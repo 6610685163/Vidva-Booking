@@ -1,285 +1,297 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - ระบบจองห้อง มธ.</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <title>{{ title }} - TSE Room Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% load static %}
     <style>
         :root {
-            --tu-red: #c21e2d;
-            --tu-red-hover: #a01825;
-            --text-main: #374151;
-            --text-muted: #6b7280;
-            --bg-color: #f3f4f6;
-            --border-color: #d1d5db;
+            --tu-red: #8b0000;
+            --tu-gold: #fbc02d;
+            --bg: #f8fafc;
+            --green: #10b981;
+            --yellow: #f59e0b;
+            --red: #ef4444;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); margin: 0; color: #334155; }
+        .navbar { background: var(--tu-red); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+        .navbar a { color: white; text-decoration: none; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
 
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-        }
+        /* Steps Indicator */
+        .steps { display: flex; justify-content: center; gap: 40px; margin-bottom: 30px; font-weight: 500; color: #94a3b8; }
+        .step.active { color: var(--tu-red); border-bottom: 2px solid var(--tu-red); }
 
-        .navbar {
-            background-color: var(--tu-red);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* Step 1 Style */
+        .room-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; }
+        .card { background: white; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); transition: 0.3s; border: 1px solid #e2e8f0; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; padding: 10px; }
+        .card:hover { transform: translateY(-5px); border-color: var(--tu-red); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); }
+        .card-title { color: var(--tu-red); font-size: 1.25rem; font-weight: 600; margin-bottom: 10px; }
+        .room-img-placeholder { height: 150px; background: #f1f5f9; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .room-img-placeholder img { width: 100%; height: 100%; object-fit: cover; }
 
-        .navbar h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
+        /* Step 2 Calendar Style */
+        .calendar-container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
+        .calendar-controls { display: flex; gap: 10px; align-items: center; }
+        .select-input { padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 1rem; cursor: pointer; outline: none; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 20px; }
+        .day-label { text-align: center; font-weight: 600; color: #64748b; padding-bottom: 10px; }
+        
+        .day { height: 90px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; border: 1px solid #f1f5f9; position: relative; }
+        .day:not(.empty):hover { transform: scale(1.02); z-index: 10; border-color: var(--tu-red); }
+        .day.empty { border: none; cursor: default; background: transparent; }
+        .day .date { font-weight: 600; font-size: 1.1rem; }
+        .day .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; }
+        
+        /* Checkbox in Calendar */
+        .day-check { position: absolute; top: 8px; right: 8px; cursor: pointer; width: 18px; height: 18px; z-index: 20; }
 
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            transition: background-color 0.2s;
-        }
+        .status-full { background-color: #fee2e2; color: var(--red); cursor: not-allowed; }
+        .status-partial { background-color: #fef3c7; color: var(--yellow); }
+        .status-available { background-color: #ecfdf5; color: var(--green); }
 
-        .navbar a:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
+        /* Time Slots Section */
+        .time-slots { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; display: none; animation: fadeIn 0.4s; }
+        .day-slot-group { margin-bottom: 25px; background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid #f0f0f0; }
+        .day-slot-header { font-weight: 600; color: var(--tu-red); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .slot-btn { padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; font-family: inherit; }
+        .slot-btn:hover:not(.disabled) { border-color: var(--tu-red); background: #fff5f5; transform: translateX(5px); }
+        .slot-btn.disabled { opacity: 0.5; cursor: not-allowed; background: #f1f5f9; }
 
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
+        /* Step 3 Style */
+        .form-box { max-width: 600px; margin: 0 auto; background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); }
+        .summary-card { background: #f1f5f9; padding: 18px; border-radius: 12px; margin-bottom: 20px; }
+        .date-badge { display: inline-block; background: white; padding: 4px 10px; border-radius: 6px; margin: 4px; border: 1px solid #e2e8f0; font-size: 0.9rem; }
+        .btn-submit { background: var(--tu-red); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.3s; font-family: inherit; }
+        .btn-submit:hover { background: #6b0000; box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3); }
 
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .card h2 {
-            color: var(--tu-red);
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid var(--tu-red);
-            padding-bottom: 0.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            font-family: 'Sarabun', sans-serif;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--tu-red);
-            box-shadow: 0 0 0 3px rgba(194, 30, 45, 0.15);
-        }
-
-        .checkbox-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-submit {
-            width: 100%;
-            background-color: var(--tu-red);
-            color: white;
-            padding: 1rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            font-family: 'Sarabun', sans-serif;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 1.5rem;
-        }
-
-        .btn-submit:hover {
-            background-color: var(--tu-red-hover);
-        }
-
-        .alert-error {
-            background-color: #fee2e2;
-            color: #b91c1c;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #f87171;
-        }
-
-        /* ซ่อนฟิลด์บางตัวไว้ก่อน จะแสดงผลด้วย JS */
-        #class-fields, #training-fields {
-            display: none;
-            background-color: #f9fafb;
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            border: 1px dashed var(--border-color);
-        }
+        .hidden { display: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
+
 <body>
-    <div class="navbar">
-        <h1>สร้างการจองห้องใหม่</h1>
-        <a href="{% url 'dashboard' %}">กลับไปแดชบอร์ด</a>
-    </div>
+
+    <nav class="navbar">
+        <div style="font-size: 1.4rem; font-weight: 600;">
+            <a href="{% url 'dashboard' %}"><i class="fa-solid fa-arrow-left"></i> กลับแดชบอร์ด</a>
+            <span style="margin-left: 20px;"><i class="fa-solid fa-gear"></i> TSE Room Booking</span>
+        </div>
+        <div>
+            <i class="fa-solid fa-circle-user"></i> {{ user.username }} | {{ user.profile.get_role_display }}
+        </div>
+    </nav>
 
     <div class="container">
-        <div class="card">
-            <h2>รายละเอียดการจอง</h2>
+        <div class="steps">
+            <div id="s1" class="step active">1. เลือกห้อง</div>
+            <div id="s2" class="step">2. ตารางรายเดือน</div>
+            <div id="s3" class="step">3. ข้อมูลการจอง</div>
+        </div>
 
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert-error">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+        <div id="view1" class="room-grid">
+            <div class="card" onclick="showStep(2, 'ENG 406-3 (ห้องประชุม 1)')">
+                <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="Room" onerror="this.src='https://via.placeholder.com/400x200?text=ENG+406-3'"></div>
+                <div class="card-title">ENG 406-3 (ห้องประชุม 1)</div>
+                <p>ความจุ: 60 คน | ห้องประชุม</p>
+            </div>
+            <div class="card" onclick="showStep(2, 'ENG 406-5 (ห้องประชุม 2)')">
+                <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="Room" onerror="this.src='https://via.placeholder.com/400x200?text=ENG+406-5'"></div>
+                <div class="card-title">ENG 406-5 (ห้องประชุม 2)</div>
+                <p>ความจุ: 15 คน | ห้องประชุม</p>
+            </div>
+            <div class="card" onclick="showStep(2, 'ENG 408-1 (ห้องประชุม 3)')">
+                <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="Room" onerror="this.src='https://via.placeholder.com/400x200?text=ENG+408-1'"></div>
+                <div class="card-title">ENG 408-1 (ห้องประชุม 3)</div>
+                <p>ความจุ: 10 คน | ห้องประชุม</p>
+            </div>
+        </div>
 
-            <form method="POST" action="">
-                {% csrf_token %}
-                
-                <div class="form-group">
-                    <label>ห้องที่ต้องการจอง</label>
-                    {{ form.room }}
-                </div>
-
-                <div class="form-group">
-                    <label>วัตถุประสงค์การใช้งาน</label>
-                    {{ form.purpose_type }}
-                </div>
-
-                <div id="class-fields">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>รหัสวิชา</label>
-                            {{ form.subject_code }}
-                        </div>
-                        <div class="form-group">
-                            <label>ชื่อวิชา</label>
-                            {{ form.subject_name }}
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>หลักสูตร</label>
-                        {{ form.curriculum }}
+        <div id="view2" class="hidden">
+            <div class="calendar-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <button onclick="showStep(1)" style="border:none; background:none; cursor:pointer; color:var(--tu-red); font-family: inherit;"><i class="fa-solid fa-chevron-left"></i> ย้อนกลับ</button>
+                    <h2 id="room-header" style="margin:0; color: var(--tu-red);">ENG 101</h2>
+                    <div class="calendar-controls">
+                        <select id="monthSelect" class="select-input" onchange="renderCalendar()"></select>
+                        <select id="yearSelect" class="select-input" onchange="renderCalendar()"></select>
                     </div>
                 </div>
 
-                <div id="training-fields">
-                    <div class="form-group">
-                        <label>ชื่อเรื่องการอบรม/ติว</label>
-                        {{ form.topic }}
-                    </div>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;"><i class="fa-solid fa-info-circle"></i> ติ๊กเลือกวันในปฏิทินเพื่อดูเวลาว่าง (เลือกได้หลายวัน)</p>
+                <div class="calendar-grid" id="calendarGrid"></div>
+
+                <div id="time-slots-section" class="time-slots">
+                    <h3 style="color: var(--tu-red); border-bottom: 2px solid #eee; padding-bottom: 10px;">เลือกช่วงเวลาจอง</h3>
+                    <div id="selected-days-slots-container"></div>
                 </div>
+            </div>
+        </div>
 
-                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
+        <div id="view3" class="hidden">
+            <div class="form-box">
+                <h2 style="color:var(--tu-red); margin-top:0;">ยืนยันรายละเอียด</h2>
+                <button onclick="showStep(2, currentRoom)" style="border:none; background:none; cursor:pointer; color:var(--tu-red); margin-bottom: 15px; font-family: inherit;">
+                    <i class="fa-solid fa-chevron-left"></i> กลับไปเลือกวัน/เวลาใหม่
+                </button>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>ตั้งแต่วันที่</label>
-                        {{ form.start_date }}
+                <div class="summary-card" id="summary-content">
                     </div>
-                    <div class="form-group">
-                        <label>ถึงวันที่</label>
-                        {{ form.end_date }}
-                    </div>
-                </div>
 
-                <div class="form-group">
-                    <label>วันในสัปดาห์ที่ต้องการใช้งาน</label>
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="room_name" id="input_room_name">
+                    <input type="hidden" name="selected_data" id="input_selected_data"> <div class="form-group">
+                        <label>รหัสวิชา / วัตถุประสงค์ <span style="color:red">*</span></label>
+                        <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบภาคปลาย" required>
+                    </div>
+
                     <div class="checkbox-group">
-                        {% for checkbox in form.selected_days %}
-                            <div class="checkbox-item">
-                                {{ checkbox.tag }} <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
-                            </div>
-                        {% endfor %}
+                        <input type="checkbox" id="semester" name="is_semester">
+                        <label for="semester" style="margin:0; cursor:pointer;">
+                            <strong>จองตลอดภาคการศึกษา</strong><br>
+                            <small>ระบบจะจองห้องให้ทุกสัปดาห์ตามวันที่เลือกจนจบเทอม</small>
+                        </label>
                     </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>ตั้งแต่เวลา</label>
-                        {{ form.start_time }}
-                    </div>
-                    <div class="form-group">
-                        <label>ถึงเวลา</label>
-                        {{ form.end_time }}
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-submit">ยืนยันการจองห้อง</button>
-            </form>
+                    <button type="submit" class="btn-submit" onclick="alert('ส่งคำขอเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">ส่งคำขอจองห้องให้ Admin</button>
+                </form>
+            </div>
         </div>
     </div>
 
     <script>
-        // โค้ดสำหรับสลับช่องกรอกข้อมูลตามวัตถุประสงค์
-        document.addEventListener('DOMContentLoaded', function() {
-            const purposeSelect = document.querySelector('select[name="purpose_type"]');
-            const classFields = document.getElementById('class-fields');
-            const trainingFields = document.getElementById('training-fields');
+        let currentRoom = "";
+        let selectedDates = []; // เก็บวันที่ที่ติ๊กเลือก [ {day, month, year, monthName} ]
+        const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
-            function toggleFields() {
-                const value = purposeSelect.value;
-                if (value === 'class') {
-                    classFields.style.display = 'block';
-                    trainingFields.style.display = 'none';
-                } else if (value === 'training') {
-                    classFields.style.display = 'none';
-                    trainingFields.style.display = 'block';
-                } else {
-                    classFields.style.display = 'none';
-                    trainingFields.style.display = 'none';
-                }
+        function initCalendarSelects() {
+            const mSelect = document.getElementById('monthSelect');
+            const ySelect = document.getElementById('yearSelect');
+            if (mSelect.options.length > 0) return;
+            const now = new Date();
+            months.forEach((m, i) => {
+                let opt = document.createElement('option');
+                opt.value = i; opt.innerHTML = m;
+                if (i === now.getMonth()) opt.selected = true;
+                mSelect.appendChild(opt);
+            });
+            for (let i = now.getFullYear(); i <= now.getFullYear() + 1; i++) {
+                let opt = document.createElement('option');
+                opt.value = i; opt.innerHTML = i + 543;
+                if (i === now.getFullYear()) opt.selected = true;
+                ySelect.appendChild(opt);
+            }
+        }
+
+        function renderCalendar() {
+            initCalendarSelects();
+            const grid = document.getElementById('calendarGrid');
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+            grid.innerHTML = "";
+            ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => { grid.innerHTML += `<div class="day-label">${day}</div>`; });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="day empty"></div>`; }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const statusNum = Math.floor(Math.random() * 3);
+                const s = [ {c:'status-available', d:'#10b981'}, {c:'status-partial', d:'#f59e0b'}, {c:'status-full', d:'#ef4444'} ][statusNum];
+                
+                const isChecked = selectedDates.some(sd => sd.day === d && sd.month === month && sd.year === year);
+                const checkboxHtml = (s.c !== 'status-full') ? `<input type="checkbox" class="day-check" ${isChecked ? 'checked' : ''} onclick="toggleDateSelection(event, ${d}, ${month}, ${year})">` : "";
+
+                grid.innerHTML += `
+                    <div class="day ${s.c}" onclick="this.querySelector('.day-check')?.click()">
+                        ${checkboxHtml}
+                        <span class="date">${d}</span>
+                        <div class="status-dot" style="background:${s.d}"></div>
+                    </div>
+                `;
+            }
+            renderTimeSlots();
+        }
+
+        function toggleDateSelection(event, d, m, y) {
+            event.stopPropagation();
+            const idx = selectedDates.findIndex(sd => sd.day === d && sd.month === m && sd.year === y);
+            if (idx > -1) {
+                selectedDates.splice(idx, 1);
+            } else {
+                selectedDates.push({ day: d, month: m, year: y, monthName: months[m] });
+            }
+            renderTimeSlots();
+        }
+
+        function renderTimeSlots() {
+            const container = document.getElementById('selected-days-slots-container');
+            const section = document.getElementById('time-slots-section');
+            container.innerHTML = "";
+
+            if (selectedDates.length === 0) {
+                section.style.display = "none";
+                return;
             }
 
-            // เรียกใช้ตอนโหลดหน้าเผื่อมีการเลือกค้างไว้
-            toggleFields();
+            section.style.display = "block";
+            // เรียงวันที่จากน้อยไปมาก
+            selectedDates.sort((a,b) => new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day));
 
-            // เรียกใช้เมื่อมีการเปลี่ยนค่าใน Dropdown
-            purposeSelect.addEventListener('change', toggleFields);
-        });
+            selectedDates.forEach(sd => {
+                const dayStr = `${sd.day} ${sd.monthName} ${sd.year + 543}`;
+                container.innerHTML += `
+                    <div class="day-slot-group">
+                        <div class="day-slot-header"><i class="fa-solid fa-calendar-day"></i> ${dayStr}</div>
+                        <div class="slot-grid">
+                            <div class="slot-btn" onclick="confirmBooking('${dayStr}', '09:00 - 12:00')"><span>09:00 - 12:00</span> <i class="fa-solid fa-plus"></i></div>
+                            <div class="slot-btn" onclick="confirmBooking('${dayStr}', '13:00 - 16:00')"><span>13:00 - 16:00</span> <i class="fa-solid fa-plus"></i></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function confirmBooking(dayStr, timeStr) {
+            // ในการพรีเซนต์: เราจะพาไป Step 3 โดยสรุปว่าจอง "ทุกวันที่ติ๊กไว้" ในช่วงเวลานี้
+            showStep(3, timeStr);
+        }
+
+        function showStep(step, timeData) {
+            document.querySelectorAll('#view1, #view2, #view3').forEach(v => v.classList.add('hidden'));
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById('view' + step).classList.remove('hidden');
+            document.getElementById('s' + step).classList.add('active');
+
+            if (step === 2) {
+                currentRoom = (typeof timeData === 'string' && timeData.includes('ENG')) ? timeData : currentRoom;
+                document.getElementById('room-header').innerText = currentRoom;
+                renderCalendar();
+            }
+            if (step === 3) {
+                const summary = document.getElementById('summary-content');
+                let dateBadges = selectedDates.map(sd => `<span class="date-badge">${sd.day} ${sd.monthName}</span>`).join("");
+                
+                summary.innerHTML = `
+                    <div style="font-size: 1.1rem; margin-bottom:10px;"><strong>ห้อง:</strong> ${currentRoom}</div>
+                    <div style="font-size: 1.1rem; margin-bottom:10px;"><strong>เวลา:</strong> ${timeData}</div>
+                    <div style="margin-top:10px;"><strong>วันที่เลือก:</strong><br> ${dateBadges}</div>
+                `;
+                
+                document.getElementById('input_room_name').value = currentRoom;
+                document.getElementById('input_selected_data').value = JSON.stringify({ dates: selectedDates, time: timeData });
+            }
+        }
+
+        initCalendarSelects();
     </script>
 </body>
 </html>

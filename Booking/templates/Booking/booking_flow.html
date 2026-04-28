@@ -202,32 +202,51 @@
 
         .slot-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
         }
 
         .slot-btn {
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
+            padding: 12px 18px;
+            border-radius: 30px;
+            /* ทรงโค้งมน Minimal */
             background: white;
+            border: 1px solid #e2e8f0;
             cursor: pointer;
-            text-align: left;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.2s ease;
+            color: #475569;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+            /* เงาเริ่มต้นบางๆ */
+        }
+
+        .slot-btn.selected-slot {
+            border-color: #6b0000 !important;
+            background-color: #ffffff !important;
+            color: #6b0000;
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.15);
+            /* เงาสีฟ้าตอนถูกเลือก */
         }
 
         .slot-btn:hover:not(.disabled) {
             border-color: var(--tu-red);
-            background: #fff5f5;
+            color: var(--tu-red);
+            box-shadow: 0 6px 12px rgba(139, 0, 0, 0.08);
+            /* เงาลอยขึ้นตอน Hover */
+            transform: translateY(-2px);
+            /* เอฟเฟกต์ยกตัว */
         }
 
         .slot-btn.disabled {
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: not-allowed;
-            background: #f1f5f9;
+            background: #f8fafc;
+            border-color: #f1f5f9;
+            box-shadow: none;
+            color: #94a3b8;
         }
 
         .form-box {
@@ -329,6 +348,55 @@
             height: 100%;
             object-fit: cover;
         }
+
+        /* Checkbox ในปฏิทิน */
+        .day-check {
+            display: none;
+        }
+
+        .day.selected-day {
+            border: 2px solid #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background-color: #eff6ff !important;
+        }
+
+        /* จัดกลุ่มเวลาของแต่ละวัน */
+        .day-slot-group {
+            margin-bottom: 20px;
+            background: transparent;
+            /* เอาพื้นหลังทึบออก */
+            padding: 0 0 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+            /* ใช้เส้นคั่นบางๆ ให้ดูคลีน */
+        }
+
+        .day-slot-header {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.05rem;
+        }
+
+        /* ป้ายวันที่หน้าสรุป */
+        .summary-card {
+            background: #f1f5f9;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin: 4px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 
@@ -398,27 +466,30 @@
             <div class="calendar-container">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <button onclick="showStep(1)"
-                        style="border:none; background:none; cursor:pointer; color:var(--tu-red);"><i
-                            class="fa-solid fa-chevron-left"></i> ย้อนกลับ</button>
-                    <h2 id="room-header" style="margin:0; color: var(--tu-red);">ENG 101</h2>
-
+                        style="border:none; background:none; cursor:pointer; color:var(--tu-red); font-family: inherit;">
+                        <i class="fa-solid fa-chevron-left"></i> ย้อนกลับไปเลือกห้อง
+                    </button>
+                    <h2 id="room-header" style="margin:0; color: var(--tu-red);">ห้องที่เลือก</h2>
                     <div class="calendar-controls">
                         <select id="monthSelect" class="select-input" onchange="renderCalendar()"></select>
                         <select id="yearSelect" class="select-input" onchange="renderCalendar()"></select>
                     </div>
                 </div>
 
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
+                    <i class="fa-solid fa-circle-info"></i> ติ๊กเลือกวันที่ต้องการ (เลือกได้หลายวัน)
+                    เพื่อดูเวลาว่างด้านล่าง
+                </p>
+
                 <div class="calendar-grid" id="calendarGrid">
                 </div>
 
                 <div id="time-slots-section" class="time-slots">
-                    <h4 id="slot-title">ตารางเวลา</h4>
-                    <div class="slot-grid">
-                        <div class="slot-btn" onclick="showStep(3, '09:00 - 12:00')"><span>09:00 - 12:00</span> <i
-                                class="fa-solid fa-chevron-right"></i></div>
-                        <div class="slot-btn disabled"><span>13:00 - 16:00</span> <small>ไม่ว่าง</small></div>
-                        <div class="slot-btn" onclick="showStep(3, '16:00 - 18:00')"><span>16:00 - 18:00</span> <i
-                                class="fa-solid fa-chevron-right"></i></div>
+                    <h3
+                        style="color: var(--tu-red); border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 30px;">
+                        เลือกช่วงเวลาสำหรับวันที่เลือกไว้
+                    </h3>
+                    <div id="selected-days-slots-container">
                     </div>
                 </div>
             </div>
@@ -433,26 +504,20 @@
                     <i class="fa-solid fa-chevron-left"></i> ย้อนกลับไป
                 </button>
 
-                <p id="summary-text" style="background:#f1f5f9; padding:15px; border-radius:10px; font-weight:500;"></p>
+                <div class="summary-card" id="summary-content">
+                </div>
 
                 <form method="POST" action="">
                     {% csrf_token %}
                     <input type="hidden" name="room_name" id="input_room_name">
-                    <input type="hidden" name="booking_date" id="input_booking_date">
-                    <input type="hidden" name="booking_time" id="input_booking_time">
+                    <input type="hidden" name="selected_data" id="input_selected_data">
 
                     <div class="form-group">
                         <label>รหัสวิชา / วัตถุประสงค์</label>
                         <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบภาคปลาย" required>
                     </div>
 
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="semester" name="is_semester">
-                        <label for="semester" style="margin:0; cursor:pointer;">
-                            <strong>จองตลอดภาคการศึกษา</strong><br>
-                            <small>ระบบจะจองห้องให้ทุกสัปดาห์ในวันและเวลานี้จนจบเทอม</small>
-                        </label>
-                    </div>
+
 
                     <button type="submit" class="btn-submit"
                         onclick="alert('ส่งคำขอเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">ส่งคำขอจองห้อง</button>
@@ -463,124 +528,181 @@
 
     <script>
         let currentRoom = "";
-        let selectedDate = "";
+        let selectedDates = []; // เก็บวันที่ที่ติ๊กเลือก
+        let selectedTimeSlots = []; // เก็บเวลาที่เลือก (ตัวแปรนี้คือตัวที่หายไปครับ)
         const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
-        // ฟังก์ชันสร้าง Dropdown เดือนและปี 
         function initCalendarSelects() {
             const mSelect = document.getElementById('monthSelect');
             const ySelect = document.getElementById('yearSelect');
             if (mSelect.options.length > 0) return;
-
             const now = new Date();
-
             months.forEach((m, i) => {
                 let opt = document.createElement('option');
-                opt.value = i;
-                opt.innerHTML = m;
+                opt.value = i; opt.innerHTML = m;
                 if (i === now.getMonth()) opt.selected = true;
                 mSelect.appendChild(opt);
             });
-
             for (let i = now.getFullYear(); i <= now.getFullYear() + 2; i++) {
                 let opt = document.createElement('option');
-                opt.value = i;
-                opt.innerHTML = i + 543; // ปี พ.ศ.
+                opt.value = i; opt.innerHTML = i + 543;
                 if (i === now.getFullYear()) opt.selected = true;
                 ySelect.appendChild(opt);
             }
         }
 
-        // วาดปฏิทิน
         function renderCalendar() {
             initCalendarSelects();
-
             const grid = document.getElementById('calendarGrid');
             let month = parseInt(document.getElementById('monthSelect').value);
             let year = parseInt(document.getElementById('yearSelect').value);
 
             if (isNaN(month) || isNaN(year)) {
-                const now = new Date();
-                month = now.getMonth();
-                year = now.getFullYear();
+                const now = new Date(); month = now.getMonth(); year = now.getFullYear();
             }
 
             grid.innerHTML = "";
-
-            ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => {
-                grid.innerHTML += `<div class="day-label">${day}</div>`;
-            });
+            ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => { grid.innerHTML += `<div class="day-label">${day}</div>`; });
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            for (let i = 0; i < firstDay; i++) {
-                grid.innerHTML += `<div class="day empty"></div>`;
-            }
+            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="day empty"></div>`; }
 
-            // วันในเดือน
             for (let d = 1; d <= daysInMonth; d++) {
                 const statusNum = Math.floor(Math.random() * 3);
-                const statuses = [
-                    { class: 'status-available', dot: '#10b981' },
-                    { class: 'status-partial', dot: '#f59e0b' },
-                    { class: 'status-full', dot: '#ef4444' }
-                ];
-                const s = statuses[statusNum];
+                const s = [{ c: 'status-available', d: '#10b981' }, { c: 'status-partial', d: '#f59e0b' }, { c: 'status-full', d: '#ef4444' }][statusNum];
 
-                // แก้ไขบั๊กตรงนี้: ใส่คำสั่งคลิกเฉพาะวันที่สถานะไม่ใช่สีแดง (เต็ม)
-                const clickAction = (s.class !== 'status-full') ? `onclick="showSlots(${d})"` : "";
+                // เช็คว่าวันนี้ถูกเลือกไว้ไหม ถ้าเลือกให้เพิ่มคลาส selected-day
+                const isChecked = selectedDates.some(sd => sd.day === d && sd.month === month && sd.year === year);
+                const selectedClass = isChecked ? 'selected-day' : '';
+
+                // ถ้าไม่เต็ม ให้คลิกได้ทั้งกล่องเลย
+                const clickAction = (s.c !== 'status-full') ? `onclick="toggleDateSelection(${d}, ${month}, ${year})"` : "";
 
                 grid.innerHTML += `
-                    <div class="day ${s.class}" ${clickAction}>
+                    <div class="day ${s.c} ${selectedClass}" ${clickAction}>
                         <span class="date">${d}</span>
-                        <div class="status-dot" style="background:${s.dot}"></div>
+                        <div class="status-dot" style="background:${s.d}"></div>
                     </div>
                 `;
             }
+            renderTimeSlots();
+        }
+
+        function toggleDateSelection(d, m, y) {
+            const idx = selectedDates.findIndex(sd => sd.day === d && sd.month === m && sd.year === y);
+            if (idx > -1) {
+                selectedDates.splice(idx, 1); // เอาวันออก
+                // ถ้าเอาวันออก ให้เอาเวลาของวันนั้นออกด้วย
+                const dayFull = `${d} ${months[m]} ${y + 543}`;
+                selectedTimeSlots = selectedTimeSlots.filter(s => s.dateStr !== dayFull);
+            } else {
+                selectedDates.push({ day: d, month: m, year: y, monthName: months[m] }); // เพิ่มวันเข้า
+            }
+            renderCalendar(); // วาดปฏิทินใหม่เพื่ออัปเดตกรอบสีฟ้า
+        }
+
+        function toggleSlotSelection(dateStr, timeStr) {
+            const idx = selectedTimeSlots.findIndex(s => s.dateStr === dateStr && s.timeStr === timeStr);
+            if (idx > -1) {
+                selectedTimeSlots.splice(idx, 1); // เอาออกถ้ากดซ้ำ
+            } else {
+                selectedTimeSlots.push({ dateStr, timeStr }); // เพิ่มเข้าถ้ายังไม่เลือก
+            }
+            renderTimeSlots(); // อัปเดตกรอบสีฟ้าของเวลา
+        }
+
+        function renderTimeSlots() {
+            const container = document.getElementById('selected-days-slots-container');
+            const section = document.getElementById('time-slots-section');
+            container.innerHTML = "";
+
+            if (selectedDates.length === 0) {
+                section.style.display = "none";
+                return;
+            }
+
+            section.style.display = "block";
+            selectedDates.sort((a, b) => new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day));
+
+            selectedDates.forEach(sd => {
+                const dayFull = `${sd.day} ${sd.monthName} ${sd.year + 543}`;
+
+                // เช็คว่าเวลานี้ถูกเลือกไว้หรือยัง
+                const isSlot1Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '09:00 - 12:00') ? 'selected-slot' : '';
+                const isSlot2Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '13:00 - 16:00') ? 'selected-slot' : '';
+
+                const icon1 = isSlot1Selected ? '<i class="fa-solid fa-check"></i>' : '';
+                const icon2 = isSlot2Selected ? '<i class="fa-solid fa-check"></i>' : '';
+
+                container.innerHTML += `
+                    <div class="day-slot-group" style="margin-bottom: 20px; background: #f9fafb; padding: 15px; border-radius: 12px; border: 1px solid #eee;">
+                        <div style="font-weight: 600; color: var(--tu-red); margin-bottom: 10px;">
+                            <i class="fa-solid fa-calendar-day"></i> วันที่ ${dayFull}
+                        </div>
+                        <div class="slot-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;">
+                            <div class="slot-btn ${isSlot1Selected}" onclick="toggleSlotSelection('${dayFull}', '09:00 - 12:00')">09:00 - 12:00 ${icon1}</div>
+                            <div class="slot-btn ${isSlot2Selected}" onclick="toggleSlotSelection('${dayFull}', '13:00 - 16:00')">13:00 - 16:00 ${icon2}</div>
+                            <div class="slot-btn disabled" style="opacity:0.5; cursor:not-allowed; background:#f1f5f9; padding:12px; border-radius:8px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
+                                16:00 - 18:00 <small>ไม่ว่าง</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // เพิ่มปุ่มกดยืนยันเวลา เพื่อไปหน้าฟอร์ม
+            if (selectedDates.length > 0) {
+                container.innerHTML += `
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button class="btn-submit" style="width: auto; padding: 12px 30px;" onclick="confirmMultipleBookings()">
+                            ยืนยันเวลาที่เลือก <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function confirmMultipleBookings() {
+            if (selectedTimeSlots.length === 0) {
+                alert("กรุณาเลือกเวลาอย่างน้อย 1 ช่วง");
+                return;
+            }
+            showStep(3, selectedTimeSlots);
         }
 
         function showStep(step, data) {
             document.querySelectorAll('.step-content, .hidden, #view1, #view2, #view3').forEach(v => v.style.display = 'none');
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
 
-            document.getElementById('view' + step).style.display = 'block';
-            document.getElementById('s' + step).classList.add('active');
+            const targetView = document.getElementById('view' + step);
+            if (targetView) targetView.style.display = 'block';
+
+            const targetStep = document.getElementById('s' + step);
+            if (targetStep) targetStep.classList.add('active');
 
             if (step === 2) {
-                currentRoom = data;
-                document.getElementById('room-header').innerText = data;
-                document.getElementById('time-slots-section').style.display = 'none';
+                if (typeof data === 'string' && data.includes('ENG')) { currentRoom = data; }
+                document.getElementById('room-header').innerText = currentRoom;
                 renderCalendar();
             }
-            if (step === 3) {
-                const monthName = months[document.getElementById('monthSelect').value];
-                const yearThai = parseInt(document.getElementById('yearSelect').value) + 543;
-                const fullDateStr = `${selectedDate} ${monthName} ${yearThai}`;
 
-                document.getElementById('summary-text').innerHTML =
-                    `<i class="fa-solid fa-location-dot"></i> ${currentRoom}<br>` +
-                    `<i class="fa-solid fa-clock"></i> วันที่ ${fullDateStr} | เวลา ${data}`;
+            if (step === 3) {
+                const summary = document.getElementById('summary-content');
+                // เอาเวลาทั้งหมดที่เลือกมาสร้างเป็นป้าย Badge เรียงต่อกัน
+                let timeBadges = data.map(t => `<span style="display:inline-block; background:white; padding:6px 12px; border-radius:6px; margin:4px; border:1px solid #3b82f6; color:#1e3a8a; font-size:0.95rem;"><i class="fa-regular fa-clock"></i> ${t.dateStr} | ${t.timeStr}</span>`).join("");
+
+                summary.innerHTML = `
+                    <div style="margin-bottom:15px; font-size:1.1rem;"><strong><i class="fa-solid fa-location-dot"></i> ห้องที่เลือก:</strong> ${currentRoom}</div>
+                    <div><strong>วันและเวลาที่จองทั้งหมด:</strong><br> <div style="margin-top:8px;">${timeBadges}</div></div>
+                `;
 
                 document.getElementById('input_room_name').value = currentRoom;
-                document.getElementById('input_booking_date').value = fullDateStr;
-                document.getElementById('input_booking_time').value = data;
+                document.getElementById('input_selected_data').value = JSON.stringify(data);
             }
         }
 
-        function showSlots(date) {
-            selectedDate = date;
-            const monthName = months[document.getElementById('monthSelect').value];
-            document.getElementById('slot-title').innerText = `ตารางเวลาวันที่ ${date} ${monthName}`;
-            document.getElementById('time-slots-section').style.display = 'block';
-
-            // เลื่อนหน้าจอลงมาให้เห็นตารางเวลาแบบนุ่มนวล
-            setTimeout(() => {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            }, 100);
-        }
-
-        // รันเตรียมข้อมูลทันทีเมื่อไฟล์โหลด
         initCalendarSelects();
     </script>
 </body>
