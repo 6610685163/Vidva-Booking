@@ -673,31 +673,45 @@
         }
 
         function showStep(step, data) {
-            document.querySelectorAll('.step-content, .hidden, #view1, #view2, #view3').forEach(v => v.style.display = 'none');
+            // 1. ซ่อนทุกหน้าก่อน
+            document.getElementById('view1').style.display = 'none';
+            document.getElementById('view2').style.display = 'none';
+            document.getElementById('view3').style.display = 'none';
+
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
 
+            // 2. แสดงหน้าที่ต้องการ
             const targetView = document.getElementById('view' + step);
-            if (targetView) targetView.style.display = 'block';
+            if (targetView) {
+                // ถ้าเป็นหน้า 1 (เลือกห้อง) ให้แสดงผลแบบ grid เพื่อรักษา Layout เดิม
+                if (step === 1) {
+                    targetView.style.display = 'grid';
+                } else {
+                    targetView.style.display = 'block';
+                }
+            }
 
             const targetStep = document.getElementById('s' + step);
             if (targetStep) targetStep.classList.add('active');
 
+            // ส่วนจัดการข้อมูลแต่ละ Step
+            if (step === 1) {
+                // ล้างค่าที่เคยเลือกไว้หากย้อนกลับมาหน้าแรก (ถ้าต้องการ)
+                // selectedDates = []; 
+                // selectedTimeSlots = [];
+            }
             if (step === 2) {
                 if (typeof data === 'string' && data.includes('ENG')) { currentRoom = data; }
                 document.getElementById('room-header').innerText = currentRoom;
                 renderCalendar();
             }
-
             if (step === 3) {
                 const summary = document.getElementById('summary-content');
-                // เอาเวลาทั้งหมดที่เลือกมาสร้างเป็นป้าย Badge เรียงต่อกัน
-                let timeBadges = data.map(t => `<span style="display:inline-block; background:white; padding:6px 12px; border-radius:6px; margin:4px; border:1px solid #3b82f6; color:#1e3a8a; font-size:0.95rem;"><i class="fa-regular fa-clock"></i> ${t.dateStr} | ${t.timeStr}</span>`).join("");
-
+                let timeBadges = data.map(t => `<span style="display:inline-block; background:white; padding:6px 12px; border-radius:8px; margin:4px; border:1.5px solid #3b82f6; color:#1e3a8a; font-size:0.9rem;"><i class="fa-regular fa-clock"></i> ${t.dateStr} | ${t.timeStr}</span>`).join("");
                 summary.innerHTML = `
                     <div style="margin-bottom:15px; font-size:1.1rem;"><strong><i class="fa-solid fa-location-dot"></i> ห้องที่เลือก:</strong> ${currentRoom}</div>
-                    <div><strong>วันและเวลาที่จองทั้งหมด:</strong><br> <div style="margin-top:8px;">${timeBadges}</div></div>
+                    <div><strong>วันและเวลาที่จองทั้งหมด:</strong><br> <div style="margin-top:10px;">${timeBadges}</div></div>
                 `;
-
                 document.getElementById('input_room_name').value = currentRoom;
                 document.getElementById('input_selected_data').value = JSON.stringify(data);
             }
