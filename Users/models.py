@@ -1,20 +1,11 @@
 """
 models.py — Vidva Booking System
-ครอบคลุม SRS ทุก module:
-  Auth    FR-AUTH-01..05
-  Booking FR-BOOK-01..09
-  Approval FR-APPR-01..04
-  Calendar FR-CAL-01..04
-  Notification FR-NOTI-01..03
-  Report  FR-RPT-01..04
-  Admin   FR-ADM-01..03
 """
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-
 
 class UserProfile(models.Model):
     ROLE_CHOICES = [
@@ -51,8 +42,8 @@ class Room(models.Model):
         ("classroom", _("ห้องเรียน")),
     ]
 
-    room_code = models.CharField(max_length=20, unique=True)  # e.g. 406-3
-    room_name = models.CharField(max_length=100)  # ห้องประชุม 1
+    room_code = models.CharField(max_length=20, unique=True)      # 406-3, 406-5, etc.
+    room_name = models.CharField(max_length=100)                   # Name in Thai
     room_type = models.CharField(max_length=20, choices=ROOM_TYPE_CHOICES)
     capacity = models.IntegerField()
     description = models.TextField(blank=True)
@@ -61,18 +52,23 @@ class Room(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = _("ห้อง")
-        verbose_name_plural = _("ห้อง")
-        ordering = ["room_code"]
+        verbose_name = _('ห้อง')
+        verbose_name_plural = _('ห้อง')
+        ordering = ['room_code']
 
     def __str__(self):
         return f"{self.room_code} - {self.room_name}"
 
 
 class Booking(models.Model):
-    PURPOSE_TYPE_CHOICES = [
-        ("class", _("สอนปกติ/ชดเชย/เสริม")),  # FR-BOOK-02 ประเภท ก
-        ("training", _("จัดอบรม/จัดติว")),  # FR-BOOK-02 ประเภท ข
+    """
+    Booking model
+    Requirement: FR-BOOK-01 to FR-BOOK-07
+    """
+
+    PURPOSE_CHOICES = [
+        ("class", _("สอนปกติ/ชดเชย/เสริม")),
+        ("training", _("จัดอบรม/จัดติว")),
     ]
 
     CURRICULUM_CHOICES = [
@@ -83,53 +79,52 @@ class Booking(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ("pending", _("รอการอนุมัติ")),  # FR-APPR-01
+        ("pending", _("รอการอนุมัติ")),
         ("approved", _("อนุมัติแล้ว")),
         ("rejected", _("ปฏิเสธ")),
-        ("cancelled", _("ยกเลิก")),  # UC-06
+        ("cancelled", _("ยกเลิก")),
     ]
 
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="bookings")
+    room = models.ForeignKey(
+        Room, on_delete=models.CASCADE, related_name="bookings", verbose_name=_("ห้อง")
+    )
     booker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
-
-    parent_booking = models.ForeignKey(
-        "self",
-        on_delete=models.CASCADE,
-        related_name="recurring_instances",
-        null=True,
-        blank=True,
-        verbose_name=_("การจองหลัก (Recurring)"),
+    purpose_type = models.CharField(
+        max_length=20, choices=PURPOSE_CHOICES, verbose_name=_("วัตถุประสงค์")
     )
-    is_recurring = models.BooleanField(default=False, verbose_name=_("การจองแบบซ้ำ"))
 
-    purpose_type = models.CharField(max_length=20, choices=PURPOSE_TYPE_CHOICES)
-
-    subject_code = models.CharField(max_length=20, null=True, blank=True)  # รหัสวิชา
-    subject_name = models.CharField(max_length=100, null=True, blank=True)  # ชื่อวิชา
+    # สำหรับ สอนปกติ/ชดเชย/เสริม
+    subject_code = models.CharField(
+        max_length=20, blank=True, null=True, verbose_name=_("รหัสวิชา")
+    )
+    subject_name = models.CharField(
+        max_length=100, blank=True, null=True, verbose_name=_("ชื่อวิชา")
+    )
     curriculum = models.CharField(
-        max_length=20, choices=CURRICULUM_CHOICES, null=True, blank=True
-    )
-
-    topic = models.CharField(max_length=200, null=True, blank=True)  # ชื่อเรื่อง
-
-    start_date = models.DateField()
-    end_date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-
-    days_of_week = models.CharField(max_length=50)
-
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    rejection_reason = models.TextField(null=True, blank=True)
-    approved_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
+        max_length=20,
+        choices=CURRICULUM_CHOICES,
         blank=True,
-        related_name="approved_bookings",
-        verbose_name=_("อนุมัติ/ปฏิเสธโดย"),
+        null=True,
+        verbose_name=_("หลักสูตร"),
     )
-    approved_at = models.DateTimeField(null=True, blank=True)
+
+    # สำหรับ จัดอบรม/จัดติว
+    topic = models.CharField(
+        max_length=200, blank=True, null=True, verbose_name=_("ชื่อเรื่อง")
+    )
+
+    # วันและเวลา
+    start_date = models.DateField(verbose_name=_("ตั้งแต่วันที่"))
+    end_date = models.DateField(verbose_name=_("ถึงวันที่"))
+    start_time = models.TimeField(verbose_name=_("ตั้งแต่เวลา"))
+    end_time = models.TimeField(verbose_name=_("ถึงเวลา"))
+    days_of_week = models.CharField(
+        max_length=50, verbose_name=_("วันในสัปดาห์")
+    )  # เก็บเป็น string เช่น "0,1,2" (0=จันทร์)
+
+    # สถานะ
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    rejection_reason = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
