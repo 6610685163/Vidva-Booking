@@ -7,8 +7,9 @@
     <title>{{ title }} - TSE Room Booking</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% load static %}
     <style>
-        /* (สไตล์ CSS เดิมทั้งหมดที่คุณส่งมา) */
+        /* (สไตล์ CSS หลัก) */
         :root {
             --tu-red: #8b0000;
             --tu-gold: #fbc02d;
@@ -62,18 +63,21 @@
 
         .room-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
         }
 
         .card {
             background: white;
             border-radius: 15px;
-            padding: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             transition: 0.3s;
             border: 1px solid #e2e8f0;
             cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
         }
 
         .card:hover {
@@ -94,6 +98,27 @@
             padding: 30px;
             border-radius: 20px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* ----- เพิ่ม CSS สำหรับ Selectbox เลือกเดือน/ปี ----- */
+        .calendar-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .select-input {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .select-input:focus {
+            border-color: var(--tu-red);
         }
 
         .calendar-grid {
@@ -123,10 +148,17 @@
             position: relative;
         }
 
-        .day:hover {
+        /* ป้องกันไม่ให้ช่องว่างขยับเมื่อเอาเมาส์ชี้ */
+        .day:not(.empty):hover {
             transform: scale(1.05);
             z-index: 10;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .day.empty {
+            border: none;
+            cursor: default;
+            background: transparent;
         }
 
         .day .date {
@@ -278,6 +310,25 @@
                 transform: translateY(0);
             }
         }
+
+        .room-img-placeholder {
+            height: 150px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 2rem;
+            overflow: hidden;
+        }
+
+        .room-img-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
     </style>
 </head>
 
@@ -301,14 +352,44 @@
         </div>
 
         <div id="view1" class="room-grid">
-            <div class="card" onclick="showStep(2, 'ห้องบรรยาย ENG 101')">
-                <div class="card-title">ENG 101</div>
-                <p>ความจุ: 100 คน | ชั้น 1 ตึกวิศวะ</p>
-                <small style="color: var(--green);"><i class="fa-solid fa-circle-check"></i> ว่างส่วนใหญ่</small>
+            <div class="card" onclick="showStep(2, 'ENG 406-3(ห้องประชุม 1)')">
+                <div class="room-img-placeholder">
+                    <img src="{% static 'images/test_room.jpg' %}" alt="test">
+                </div>
+                <div class="card-title">ENG 406-3(ห้องประชุม 1)</div>
+                <p>ความจุ: 60 คน | ห้องประชุม</p>
+                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
             </div>
-            <div class="card" onclick="showStep(2, 'Lab Computer 402')">
-                <div class="card-title">Lab Com 402</div>
-                <p>ความจุ: 40 คน | ชั้น 4 ตึกวิศวะ</p>
+            <div class="card" onclick="showStep(2, 'ENG 406-5(ห้องประชุม 2)')">
+                <div class="room-img-placeholder">
+                    <img src="{% static 'images/test_room.jpg' %}" alt="test">
+                </div>
+                <div class="card-title">ENG 406-5(ห้องประชุม 2)</div>
+                <p>ความจุ: 15 คน | ห้องประชุม</p>
+                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+            </div>
+            <div class="card" onclick="showStep(2, 'ENG 408-1(ห้องประชุม 3)')">
+                <div class="room-img-placeholder">
+                    <img src="{% static 'images/test_room.jpg' %}" alt="test">
+                </div>
+                <div class="card-title">ENG 408-1(ห้องประชุม 3)</div>
+                <p>ความจุ: 10 คน | ห้องประชุม</p>
+                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+            </div>
+            <div class="card" onclick="showStep(2, 'ENG 408-2/1(ห้องบรรยาย 1)')">
+                <div class="room-img-placeholder">
+                    <img src="{% static 'images/test_room.jpg' %}" alt="test">
+                </div>
+                <div class="card-title">ENG 408-2/1(ห้องบรรยาย 1)</div>
+                <p>ความจุ: 20 คน | ห้องเรียน</p>
+                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+            </div>
+            <div class="card" onclick="showStep(2, 'ENG 408-2/2(ห้องบรรยาย 2)')">
+                <div class="room-img-placeholder">
+                    <img src="{% static 'images/test_room.jpg' %}" alt="test">
+                </div>
+                <div class="card-title">ENG 408-2/2(ห้องบรรยาย 2)</div>
+                <p>ความจุ: 20 คน | ห้องเรียน</p>
                 <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
             </div>
         </div>
@@ -320,39 +401,18 @@
                         style="border:none; background:none; cursor:pointer; color:var(--tu-red);"><i
                             class="fa-solid fa-chevron-left"></i> ย้อนกลับ</button>
                     <h2 id="room-header" style="margin:0; color: var(--tu-red);">ENG 101</h2>
-                    <h3 style="margin:0;">เมษายน 2569</h3>
+
+                    <div class="calendar-controls">
+                        <select id="monthSelect" class="select-input" onchange="renderCalendar()"></select>
+                        <select id="yearSelect" class="select-input" onchange="renderCalendar()"></select>
+                    </div>
                 </div>
 
-                <div class="calendar-grid">
-                    <div class="day-label">อา.</div>
-                    <div class="day-label">จ.</div>
-                    <div class="day-label">อ.</div>
-                    <div class="day-label">พ.</div>
-                    <div class="day-label">พฤ.</div>
-                    <div class="day-label">ศ.</div>
-                    <div class="day-label">ส.</div>
-
-                    <div class="day" style="opacity: 0.3;"><span class="date">29</span></div>
-                    <div class="day" style="opacity: 0.3;"><span class="date">30</span></div>
-                    <div class="day status-available" onclick="showSlots(1)"><span class="date">1</span>
-                        <div class="status-dot" style="background:var(--green)"></div>
-                    </div>
-                    <div class="day status-partial" onclick="showSlots(2)"><span class="date">2</span>
-                        <div class="status-dot" style="background:var(--yellow)"></div>
-                    </div>
-                    <div class="day status-full"><span class="date">3</span>
-                        <div class="status-dot" style="background:var(--red)"></div>
-                    </div>
-                    <div class="day status-available" onclick="showSlots(4)"><span class="date">4</span>
-                        <div class="status-dot" style="background:var(--green)"></div>
-                    </div>
-                    <div class="day status-available" onclick="showSlots(5)"><span class="date">5</span>
-                        <div class="status-dot" style="background:var(--green)"></div>
-                    </div>
+                <div class="calendar-grid" id="calendarGrid">
                 </div>
 
                 <div id="time-slots-section" class="time-slots">
-                    <h4 id="slot-title">ตารางเวลาวันที่ 1 เมษายน</h4>
+                    <h4 id="slot-title">ตารางเวลา</h4>
                     <div class="slot-grid">
                         <div class="slot-btn" onclick="showStep(3, '09:00 - 12:00')"><span>09:00 - 12:00</span> <i
                                 class="fa-solid fa-chevron-right"></i></div>
@@ -367,6 +427,12 @@
         <div id="view3" class="hidden">
             <div class="form-box">
                 <h2 style="color:var(--tu-red); margin-top:0;">ยืนยันการจอง</h2>
+
+                <button onclick="showStep(2, currentRoom)"
+                    style="border:none; background:none; cursor:pointer; color:var(--tu-red); margin-bottom: 15px; font-family: 'Sarabun', sans-serif;">
+                    <i class="fa-solid fa-chevron-left"></i> ย้อนกลับไป
+                </button>
+
                 <p id="summary-text" style="background:#f1f5f9; padding:15px; border-radius:10px; font-weight:500;"></p>
 
                 <form method="POST" action="">
@@ -397,7 +463,82 @@
 
     <script>
         let currentRoom = "";
-        let currentDate = "";
+        let selectedDate = "";
+        const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+        // ฟังก์ชันสร้าง Dropdown เดือนและปี 
+        function initCalendarSelects() {
+            const mSelect = document.getElementById('monthSelect');
+            const ySelect = document.getElementById('yearSelect');
+            if (mSelect.options.length > 0) return;
+
+            const now = new Date();
+
+            months.forEach((m, i) => {
+                let opt = document.createElement('option');
+                opt.value = i;
+                opt.innerHTML = m;
+                if (i === now.getMonth()) opt.selected = true;
+                mSelect.appendChild(opt);
+            });
+
+            for (let i = now.getFullYear(); i <= now.getFullYear() + 2; i++) {
+                let opt = document.createElement('option');
+                opt.value = i;
+                opt.innerHTML = i + 543; // ปี พ.ศ.
+                if (i === now.getFullYear()) opt.selected = true;
+                ySelect.appendChild(opt);
+            }
+        }
+
+        // วาดปฏิทิน
+        function renderCalendar() {
+            initCalendarSelects();
+
+            const grid = document.getElementById('calendarGrid');
+            let month = parseInt(document.getElementById('monthSelect').value);
+            let year = parseInt(document.getElementById('yearSelect').value);
+
+            if (isNaN(month) || isNaN(year)) {
+                const now = new Date();
+                month = now.getMonth();
+                year = now.getFullYear();
+            }
+
+            grid.innerHTML = "";
+
+            ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => {
+                grid.innerHTML += `<div class="day-label">${day}</div>`;
+            });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += `<div class="day empty"></div>`;
+            }
+
+            // วันในเดือน
+            for (let d = 1; d <= daysInMonth; d++) {
+                const statusNum = Math.floor(Math.random() * 3);
+                const statuses = [
+                    { class: 'status-available', dot: '#10b981' },
+                    { class: 'status-partial', dot: '#f59e0b' },
+                    { class: 'status-full', dot: '#ef4444' }
+                ];
+                const s = statuses[statusNum];
+
+                // แก้ไขบั๊กตรงนี้: ใส่คำสั่งคลิกเฉพาะวันที่สถานะไม่ใช่สีแดง (เต็ม)
+                const clickAction = (s.class !== 'status-full') ? `onclick="showSlots(${d})"` : "";
+
+                grid.innerHTML += `
+                    <div class="day ${s.class}" ${clickAction}>
+                        <span class="date">${d}</span>
+                        <div class="status-dot" style="background:${s.dot}"></div>
+                    </div>
+                `;
+            }
+        }
 
         function showStep(step, data) {
             document.querySelectorAll('.step-content, .hidden, #view1, #view2, #view3').forEach(v => v.style.display = 'none');
@@ -410,25 +551,37 @@
                 currentRoom = data;
                 document.getElementById('room-header').innerText = data;
                 document.getElementById('time-slots-section').style.display = 'none';
+                renderCalendar();
             }
             if (step === 3) {
+                const monthName = months[document.getElementById('monthSelect').value];
+                const yearThai = parseInt(document.getElementById('yearSelect').value) + 543;
+                const fullDateStr = `${selectedDate} ${monthName} ${yearThai}`;
+
                 document.getElementById('summary-text').innerHTML =
                     `<i class="fa-solid fa-location-dot"></i> ${currentRoom}<br>` +
-                    `<i class="fa-solid fa-clock"></i> วันที่ ${currentDate} เมษายน | เวลา ${data}`;
+                    `<i class="fa-solid fa-clock"></i> วันที่ ${fullDateStr} | เวลา ${data}`;
 
-                // ใส่ค่าลงไปใน Hidden input เพื่อเตรียมส่งให้ Django view
                 document.getElementById('input_room_name').value = currentRoom;
-                document.getElementById('input_booking_date').value = currentDate;
+                document.getElementById('input_booking_date').value = fullDateStr;
                 document.getElementById('input_booking_time').value = data;
             }
         }
 
         function showSlots(date) {
-            currentDate = date;
-            document.getElementById('slot-title').innerText = "ตารางเวลาวันที่ " + date + " เมษายน";
+            selectedDate = date;
+            const monthName = months[document.getElementById('monthSelect').value];
+            document.getElementById('slot-title').innerText = `ตารางเวลาวันที่ ${date} ${monthName}`;
             document.getElementById('time-slots-section').style.display = 'block';
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+            // เลื่อนหน้าจอลงมาให้เห็นตารางเวลาแบบนุ่มนวล
+            setTimeout(() => {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }, 100);
         }
+
+        // รันเตรียมข้อมูลทันทีเมื่อไฟล์โหลด
+        initCalendarSelects();
     </script>
 </body>
 
