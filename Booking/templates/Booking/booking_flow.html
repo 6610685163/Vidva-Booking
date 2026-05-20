@@ -1,992 +1,850 @@
-<!DOCTYPE html>
-<html lang="th">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - TSE Room Booking</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    {% load static %}
-    <style>
-        /* (สไตล์ CSS หลัก) */
-        :root {
-            --tu-red: #8b0000;
-            --tu-gold: #fbc02d;
-            --bg: #f8fafc;
-            --green: #10b981;
-            --yellow: #f59e0b;
-            --red: #ef4444;
-        }
+{% block title %}จองห้องเรียน/ห้องประชุม{% endblock %}
 
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background: var(--bg);
-            margin: 0;
-            color: #334155;
-        }
+{% block extra_style %}
+<style>
+    /* ----- แถบสถานะ ----- */
+    .steps {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-bottom: 30px;
+        font-weight: 500;
+        color: #94a3b8;
+    }
 
-        .navbar {
-            background: var(--tu-red);
-            color: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+    .step.active {
+        color: var(--tu-red);
+        border-bottom: 2px solid var(--tu-red);
+    }
 
-        .navbar a {
-            color: white;
-            text-decoration: none;
-        }
+    /* ----- หน้า 1: เลือกห้อง ----- */
+    .room-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 25px;
+    }
 
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
+    .card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: 0.3s;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+    }
 
-        .steps {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin-bottom: 30px;
-            font-weight: 500;
-            color: #94a3b8;
-        }
+    .card:hover {
+        transform: translateY(-5px);
+        border-color: var(--tu-red);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
 
-        .step.active {
-            color: var(--tu-red);
-            border-bottom: 2px solid var(--tu-red);
-        }
+    .card-title {
+        color: var(--tu-red);
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
 
-        .room-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
-        }
+    .room-img-placeholder {
+        height: 150px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
 
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: 0.3s;
-            border: 1px solid #e2e8f0;
-            cursor: pointer;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-        }
+    .room-img-placeholder img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: var(--tu-red);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
+    /* ----- หน้า 2: ปฏิทิน ----- */
+    .calendar-container {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
 
-        .card-title {
-            color: var(--tu-red);
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
+    .calendar-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
 
-        .calendar-container {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
+    .select-input {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-family: inherit;
+        font-size: 1rem;
+        cursor: pointer;
+        outline: none;
+    }
 
-        /* ----- เพิ่ม CSS สำหรับ Selectbox เลือกเดือน/ปี ----- */
-        .calendar-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+    .select-input:focus {
+        border-color: var(--tu-red);
+    }
 
-        .select-input {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            font-family: inherit;
-            font-size: 1rem;
-            cursor: pointer;
-            outline: none;
-        }
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+    }
 
-        .select-input:focus {
-            border-color: var(--tu-red);
-        }
+    .day-label {
+        text-align: center;
+        font-weight: 600;
+        color: #64748b;
+        padding-bottom: 10px;
+    }
 
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
+    .day {
+        height: 80px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+        border: 1px solid #f1f5f9;
+        position: relative;
+    }
 
-        .day-label {
-            text-align: center;
-            font-weight: 600;
-            color: #64748b;
-            padding-bottom: 10px;
-        }
+    .day:not(.empty):hover {
+        transform: scale(1.05);
+        z-index: 10;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
 
-        .day {
-            height: 80px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid #f1f5f9;
-            position: relative;
-        }
+    .day.empty {
+        border: none;
+        cursor: default;
+        background: transparent;
+    }
 
-        /* ป้องกันไม่ให้ช่องว่างขยับเมื่อเอาเมาส์ชี้ */
-        .day:not(.empty):hover {
-            transform: scale(1.05);
-            z-index: 10;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
+    .day .date {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
 
-        .day.empty {
-            border: none;
-            cursor: default;
-            background: transparent;
-        }
+    .day .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-top: 5px;
+    }
 
-        .day .date {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
+    .status-full {
+        background-color: #fee2e2;
+        color: var(--red);
+        border-color: #fecaca;
+        cursor: not-allowed;
+    }
 
-        .day .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-top: 5px;
-        }
+    .status-partial {
+        background-color: #fef3c7;
+        color: var(--yellow);
+        border-color: #fde68a;
+    }
 
-        .status-full {
-            background-color: #fee2e2;
-            color: var(--red);
-            border-color: #fecaca;
-            cursor: not-allowed;
-        }
+    .status-available {
+        background-color: #ecfdf5;
+        color: var(--green);
+        border-color: #d1fae5;
+    }
 
-        .status-partial {
-            background-color: #fef3c7;
-            color: var(--yellow);
-            border-color: #fde68a;
-        }
+    .day.selected-day {
+        border: 2px solid #3b82f6 !important;
+        background-color: #eff6ff !important;
+    }
 
-        .status-available {
-            background-color: #ecfdf5;
-            color: var(--green);
-            border-color: #d1fae5;
-        }
+    /* ----- สไตล์กลุ่มเวลา Minimal & มีมิติ ----- */
+    .time-slots {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        display: none;
+        animation: fadeIn 0.4s;
+    }
 
-        .time-slots {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            display: none;
-            animation: fadeIn 0.4s;
-        }
+    .day-slot-group {
+        margin-bottom: 20px;
+        background: transparent;
+        padding: 0 0 15px 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
 
-        .slot-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
-        }
+    .day-slot-header {
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.05rem;
+    }
 
-        .slot-btn {
-            padding: 12px 18px;
-            border-radius: 30px;
-            /* ทรงโค้งมน Minimal */
-            background: white;
-            border: 1px solid #e2e8f0;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s ease;
-            color: #475569;
-            font-weight: 500;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
-            /* เงาเริ่มต้นบางๆ */
-        }
+    .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+    }
 
-        .slot-btn.selected-slot {
-            border-color: #6b0000 !important;
-            background-color: #ffffff !important;
-            color: #6b0000;
-            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.15);
-            /* เงาสีฟ้าตอนถูกเลือก */
-        }
+    .slot-btn {
+        padding: 12px 18px;
+        border-radius: 30px;
+        background: white;
+        border: 1.5px solid #e2e8f0;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
+        color: #475569;
+        font-weight: 500;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+    }
 
-        .slot-btn:hover:not(.disabled) {
-            border-color: var(--tu-red);
-            color: var(--tu-red);
-            box-shadow: 0 6px 12px rgba(139, 0, 0, 0.08);
-            /* เงาลอยขึ้นตอน Hover */
-            transform: translateY(-2px);
-            /* เอฟเฟกต์ยกตัว */
-        }
+    .slot-btn:hover:not(.disabled) {
+        border-color: var(--tu-red);
+        color: var(--tu-red);
+        box-shadow: 0 6px 12px rgba(139, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
 
-        .slot-btn.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background: #f8fafc;
-            border-color: #f1f5f9;
-            box-shadow: none;
-            color: #94a3b8;
-        }
+    .slot-btn.selected-slot {
+        border-color: #3b82f6 !important;
+        background-color: #eff6ff !important;
+        color: #1e3a8a;
+        box-shadow: 0 6px 12px rgba(59, 130, 246, 0.15);
+    }
 
-        .form-box {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 35px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-        }
+    .slot-btn.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background: #f8fafc;
+        border-color: #f1f5f9;
+        box-shadow: none;
+        color: #94a3b8;
+    }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+    /* ----- ฟอร์ม (หน้า 3 และ 4) ----- */
+    .form-box {
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        padding: 35px;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #1e293b;
-        }
+    .form-group {
+        margin-bottom: 20px;
+    }
 
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-family: inherit;
-            box-sizing: border-box;
-        }
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #1e293b;
+    }
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #fffbeb;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #fef3c7;
-            margin: 20px 0;
-        }
+    input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-family: inherit;
+    }
 
-        .checkbox-group input {
-            width: auto;
-            scale: 1.2;
-        }
+    .btn-submit {
+        background: var(--tu-red);
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 10px;
+        width: 100%;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+    }
 
-        .btn-submit {
-            background: var(--tu-red);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            width: 100%;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+    .btn-submit:hover {
+        background: #6b0000;
+        box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
+    }
 
-        .btn-submit:hover {
-            background: #6b0000;
-            box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
-        }
+    /* ----- สไตล์สำหรับ Popup Modal ----- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
 
-        .hidden {
-            display: none;
-        }
+    .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+    }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 450px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .modal-overlay.show .modal-content {
+        transform: translateY(0);
+    }
 
-        .room-img-placeholder {
-            height: 150px;
-            background: #f1f5f9;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #9ca3af;
-            font-size: 2rem;
-            overflow: hidden;
-        }
+    .modal-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 25px;
+    }
 
-        .room-img-placeholder img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+    .btn-option {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        padding: 20px;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: 0.2s;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-family: inherit;
+    }
 
-        /* Checkbox ในปฏิทิน */
-        .day-check {
-            display: none;
-        }
+    .btn-option:hover {
+        border-color: var(--tu-red);
+        background: #fff5f5;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(139, 0, 0, 0.08);
+    }
 
-        .day.selected-day {
-            border: 2px solid #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-            background-color: #eff6ff !important;
-        }
+    .btn-option strong {
+        font-size: 1.15rem;
+        color: var(--tu-red);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-        /* จัดกลุ่มเวลาของแต่ละวัน */
-        .day-slot-group {
-            margin-bottom: 20px;
-            background: transparent;
-            /* เอาพื้นหลังทึบออก */
-            padding: 0 0 15px 0;
-            border-bottom: 1px solid #e2e8f0;
-            /* ใช้เส้นคั่นบางๆ ให้ดูคลีน */
-        }
+    .btn-option small {
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.4;
+    }
 
-        .day-slot-header {
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1.05rem;
-        }
+    .btn-close-modal {
+        margin-top: 20px;
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-family: inherit;
+        width: 100%;
+        padding: 10px;
+        transition: 0.2s;
+    }
 
-        /* ป้ายวันที่หน้าสรุป */
-        .summary-card {
-            background: #f1f5f9;
-            padding: 18px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
+    .btn-close-modal:hover {
+        color: #334155;
+        text-decoration: underline;
+    }
 
-        .date-badge {
-            display: inline-block;
-            background: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            margin: 4px;
-            border: 1px solid #e2e8f0;
-            font-size: 0.9rem;
-        }
+    /* ----- สไตล์สำหรับ Checkbox แบบปุ่มกด (Minimal) ----- */
+    .custom-checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 10px;
+    }
 
-        /* ----- สไตล์สำหรับ Popup Modal ----- */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+    .time-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .check-box-btn {
+        display: block;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .check-box-btn input {
+        display: none;
+    }
+
+    .check-box-btn span {
+        display: block;
+        border: 1.5px solid #e2e8f0;
+        padding: 12px 10px;
+        border-radius: 12px;
+        text-align: center;
+        transition: 0.2s;
+        color: #64748b;
+        font-weight: 500;
+        background: white;
+    }
+
+    .check-box-btn:hover span {
+        border-color: #cbd5e1;
+    }
+
+    .check-box-btn input:checked+span {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        color: #1e3a8a;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    @keyframes fadeIn {
+        from {
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transform: translateY(10px);
         }
 
-        .modal-overlay.show {
-            display: flex;
+        to {
             opacity: 1;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
-
-        .modal-overlay.show .modal-content {
             transform: translateY(0);
         }
+    }
+</style>
+{% endblock %}
 
-        .modal-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 25px;
-        }
+{% block content %}
+<div class="steps">
+    <div id="s1" class="step active">1. เลือกห้อง</div>
+    <div id="s2" class="step">2. ตารางรายเดือน</div>
+    <div id="s3" class="step">3. ข้อมูลการจอง</div>
+    <div id="s4" class="step hidden" style="display: none;">2. จองทั้งเทอม</div>
+</div>
 
-        .btn-option {
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            padding: 20px;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: 0.2s;
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            font-family: inherit;
-        }
-
-        .btn-option:hover {
-            border-color: var(--tu-red);
-            background: #fff5f5;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.08);
-        }
-
-        .btn-option strong {
-            font-size: 1.15rem;
-            color: var(--tu-red);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-option small {
-            color: #64748b;
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-
-        .btn-close-modal {
-            margin-top: 20px;
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-family: inherit;
-            width: 100%;
-            padding: 10px;
-            transition: 0.2s;
-        }
-
-        .btn-close-modal:hover {
-            color: #334155;
-            text-decoration: underline;
-        }
-
-        /* ----- สไตล์สำหรับ Checkbox แบบปุ่มกด (Minimal) ----- */
-        .custom-checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: 10px;
-        }
-
-        .time-grid {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        }
-
-        .check-box-btn {
-            display: block;
-            cursor: pointer;
-            margin: 0;
-        }
-
-        .check-box-btn input {
-            display: none;
-        }
-
-        .check-box-btn span {
-            display: block;
-            border: 1.5px solid #e2e8f0;
-            padding: 12px 10px;
-            border-radius: 12px;
-            text-align: center;
-            transition: 0.2s;
-            color: #64748b;
-            font-weight: 500;
-            background: white;
-        }
-
-        .check-box-btn:hover span {
-            border-color: #cbd5e1;
-        }
-
-        .check-box-btn input:checked+span {
-            border-color: #3b82f6;
-            background: #eff6ff;
-            color: #1e3a8a;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-        }
-    </style>
-</head>
-
-<body>
-
-    <nav class="navbar">
-        <div style="font-size: 1.4rem; font-weight: 600;">
-            <a href="{% url 'dashboard' %}"><i class="fa-solid fa-arrow-left"></i> กลับแดชบอร์ด</a>
-            <span style="margin-left: 20px;"><i class="fa-solid fa-gear"></i> TSE Room Booking</span>
-        </div>
-        <div>
-            <i class="fa-solid fa-circle-user"></i> {{ user.username }} | {{ user.profile.get_role_display }}
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="steps">
-            <div id="s1" class="step active">1. เลือกห้อง</div>
-            <div id="s2" class="step">2. ตารางรายเดือน</div>
-            <div id="s3" class="step">3. ข้อมูลการจอง</div>
-            <div id="s4" class="step hidden" style="display: none;">2. จองทั้งเทอม</div>
-        </div>
-
-        <div id="view1" class="room-grid">
-            <div class="card" onclick="openBookingModal('ENG 406-3(ห้องประชุม 1)')">
-                <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"></div>
-                <div class="card-title">ENG 406-3(ห้องประชุม 1)</div>
-                <p>ความจุ: 60 คน | ห้องประชุม</p>
-                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
-            </div>
-            <div class="card" onclick="openBookingModal('ENG 406-5(ห้องประชุม 2)')">
-                <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"></div>
-                <div class="card-title">ENG 406-5(ห้องประชุม 2)</div>
-                <p>ความจุ: 15 คน | ห้องประชุม</p>
-                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
-            </div>
-            <div class="card" onclick="openBookingModal('ENG 408-1(ห้องประชุม 3)')">
-                <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"></div>
-                <div class="card-title">ENG 408-1(ห้องประชุม 3)</div>
-                <p>ความจุ: 10 คน | ห้องประชุม</p>
-                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
-            </div>
-            <div class="card" onclick="openBookingModal('ENG 408-2/1(ห้องบรรยาย 1)')">
-                <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"></div>
-                <div class="card-title">ENG 408-2/1(ห้องบรรยาย 1)</div>
-                <p>ความจุ: 20 คน | ห้องเรียน</p>
-                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
-            </div>
-            <div class="card" onclick="openBookingModal('ENG 408-2/2(ห้องบรรยาย 2)')">
-                <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"></div>
-                <div class="card-title">ENG 408-2/2(ห้องบรรยาย 2)</div>
-                <p>ความจุ: 20 คน | ห้องเรียน</p>
-                <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
-            </div>
-        </div>
-
-        <div id="view2" class="hidden">
-            <div class="calendar-container">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <button onclick="showStep(1)"
-                        style="border:none; background:none; cursor:pointer; color:var(--tu-red); font-family: inherit;">
-                        <i class="fa-solid fa-chevron-left"></i> ย้อนกลับไปเลือกห้อง
-                    </button>
-                    <h2 id="room-header" style="margin:0; color: var(--tu-red);">ห้องที่เลือก</h2>
-                    <div class="calendar-controls">
-                        <select id="monthSelect" class="select-input" onchange="renderCalendar()"></select>
-                        <select id="yearSelect" class="select-input" onchange="renderCalendar()"></select>
-                    </div>
-                </div>
-
-                <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
-                    <i class="fa-solid fa-circle-info"></i> ติ๊กเลือกวันที่ต้องการ (เลือกได้หลายวัน)
-                    เพื่อดูเวลาว่างด้านล่าง
-                </p>
-
-                <div class="calendar-grid" id="calendarGrid">
-                </div>
-
-                <div id="time-slots-section" class="time-slots">
-                    <h3
-                        style="color: var(--tu-red); border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 30px;">
-                        เลือกช่วงเวลาสำหรับวันที่เลือกไว้
-                    </h3>
-                    <div id="selected-days-slots-container">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view3" class="hidden">
-            <div class="form-box">
-                <h2 style="color:var(--tu-red); margin-top:0;">ยืนยันการจอง</h2>
-
-                <button onclick="showStep(2, currentRoom)"
-                    style="border:none; background:none; cursor:pointer; color:var(--tu-red); margin-bottom: 15px; font-family: 'Sarabun', sans-serif;">
-                    <i class="fa-solid fa-chevron-left"></i> ย้อนกลับไป
-                </button>
-
-                <div class="summary-card" id="summary-content">
-                </div>
-
-                <form method="POST" action="">
-                    {% csrf_token %}
-                    <input type="hidden" name="room_name" id="input_room_name">
-                    <input type="hidden" name="selected_data" id="input_selected_data">
-
-                    <div class="form-group">
-                        <label>รหัสวิชา / วัตถุประสงค์</label>
-                        <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบภาคปลาย" required>
-                    </div>
-
-
-
-                    <button type="submit" class="btn-submit"
-                        onclick="alert('ส่งคำขอเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">ส่งคำขอจองห้อง</button>
-                </form>
-            </div>
-        </div>
+<div id="view1" class="room-grid">
+    <div class="card" onclick="openBookingModal('ENG 406-3(ห้องประชุม 1)')">
+        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
+                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+406-3'"></div>
+        <div class="card-title">ENG 406-3(ห้องประชุม 1)</div>
+        <p>ความจุ: 60 คน | ห้องประชุม</p>
+        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
     </div>
+    <div class="card" onclick="openBookingModal('ENG 406-5(ห้องประชุม 2)')">
+        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
+                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+406-5'"></div>
+        <div class="card-title">ENG 406-5(ห้องประชุม 2)</div>
+        <p>ความจุ: 15 คน | ห้องประชุม</p>
+        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+    </div>
+    <div class="card" onclick="openBookingModal('ENG 408-1(ห้องประชุม 3)')">
+        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
+                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+408-1'"></div>
+        <div class="card-title">ENG 408-1(ห้องประชุม 3)</div>
+        <p>ความจุ: 10 คน | ห้องประชุม</p>
+        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+    </div>
+    <div class="card" onclick="openBookingModal('ENG 408-2/1(ห้องบรรยาย 1)')">
+        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
+                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+408-2/1'"></div>
+        <div class="card-title">ENG 408-2/1(ห้องบรรยาย 1)</div>
+        <p>ความจุ: 20 คน | ห้องเรียน</p>
+        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+    </div>
+    <div class="card" onclick="openBookingModal('ENG 408-2/2(ห้องบรรยาย 2)')">
+        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
+                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+408-2/2'"></div>
+        <div class="card-title">ENG 408-2/2(ห้องบรรยาย 2)</div>
+        <p>ความจุ: 20 คน | ห้องเรียน</p>
+        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+    </div>
+</div>
 
-    <div id="view4" class="hidden" style="display: none;">
-        <div class="form-box" style="max-width: 800px;">
-            <h2 style="color:var(--tu-red); margin-top:0;">รายละเอียดการจองทั้งเทอม</h2>
+<div id="view2" class="hidden">
+    <div class="calendar-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
             <button onclick="showStep(1)"
-                style="border:none; background:none; cursor:pointer; color:var(--tu-red); margin-bottom: 20px; font-family: inherit;">
-                <i class="fa-solid fa-chevron-left"></i> ยกเลิกและกลับไปหน้าแรก
+                style="border:none; background:none; cursor:pointer; color:var(--tu-red); font-family: inherit;">
+                <i class="fa-solid fa-chevron-left"></i> ย้อนกลับไปเลือกห้อง
             </button>
+            <h2 id="room-header" style="margin:0; color: var(--tu-red);">ห้องที่เลือก</h2>
+            <div class="calendar-controls">
+                <select id="monthSelect" class="select-input" onchange="renderCalendar()"></select>
+                <select id="yearSelect" class="select-input" onchange="renderCalendar()"></select>
+            </div>
+        </div>
 
-            <div class="summary-card"
-                style="background:#eff6ff; border: 1px solid #bfdbfe; padding:18px; border-radius:12px; margin-bottom: 25px; color: #1e3a8a;">
-                <div style="font-size: 1.1rem;"><strong><i class="fa-solid fa-location-dot"></i>
-                        ห้องที่เลือกจองประจำ:</strong> <span id="semesterRoomName"></span></div>
+        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">
+            <i class="fa-solid fa-circle-info"></i> เลือกวันที่ต้องการ (เลือกได้หลายวัน) เพื่อดูเวลาว่างด้านล่าง
+        </p>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+
+        <div id="time-slots-section" class="time-slots">
+            <h3
+                style="color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-top: 40px; font-weight: 600;">
+                เลือกช่วงเวลาสำหรับวันที่เลือกไว้</h3>
+            <div id="selected-days-slots-container"></div>
+        </div>
+    </div>
+</div>
+
+<div id="view3" class="hidden">
+    <div class="form-box">
+        <h2 style="color:var(--tu-red); margin-top:0;">ยืนยันการจอง</h2>
+
+        <button onclick="showStep(2, currentRoom)"
+            style="border:none; background:none; cursor:pointer; color:var(--tu-red); margin-bottom: 15px; font-family: inherit;">
+            <i class="fa-solid fa-chevron-left"></i> ย้อนกลับไปแก้ไขวัน/เวลา
+        </button>
+
+        <div id="summary-content" style="background:#f1f5f9; padding:18px; border-radius:12px; margin-bottom: 20px;">
+        </div>
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="room_name" id="input_room_name">
+            <input type="hidden" name="selected_data" id="input_selected_data">
+
+            <div class="form-group">
+                <label>รหัสวิชา / วัตถุประสงค์ <span style="color:red">*</span></label>
+                <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบภาคปลาย" required>
             </div>
 
-            <form method="POST" action="">
-                {% csrf_token %}
-                <input type="hidden" name="room_name" id="semester_input_room_name">
-                <input type="hidden" name="booking_type" value="semester">
+            <button type="submit" class="btn-submit"
+                onclick="alert('ส่งคำขอจองห้องเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">ส่งคำขอจองห้อง</button>
+        </form>
+    </div>
+</div>
 
-                <div class="form-group" style="margin-bottom: 30px;">
-                    <label>รหัสวิชา / วัตถุประสงค์การใช้งาน <span style="color:red">*</span></label>
-                    <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบประจำสัปดาห์" required>
+<div id="view4" class="hidden" style="display: none;">
+    <div class="form-box" style="max-width: 800px;">
+        <h2 style="color:var(--tu-red); margin-top:0;">รายละเอียดการจองทั้งเทอม</h2>
+        <button onclick="showStep(1)"
+            style="border:none; background:none; cursor:pointer; color:var(--tu-red); margin-bottom: 20px; font-family: inherit;">
+            <i class="fa-solid fa-chevron-left"></i> ยกเลิกและกลับไปหน้าแรก
+        </button>
+
+        <div
+            style="background:#eff6ff; border: 1px solid #bfdbfe; padding:18px; border-radius:12px; margin-bottom: 25px; color: #1e3a8a;">
+            <div style="font-size: 1.1rem;"><strong><i class="fa-solid fa-location-dot"></i>
+                    ห้องที่เลือกจองประจำ:</strong> <span id="semesterRoomName"></span></div>
+        </div>
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="room_name" id="semester_input_room_name">
+            <input type="hidden" name="booking_type" value="semester">
+
+            <div class="form-group" style="margin-bottom: 30px;">
+                <label>รหัสวิชา / วัตถุประสงค์การใช้งาน <span style="color:red">*</span></label>
+                <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบประจำสัปดาห์" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 30px;">
+                <label>เลือกวันในสัปดาห์ที่ต้องการใช้งาน <span style="color:red">*</span></label>
+                <div class="custom-checkbox-grid">
+                    <label class="check-box-btn"><input type="checkbox" name="days"
+                            value="จันทร์"><span>จันทร์</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days"
+                            value="อังคาร"><span>อังคาร</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days" value="พุธ"><span>พุธ</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days"
+                            value="พฤหัสบดี"><span>พฤหัสบดี</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days"
+                            value="ศุกร์"><span>ศุกร์</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days"
+                            value="เสาร์"><span>เสาร์</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days"
+                            value="อาทิตย์"><span>อาทิตย์</span></label>
                 </div>
+            </div>
 
-                <div class="form-group" style="margin-bottom: 30px;">
-                    <label>เลือกวันในสัปดาห์ที่ต้องการใช้งาน <span style="color:red">*</span></label>
-                    <div class="custom-checkbox-grid">
-                        <label class="check-box-btn"><input type="checkbox" name="days"
-                                value="จันทร์"><span>จันทร์</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="days"
-                                value="อังคาร"><span>อังคาร</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="days"
-                                value="พุธ"><span>พุธ</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="days"
-                                value="พฤหัสบดี"><span>พฤหัสบดี</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="days"
-                                value="ศุกร์"><span>ศุกร์</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="days"
-                                value="เสาร์"><span>เสาร์</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="days"
-                                value="อาทิตย์"><span>อาทิตย์</span></label>
+            <div class="form-group" style="margin-bottom: 30px;">
+                <label>เลือกช่วงเวลา (เลือกได้หลายช่วง) <span style="color:red">*</span></label>
+                <div class="custom-checkbox-grid time-grid">
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="08:00 - 09:30"><span>08:00 -
+                            09:30</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="09:30 - 11:00"><span>09:30 -
+                            11:00</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="11:00 - 12:30"><span>11:00 -
+                            12:30</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="13:30 - 15:00"><span>13:30 -
+                            15:00</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="15:00 - 16:30"><span>15:00 -
+                            16:30</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="16:30 - 18:00"><span>16:30 -
+                            18:00</span></label>
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <button type="submit" class="btn-submit" style="width: auto; padding: 15px 40px; border-radius: 50px;"
+                    onclick="alert('ส่งคำขอจองห้องแบบทั้งเทอมเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">
+                    ส่งคำขอจองแบบทั้งเทอม <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="bookingTypeModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 style="color: var(--tu-red); margin-top: 0; margin-bottom: 10px;">รูปแบบการจองห้อง</h2>
+        <p style="color: #64748b; margin-bottom: 20px;">ห้อง: <strong style="color:#1e293b;"
+                id="modalRoomName"></strong></p>
+
+        <div class="modal-buttons">
+            <button class="btn-option" onclick="selectBookingType('semester')">
+                <strong><i class="fa-solid fa-calendar-week"></i> จองแบบทั้งเทอม</strong>
+                <small>เลือกวันและเวลาที่ต้องใช้สอนหรือติวซ้ำทุกสัปดาห์ จนจบภาคการศึกษา</small>
+            </button>
+            <button class="btn-option" onclick="selectBookingType('daily')">
+                <strong><i class="fa-solid fa-calendar-day"></i> จองแบบรายวัน</strong>
+                <small>เลือกวันที่จากปฏิทิน และกำหนดช่วงเวลาด้วยตัวเองอย่างอิสระ</small>
+            </button>
+        </div>
+        <button class="btn-close-modal" onclick="closeModal()">ย้อนกลับ</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    let currentRoom = "";
+    let pendingRoom = "";
+    let selectedDates = [];
+    let selectedTimeSlots = [];
+    const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    function openBookingModal(roomName) {
+        pendingRoom = roomName;
+        document.getElementById('modalRoomName').innerText = roomName;
+        const modal = document.getElementById('bookingTypeModal');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('bookingTypeModal');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    function selectBookingType(type) {
+        closeModal();
+        if (type === 'daily') { showStep(2, pendingRoom); }
+        else if (type === 'semester') { showStep(4, pendingRoom); }
+    }
+
+    function initCalendarSelects() {
+        const mSelect = document.getElementById('monthSelect');
+        const ySelect = document.getElementById('yearSelect');
+        if (mSelect.options.length > 0) return;
+        const now = new Date();
+        months.forEach((m, i) => {
+            let opt = document.createElement('option');
+            opt.value = i; opt.innerHTML = m;
+            if (i === now.getMonth()) opt.selected = true;
+            mSelect.appendChild(opt);
+        });
+        for (let i = now.getFullYear(); i <= now.getFullYear() + 2; i++) {
+            let opt = document.createElement('option');
+            opt.value = i; opt.innerHTML = i + 543;
+            if (i === now.getFullYear()) opt.selected = true;
+            ySelect.appendChild(opt);
+        }
+    }
+
+    function renderCalendar() {
+        initCalendarSelects();
+        const grid = document.getElementById('calendarGrid');
+        let month = parseInt(document.getElementById('monthSelect').value);
+        let year = parseInt(document.getElementById('yearSelect').value);
+
+        if (isNaN(month) || isNaN(year)) {
+            const now = new Date(); month = now.getMonth(); year = now.getFullYear();
+        }
+
+        grid.innerHTML = "";
+        ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => { grid.innerHTML += `<div class="day-label">${day}</div>`; });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="day empty"></div>`; }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            let statusNum = 0;
+            if ((d + month) % 5 === 0) statusNum = 2;
+            else if ((d + month) % 3 === 0) statusNum = 1;
+
+            const s = [{ c: 'status-available', d: '#10b981' }, { c: 'status-partial', d: '#f59e0b' }, { c: 'status-full', d: '#ef4444' }][statusNum];
+            const isChecked = selectedDates.some(sd => sd.day === d && sd.month === month && sd.year === year);
+            const selectedClass = isChecked ? 'selected-day' : '';
+            const clickAction = (s.c !== 'status-full') ? `onclick="toggleDateSelection(${d}, ${month}, ${year})"` : "";
+
+            grid.innerHTML += `
+                <div class="day ${s.c} ${selectedClass}" ${clickAction}>
+                    <span class="date">${d}</span>
+                    <div class="status-dot" style="background:${s.d}"></div>
+                </div>
+            `;
+        }
+        renderTimeSlots();
+    }
+
+    function toggleDateSelection(d, m, y) {
+        const idx = selectedDates.findIndex(sd => sd.day === d && sd.month === m && sd.year === y);
+        if (idx > -1) {
+            selectedDates.splice(idx, 1);
+            const dayFull = `${d} ${months[m]} ${y + 543}`;
+            selectedTimeSlots = selectedTimeSlots.filter(s => s.dateStr !== dayFull);
+        } else {
+            selectedDates.push({ day: d, month: m, year: y, monthName: months[m] });
+        }
+        renderCalendar();
+    }
+
+    function toggleSlotSelection(dateStr, timeStr) {
+        const idx = selectedTimeSlots.findIndex(s => s.dateStr === dateStr && s.timeStr === timeStr);
+        if (idx > -1) selectedTimeSlots.splice(idx, 1);
+        else selectedTimeSlots.push({ dateStr, timeStr });
+        renderTimeSlots();
+    }
+
+    function renderTimeSlots() {
+        const container = document.getElementById('selected-days-slots-container');
+        const section = document.getElementById('time-slots-section');
+        container.innerHTML = "";
+
+        if (selectedDates.length === 0) { section.style.display = "none"; return; }
+
+        section.style.display = "block";
+        selectedDates.sort((a, b) => new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day));
+
+        selectedDates.forEach(sd => {
+            const dayFull = `${sd.day} ${sd.monthName} ${sd.year + 543}`;
+            const isSlot1 = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '09:00 - 12:00') ? 'selected-slot' : '';
+            const isSlot2 = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '13:00 - 16:00') ? 'selected-slot' : '';
+
+            container.innerHTML += `
+                <div class="day-slot-group">
+                    <div class="day-slot-header"><i class="fa-regular fa-calendar"></i> วันที่ ${dayFull}</div>
+                    <div class="slot-grid">
+                        <div class="slot-btn ${isSlot1}" onclick="toggleSlotSelection('${dayFull}', '09:00 - 12:00')"><span>09:00 - 12:00</span> ${isSlot1 ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>
+                        <div class="slot-btn ${isSlot2}" onclick="toggleSlotSelection('${dayFull}', '13:00 - 16:00')"><span>13:00 - 16:00</span> ${isSlot2 ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>
+                        <div class="slot-btn disabled"><span>16:00 - 18:00</span> <i class="fa-solid fa-lock"></i></div>
                     </div>
                 </div>
+            `;
+        });
 
-                <div class="form-group" style="margin-bottom: 30px;">
-                    <label>เลือกช่วงเวลา (เลือกได้หลายช่วง) <span style="color:red">*</span></label>
-                    <div class="custom-checkbox-grid time-grid">
-                        <label class="check-box-btn"><input type="checkbox" name="times"
-                                value="08:00 - 09:30"><span>08:00 - 09:30</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="times"
-                                value="09:30 - 11:00"><span>09:30 - 11:00</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="times"
-                                value="11:00 - 12:30"><span>11:00 - 12:30</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="times"
-                                value="13:30 - 15:00"><span>13:30 - 15:00</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="times"
-                                value="15:00 - 16:30"><span>15:00 - 16:30</span></label>
-                        <label class="check-box-btn"><input type="checkbox" name="times"
-                                value="16:30 - 18:00"><span>16:30 - 18:00</span></label>
-                    </div>
-                </div>
-
-                <div style="text-align: right;">
-                    <button type="submit" class="btn-submit"
-                        style="width: auto; padding: 15px 40px; border-radius: 50px;"
-                        onclick="alert('ส่งคำขอจองห้องแบบทั้งเทอมเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">
-                        ส่งคำขอจองแบบทั้งเทอม <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>
+        if (selectedDates.length > 0) {
+            container.innerHTML += `
+                <div style="margin-top: 25px; text-align: right;">
+                    <button class="btn-submit" style="width: auto; padding: 12px 30px; border-radius: 30px; box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);" onclick="confirmMultipleBookings()">
+                        ยืนยันเวลาที่เลือก <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
-            </form>
-        </div>
-    </div>
+            `;
+        }
+    }
 
-    <div id="bookingTypeModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 style="color: var(--tu-red); margin-top: 0; margin-bottom: 10px;">รูปแบบการจองห้อง</h2>
-            <p style="color: #64748b; margin-bottom: 20px;">ห้อง: <strong style="color:#1e293b;"
-                    id="modalRoomName"></strong></p>
+    function confirmMultipleBookings() {
+        if (selectedTimeSlots.length === 0) { alert("กรุณาเลือกเวลาอย่างน้อย 1 ช่วง"); return; }
+        showStep(3, selectedTimeSlots);
+    }
 
-            <div class="modal-buttons">
-                <button class="btn-option" onclick="selectBookingType('semester')">
-                    <strong><i class="fa-solid fa-calendar-week"></i> จองแบบทั้งเทอม</strong>
-                    <small>เลือกวันและเวลาที่ต้องใช้สอนหรือติวซ้ำทุกสัปดาห์ จนจบภาคการศึกษา</small>
-                </button>
-                <button class="btn-option" onclick="selectBookingType('daily')">
-                    <strong><i class="fa-solid fa-calendar-day"></i> จองแบบรายวัน</strong>
-                    <small>เลือกวันที่จากปฏิทิน และกำหนดช่วงเวลาด้วยตัวเองอย่างอิสระ</small>
-                </button>
-            </div>
+    function showStep(step, data) {
+        document.getElementById('view1').style.display = 'none';
+        document.getElementById('view2').style.display = 'none';
+        document.getElementById('view3').style.display = 'none';
+        document.getElementById('view4').style.display = 'none';
 
-            <button class="btn-close-modal" onclick="closeModal()">ย้อนกลับ</button>
-        </div>
-    </div>
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
 
-    <script>
-        let currentRoom = "";
-        let selectedDates = []; // เก็บวันที่ที่ติ๊กเลือก
-        let selectedTimeSlots = []; // เก็บเวลาที่เลือก (ตัวแปรนี้คือตัวที่หายไปครับ)
-        const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-
-        function initCalendarSelects() {
-            const mSelect = document.getElementById('monthSelect');
-            const ySelect = document.getElementById('yearSelect');
-            if (mSelect.options.length > 0) return;
-            const now = new Date();
-            months.forEach((m, i) => {
-                let opt = document.createElement('option');
-                opt.value = i; opt.innerHTML = m;
-                if (i === now.getMonth()) opt.selected = true;
-                mSelect.appendChild(opt);
-            });
-            for (let i = now.getFullYear(); i <= now.getFullYear() + 2; i++) {
-                let opt = document.createElement('option');
-                opt.value = i; opt.innerHTML = i + 543;
-                if (i === now.getFullYear()) opt.selected = true;
-                ySelect.appendChild(opt);
-            }
+        const targetView = document.getElementById('view' + step);
+        if (targetView) {
+            if (step === 1) targetView.style.display = 'grid';
+            else targetView.style.display = 'block';
         }
 
-        function renderCalendar() {
-            initCalendarSelects();
-            const grid = document.getElementById('calendarGrid');
-            let month = parseInt(document.getElementById('monthSelect').value);
-            let year = parseInt(document.getElementById('yearSelect').value);
+        const targetStep = document.getElementById('s' + step);
+        if (targetStep) targetStep.classList.add('active');
 
-            if (isNaN(month) || isNaN(year)) {
-                const now = new Date(); month = now.getMonth(); year = now.getFullYear();
-            }
-
-            grid.innerHTML = "";
-            ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => { grid.innerHTML += `<div class="day-label">${day}</div>`; });
-
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="day empty"></div>`; }
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const statusNum = Math.floor(Math.random() * 3);
-                const s = [{ c: 'status-available', d: '#10b981' }, { c: 'status-partial', d: '#f59e0b' }, { c: 'status-full', d: '#ef4444' }][statusNum];
-
-                // เช็คว่าวันนี้ถูกเลือกไว้ไหม ถ้าเลือกให้เพิ่มคลาส selected-day
-                const isChecked = selectedDates.some(sd => sd.day === d && sd.month === month && sd.year === year);
-                const selectedClass = isChecked ? 'selected-day' : '';
-
-                // ถ้าไม่เต็ม ให้คลิกได้ทั้งกล่องเลย
-                const clickAction = (s.c !== 'status-full') ? `onclick="toggleDateSelection(${d}, ${month}, ${year})"` : "";
-
-                grid.innerHTML += `
-                    <div class="day ${s.c} ${selectedClass}" ${clickAction}>
-                        <span class="date">${d}</span>
-                        <div class="status-dot" style="background:${s.d}"></div>
-                    </div>
-                `;
-            }
-            renderTimeSlots();
+        if (step === 1) {
+            document.getElementById('s2').style.display = 'block';
+            document.getElementById('s3').style.display = 'block';
+            document.getElementById('s4').style.display = 'none';
+        } else if (step === 4) {
+            document.getElementById('s2').style.display = 'none';
+            document.getElementById('s3').style.display = 'none';
+            document.getElementById('s4').style.display = 'block';
+            document.getElementById('s4').classList.add('active');
+        } else if (step === 2 || step === 3) {
+            document.getElementById('s2').style.display = 'block';
+            document.getElementById('s3').style.display = 'block';
+            document.getElementById('s4').style.display = 'none';
         }
 
-        function toggleDateSelection(d, m, y) {
-            const idx = selectedDates.findIndex(sd => sd.day === d && sd.month === m && sd.year === y);
-            if (idx > -1) {
-                selectedDates.splice(idx, 1); // เอาวันออก
-                // ถ้าเอาวันออก ให้เอาเวลาของวันนั้นออกด้วย
-                const dayFull = `${d} ${months[m]} ${y + 543}`;
-                selectedTimeSlots = selectedTimeSlots.filter(s => s.dateStr !== dayFull);
-            } else {
-                selectedDates.push({ day: d, month: m, year: y, monthName: months[m] }); // เพิ่มวันเข้า
-            }
-            renderCalendar(); // วาดปฏิทินใหม่เพื่ออัปเดตกรอบสีฟ้า
+        if (step === 2 || step === 4) {
+            if (typeof data === 'string' && data.includes('ENG')) { currentRoom = data; }
         }
 
-        function toggleSlotSelection(dateStr, timeStr) {
-            const idx = selectedTimeSlots.findIndex(s => s.dateStr === dateStr && s.timeStr === timeStr);
-            if (idx > -1) {
-                selectedTimeSlots.splice(idx, 1); // เอาออกถ้ากดซ้ำ
-            } else {
-                selectedTimeSlots.push({ dateStr, timeStr }); // เพิ่มเข้าถ้ายังไม่เลือก
-            }
-            renderTimeSlots(); // อัปเดตกรอบสีฟ้าของเวลา
+        if (step === 2) {
+            document.getElementById('room-header').innerText = currentRoom;
+            renderCalendar();
         }
-
-        function renderTimeSlots() {
-            const container = document.getElementById('selected-days-slots-container');
-            const section = document.getElementById('time-slots-section');
-            container.innerHTML = "";
-
-            if (selectedDates.length === 0) {
-                section.style.display = "none";
-                return;
-            }
-
-            section.style.display = "block";
-            selectedDates.sort((a, b) => new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day));
-
-            selectedDates.forEach(sd => {
-                const dayFull = `${sd.day} ${sd.monthName} ${sd.year + 543}`;
-
-                // เช็คว่าเวลานี้ถูกเลือกไว้หรือยัง
-                const isSlot1Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '09:00 - 12:00') ? 'selected-slot' : '';
-                const isSlot2Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '13:00 - 16:00') ? 'selected-slot' : '';
-
-                const icon1 = isSlot1Selected ? '<i class="fa-solid fa-check"></i>' : '';
-                const icon2 = isSlot2Selected ? '<i class="fa-solid fa-check"></i>' : '';
-
-                container.innerHTML += `
-                    <div class="day-slot-group" style="margin-bottom: 20px; background: #f9fafb; padding: 15px; border-radius: 12px; border: 1px solid #eee;">
-                        <div style="font-weight: 600; color: var(--tu-red); margin-bottom: 10px;">
-                            <i class="fa-solid fa-calendar-day"></i> วันที่ ${dayFull}
-                        </div>
-                        <div class="slot-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;">
-                            <div class="slot-btn ${isSlot1Selected}" onclick="toggleSlotSelection('${dayFull}', '09:00 - 12:00')">09:00 - 12:00 ${icon1}</div>
-                            <div class="slot-btn ${isSlot2Selected}" onclick="toggleSlotSelection('${dayFull}', '13:00 - 16:00')">13:00 - 16:00 ${icon2}</div>
-                            <div class="slot-btn disabled" style="opacity:0.5; cursor:not-allowed; background:#f1f5f9; padding:12px; border-radius:8px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
-                                16:00 - 18:00 <small>ไม่ว่าง</small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            // เพิ่มปุ่มกดยืนยันเวลา เพื่อไปหน้าฟอร์ม
-            if (selectedDates.length > 0) {
-                container.innerHTML += `
-                    <div style="margin-top: 20px; text-align: right;">
-                        <button class="btn-submit" style="width: auto; padding: 12px 30px;" onclick="confirmMultipleBookings()">
-                            ยืนยันเวลาที่เลือก <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </div>
-                `;
-            }
+        if (step === 3) {
+            const summary = document.getElementById('summary-content');
+            let timeBadges = data.map(t => `<span style="display:inline-block; background:white; padding:6px 12px; border-radius:8px; margin:4px; border:1.5px solid #3b82f6; color:#1e3a8a; font-size:0.9rem;"><i class="fa-regular fa-clock"></i> ${t.dateStr} | ${t.timeStr}</span>`).join("");
+            summary.innerHTML = `
+                <div style="margin-bottom:15px; font-size:1.1rem;"><strong><i class="fa-solid fa-location-dot"></i> ห้องที่เลือก:</strong> ${currentRoom}</div>
+                <div><strong>วันและเวลาที่จองทั้งหมด:</strong><br> <div style="margin-top:10px;">${timeBadges}</div></div>
+            `;
+            document.getElementById('input_room_name').value = currentRoom;
+            document.getElementById('input_selected_data').value = JSON.stringify(data);
         }
-
-        function confirmMultipleBookings() {
-            if (selectedTimeSlots.length === 0) {
-                alert("กรุณาเลือกเวลาอย่างน้อย 1 ช่วง");
-                return;
-            }
-            showStep(3, selectedTimeSlots);
+        if (step === 4) {
+            document.getElementById('semesterRoomName').innerText = currentRoom;
+            document.getElementById('semester_input_room_name').value = currentRoom;
         }
-
-        let pendingRoom = "";
-
-        // ฟังก์ชันเปิด Popup
-        function openBookingModal(roomName) {
-            pendingRoom = roomName;
-            document.getElementById('modalRoomName').innerText = roomName;
-            const modal = document.getElementById('bookingTypeModal');
-            modal.style.display = 'flex';
-            // setTimeout ช่วยเรื่อง Animation เฟดเข้าให้สวยงาม
-            setTimeout(() => modal.classList.add('show'), 10);
-        }
-
-        // ฟังก์ชันปิด Popup
-        function closeModal() {
-            const modal = document.getElementById('bookingTypeModal');
-            modal.classList.remove('show');
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-
-        // ฟังก์ชันประมวลผลการกดปุ่มจาก Popup
-        function selectBookingType(type) {
-            closeModal();
-            if (type === 'daily') {
-                showStep(2, pendingRoom);
-            } else if (type === 'semester') {
-                showStep(4, pendingRoom);
-            }
-        }
-
-        function showStep(step, data) {
-            // ซ่อนทุกหน้า
-            document.getElementById('view1').style.display = 'none';
-            document.getElementById('view2').style.display = 'none';
-            document.getElementById('view3').style.display = 'none';
-            document.getElementById('view4').style.display = 'none';
-
-            // ล้างแถบสถานะทั้งหมด
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-
-            const targetView = document.getElementById('view' + step);
-            if (targetView) {
-                if (step === 1) targetView.style.display = 'grid'; // คืนค่า Grid ให้หน้าเลือกห้อง
-                else targetView.style.display = 'block';
-            }
-
-            const targetStep = document.getElementById('s' + step);
-            if (targetStep) targetStep.classList.add('active');
-
-            // จัดการซ่อน/โชว์แถบสถานะ Breadcrumb ให้สัมพันธ์กับ Flow ที่เลือก
-            if (step === 1) {
-                document.getElementById('s2').style.display = 'block';
-                document.getElementById('s3').style.display = 'block';
-                document.getElementById('s4').style.display = 'none';
-            } else if (step === 4) { // Flow จองเทอม
-                document.getElementById('s2').style.display = 'none';
-                document.getElementById('s3').style.display = 'none';
-                document.getElementById('s4').style.display = 'block';
-                document.getElementById('s4').classList.add('active');
-            } else if (step === 2 || step === 3) { // Flow จองรายวัน
-                document.getElementById('s2').style.display = 'block';
-                document.getElementById('s3').style.display = 'block';
-                document.getElementById('s4').style.display = 'none';
-            }
-
-            // รับค่าห้อง
-            if (step === 2 || step === 4) {
-                if (typeof data === 'string' && data.includes('ENG')) { currentRoom = data; }
-            }
-
-            // ประมวลผลก่อนเข้าหน้าต่างๆ
-            if (step === 2) {
-                document.getElementById('room-header').innerText = currentRoom;
-                renderCalendar();
-            }
-            if (step === 3) {
-                const summary = document.getElementById('summary-content');
-                let timeBadges = data.map(t => `<span style="display:inline-block; background:white; padding:6px 12px; border-radius:8px; margin:4px; border:1.5px solid #3b82f6; color:#1e3a8a; font-size:0.9rem;"><i class="fa-regular fa-clock"></i> ${t.dateStr} | ${t.timeStr}</span>`).join("");
-                summary.innerHTML = `
-                    <div style="margin-bottom:15px; font-size:1.1rem;"><strong><i class="fa-solid fa-location-dot"></i> ห้องที่เลือก:</strong> ${currentRoom}</div>
-                    <div><strong>วันและเวลาที่จองทั้งหมด:</strong><br> <div style="margin-top:10px;">${timeBadges}</div></div>
-                `;
-                document.getElementById('input_room_name').value = currentRoom;
-                document.getElementById('input_selected_data').value = JSON.stringify(data);
-            }
-            if (step === 4) {
-                document.getElementById('semesterRoomName').innerText = currentRoom;
-                document.getElementById('semester_input_room_name').value = currentRoom;
-            }
-        }
-    </script>
-</body>
-
-</html>
+    }
+</script>
+{% endblock %}

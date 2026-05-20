@@ -1,237 +1,202 @@
-<!DOCTYPE html>
-<html lang="th">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - ระบบจองห้อง มธ.</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            var(--tu-red): #c21e2d;
-            var(--tu-red-hover): #a01825;
-            --tu-red: #c21e2d;
-            --tu-red-hover: #a01825;
-            --tu-red-light: #fef2f2;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --bg-color: #f8fafc;
-            --surface-color: #ffffff;
-            --border-color: #e5e7eb;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-            --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
-            --shadow-red: 0 4px 14px 0 rgba(194, 30, 45, 0.25);
-        }
+{% block title %}Dashboard{% endblock %}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+{% block extra_style %}
+<style>
+    /* ----- เก็บ UI แบบเดิมของคุณไว้ 100% ----- */
+    :root {
+        --tu-red-hover: #a01825;
+        --tu-red-light: #fef2f2;
+        --text-main: #1f2937;
+        --text-muted: #6b7280;
+        --surface-color: #ffffff;
+        --border-color: #e5e7eb;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        --shadow-red: 0 4px 14px 0 rgba(194, 30, 45, 0.25);
+    }
 
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-        }
+    .alert {
+        background-color: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: var(--shadow-sm);
+    }
 
-        .navbar {
-            background: linear-gradient(135deg, var(--tu-red) 0%, #90121e 100%);
-            color: white;
-            padding: 1rem 2.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow-md);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+    }
 
-        .navbar h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: 0.5px; }
+    .card {
+        background: var(--surface-color);
+        border-radius: 16px;
+        padding: 2.5rem 2rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 
-        .navbar-right { display: flex; gap: 1.5rem; align-items: center; }
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--tu-red);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
 
-        .user-info { display: flex; flex-direction: column; justify-content: center; text-align: right; }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+        border-color: transparent;
+    }
 
-        .user-name { font-weight: 600; font-size: 0.95rem; }
+    .card:hover::before {
+        opacity: 1;
+    }
 
-        .user-role {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.8);
-            background: rgba(0, 0, 0, 0.15);
-            padding: 0.1rem 0.6rem;
-            border-radius: 12px;
-            margin-top: 0.2rem;
-            display: inline-block;
-            width: fit-content;
-            margin-left: auto;
-        }
+    .card-icon {
+        font-size: 1.8rem;
+        color: var(--tu-red);
+        background: var(--tu-red-light);
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        margin-bottom: 1.2rem;
+    }
 
-        .logout-btn {
-            background-color: transparent;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 0.5rem 1.2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: 'Sarabun', sans-serif;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
+    .card h2 {
+        color: var(--text-main);
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        margin-top: 0;
+    }
 
-        .logout-btn:hover { background-color: rgba(255, 255, 255, 0.1); border-color: white; }
+    .card>p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
 
-        .container { max-width: 1100px; margin: 2.5rem auto; padding: 0 1.5rem; }
+    .feature-list {
+        list-style: none;
+        margin-bottom: 2rem;
+        flex-grow: 1;
+        padding: 0;
+    }
 
-        .alert {
-            background-color: #ecfdf5;
-            border: 1px solid #a7f3d0;
-            color: #065f46;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 2.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            box-shadow: var(--shadow-sm);
-        }
+    .feature-list li {
+        padding: 0.4rem 0 0.4rem 1.8rem;
+        position: relative;
+        color: var(--text-main);
+        font-size: 0.95rem;
+    }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-        }
+    .feature-list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 10px;
+        width: 6px;
+        height: 10px;
+        border: solid var(--tu-red);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
 
-        .card {
-            background: var(--surface-color);
-            border-radius: 16px;
-            padding: 2.5rem 2rem;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border-color);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+    .btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 0.85rem 1.5rem;
+        background-color: var(--tu-red);
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        box-shadow: var(--shadow-red);
+    }
 
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 4px;
-            background: var(--tu-red);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
+    .btn:hover {
+        background-color: var(--tu-red-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px 0 rgba(194, 30, 45, 0.35);
+        color: white;
+    }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-            border-color: transparent;
-        }
+    .btn-outline {
+        background-color: transparent;
+        color: var(--tu-red);
+        border: 2px solid var(--tu-red);
+        box-shadow: none;
+    }
 
-        .card:hover::before { opacity: 1; }
+    .btn-outline:hover {
+        background-color: var(--tu-red-light);
+        transform: translateY(-2px);
+        box-shadow: none;
+        color: var(--tu-red);
+    }
+</style>
+{% endblock %}
 
-        /* จัดการไอคอนสีเดียวตรงนี้ */
-        .card-icon {
-            font-size: 1.8rem;
-            color: var(--tu-red);
-            background: var(--tu-red-light);
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-            margin-bottom: 1.2rem;
-        }
+{% block content %}
+<div class="alert">
+    <i class="fa-solid fa-hand-sparkles" style="font-size: 1.2rem; color: #047857;"></i>
+    <div>
+        <strong>ยินดีต้อนรับ!</strong> คุณได้เข้าสู่ระบบสำเร็จแล้ว
+    </div>
+</div>
 
-        .card h2 { color: var(--text-main); font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .card > p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-icon"><i class="fa-regular fa-calendar-plus"></i></div>
+        <h2>จองห้องใหม่</h2>
+        <p>สร้างการจองห้องประชุมหรือห้องเรียนใหม่ภายในภาควิชา</p>
+        <ul class="feature-list">
+            <li>เลือกห้องที่ต้องการใช้งาน</li>
+            <li>กำหนดวันและเวลาที่ต้องใช้</li>
+            <li>ระบุวัตถุประสงค์ (สอน/อบรม)</li>
+        </ul>
+        <a href="{% url 'booking_flow' %}" class="btn">เริ่มต้นจองห้อง</a>
+    </div>
 
-        .feature-list { list-style: none; margin-bottom: 2rem; flex-grow: 1; }
-        .feature-list li { padding: 0.4rem 0 0.4rem 1.8rem; position: relative; color: var(--text-main); font-size: 0.95rem; }
-        
-        .feature-list li::before {
-            content: ""; position: absolute; left: 0; top: 10px; width: 6px; height: 10px;
-            border: solid var(--tu-red); border-width: 0 2px 2px 0; transform: rotate(45deg);
-        }
-
-        .btn {
-            display: block; width: 100%; text-align: center; padding: 0.85rem 1.5rem;
-            background-color: var(--tu-red); color: white; text-decoration: none;
-            border-radius: 10px; font-weight: 600; font-size: 1rem;
-            transition: all 0.3s ease; border: none; cursor: pointer;
-            box-shadow: var(--shadow-red);
-        }
-
-        .btn:hover {
-            background-color: var(--tu-red-hover); transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(194, 30, 45, 0.35);
-        }
-
-        .btn-outline {
-            background-color: transparent; color: var(--tu-red);
-            border: 2px solid var(--tu-red); box-shadow: none;
-        }
-
-        .btn-outline:hover {
-            background-color: var(--tu-red-light); transform: translateY(-2px); box-shadow: none;
-        }
-    </style>
-</head>
-
-<body>
-    <nav class="navbar">
-        <h1>TSE Room Booking System</h1>
-        <div class="navbar-right">
-            <div class="user-info">
-                <span class="user-name">{{ user.first_name|default:user.username }}</span>
-                <span class="user-role">{{ user_role|default:"อาจารย์" }}</span>
-            </div>
-            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn"><i class="fa-solid fa-right-from-bracket" style="margin-right: 5px;"></i> ออกจากระบบ</button>
-            </form>
-        </div>
-    </nav>
-
-    <main class="container">
-        <div class="alert">
-            <i class="fa-solid fa-hand-wave" style="font-size: 1.2rem; color: #047857;"></i>
-            <div>
-                <strong>ยินดีต้อนรับ!</strong> คุณได้เข้าสู่ระบบสำเร็จแล้ว
-            </div>
-        </div>
-
-        <div class="dashboard-grid">
-            <div class="card">
-                <div class="card-icon"><i class="fa-regular fa-calendar-plus"></i></div>
-                <h2>จองห้องใหม่</h2>
-                <p>สร้างการจองห้องประชุมหรือห้องเรียนใหม่ภายในภาควิชา</p>
-                <ul class="feature-list">
-                    <li>เลือกห้องที่ต้องการใช้งาน</li>
-                    <li>กำหนดวันและเวลาที่ต้องใช้</li>
-                    <li>ระบุวัตถุประสงค์ (สอน/อบรม)</li>
-                </ul>
-                <a href="{% url 'booking_flow' %}" class="btn">เริ่มต้นจองห้อง</a>
-            </div>
-
-            <div class="card">
-                <div class="card-icon"><i class="fa-solid fa-list-check"></i></div>
-                <h2>การจองของฉัน</h2>
-                <p>ตรวจสอบประวัติการจองและสถานะการอนุมัติของคุณ</p>
-                <ul class="feature-list">
-                    <li>ดูรายการจองทั้งหมดของคุณ</li>
-                    <li>ติดตามสถานะ (รออนุมัติ/อนุมัติแล้ว)</li>
-                    <li>ยกเลิกการจองที่ยังไม่ถึงวันใช้งาน</li>
-                </ul>
-                <a href="#" class="btn btn-outline">ดูรายการของฉัน</a>
-            </div>
-        </div>
-    </main>
-</body>
-
-</html>
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-list-check"></i></div>
+        <h2>การจองของฉัน</h2>
+        <p>ตรวจสอบประวัติการจองและสถานะการอนุมัติของคุณ</p>
+        <ul class="feature-list">
+            <li>ดูรายการจองทั้งหมดของคุณ</li>
+            <li>ติดตามสถานะ (รออนุมัติ/อนุมัติแล้ว)</li>
+            <li>ยกเลิกการจองที่ยังไม่ถึงวันใช้งาน</li>
+        </ul>
+        <a href="#" class="btn btn-outline">ดูรายการของฉัน</a>
+    </div>
+</div>
+{% endblock %}
