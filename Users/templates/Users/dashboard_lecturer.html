@@ -196,7 +196,19 @@
             <li>ติดตามสถานะ (รออนุมัติ/อนุมัติแล้ว)</li>
             <li>ยกเลิกการจองที่ยังไม่ถึงวันใช้งาน</li>
         </ul>
-        <a href="#" class="btn btn-outline">ดูรายการของฉัน</a>
+        <a href="{% url 'my_bookings' %}" class="btn btn-outline">ดูรายการของฉัน</a>
+    </div>
+
+    <div class="card">
+        <div class="card-icon"><i class="fa-regular fa-calendar-days"></i></div>
+        <h2>ปฏิทินการจอง</h2>
+        <p>ดูภาพรวมปฏิทินรายเดือนแสดงวันและเวลาที่คุณได้ทำการจองห้องไว้</p>
+        <ul class="feature-list">
+            <li>ดูภาพรวมตารางเวลาในแต่ละเดือน</li>
+            <li>ตรวจสอบวันที่จองสำเร็จ</li>
+            <li>คลิกดูรายละเอียดการใช้งานแต่ละวัน</li>
+        </ul>
+        <a href="{% url 'booking_calendar' %}" class="btn btn-outline">ดูปฏิทินของฉัน</a>
     </div>
 </div>
 {% endblock %}
