@@ -63,6 +63,8 @@ class Booking(models.Model):
         max_length=20, choices=PURPOSE_CHOICES, verbose_name=_("วัตถุประสงค์")
     )
 
+    notification_email = models.EmailField(blank=True, null=True)
+
     # สำหรับ สอนปกติ/ชดเชย/เสริม
     subject_code = models.CharField(
         max_length=20, blank=True, null=True, verbose_name=_("รหัสวิชา")

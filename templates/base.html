@@ -241,6 +241,66 @@
     </nav>
 
     <div class="container">
+        {% if messages %}
+        <div style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" style="
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                animation: slideDown 0.3s ease, slideUp 4s ease 3s forwards;
+                {% if 'error' in message.tags %}
+                    background-color: #fee2e2;
+                    border: 1px solid #fecaca;
+                    color: #991b1b;
+                {% elif 'warning' in message.tags %}
+                    background-color: #fef3c7;
+                    border: 1px solid #fde68a;
+                    color: #92400e;
+                {% elif 'success' in message.tags %}
+                    background-color: #ecfdf5;
+                    border: 1px solid #a7f3d0;
+                    color: #065f46;
+                {% else %}
+                    background-color: #dbeafe;
+                    border: 1px solid #bfdbfe;
+                    color: #1e40af;
+                {% endif %}
+            ">
+                <i class="fa-solid fa-circle-check" style="font-size: 1.2rem;"></i>
+                <div>
+                    {{ message }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <style>
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            @keyframes slideUp {
+                from {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+            }
+        </style>
+        {% endif %}
+
         {% block content %}{% endblock %}
     </div>
 
