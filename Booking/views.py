@@ -38,6 +38,7 @@ def booking_flow_view(request):
     if request.method == "POST":
         room_raw = request.POST.get("room_name", "")
         room_code = room_raw.split("(")[0].strip() if "(" in room_raw else room_raw
+        room_code = room_code.replace("ENG ", "").strip()
         room = Room.objects.filter(room_code=room_code).first()
 
         if not room:
@@ -69,11 +70,11 @@ def booking_flow_view(request):
 
             for slot in slots:
                 booking_date = parse_thai_date(slot.get("dateStr", ""))
-                
-                # 🎯 ป้องกันบั๊กเรื่องการเว้นวรรค 
+
+                # ป้องกันบั๊กเรื่องการเว้นวรรค
                 time_str_clean = slot.get("timeStr", "").replace(" - ", "-")
                 time_range = time_str_clean.split("-")
-                
+
                 start_time_str = time_range[0].strip()
                 end_time_str = time_range[1].strip()
 
@@ -81,7 +82,7 @@ def booking_flow_view(request):
                 end_time = datetime.strptime(end_time_str, "%H:%M").time()
                 day_num = str(booking_date.weekday())
 
-                # 🛡️ Conflict Detection
+                # Conflict Detection
                 conflict_exists = Booking.objects.filter(
                     room=room,
                     status__in=["pending", "approved"],
@@ -108,10 +109,10 @@ def booking_flow_view(request):
                     end_time=end_time,
                     days_of_week=day_num,
                     status="pending",
-                    # notification_email=notification_email, # 🎯 คลายคอมเมนต์บรรทัดนี้ถ้า Model มีการอัปเดตฟิลด์นี้แล้ว
+                    notification_email=notification_email
                 )
 
-                # 🎯 ส่ง Email แจ้งเตือน 
+                # ส่ง Email แจ้งเตือน
                 try:
                     send_booking_notification(booking, "new_booking")
                 except Exception as e:
@@ -140,7 +141,7 @@ def booking_flow_view(request):
             for time_slot in times_list:
                 time_str_clean = time_slot.replace(" - ", "-")
                 time_range = time_str_clean.split("-")
-                
+
                 start_time = datetime.strptime(time_range[0].strip(), "%H:%M").time()
                 end_time = datetime.strptime(time_range[1].strip(), "%H:%M").time()
 
@@ -176,9 +177,9 @@ def booking_flow_view(request):
                     end_time=end_time,
                     days_of_week=days_of_week_str,
                     status="pending",
-                    # notification_email=notification_email, 
+                    notification_email=notification_email
                 )
-                
+
                 # 🎯 ส่ง Email แจ้งเตือน
                 try:
                     send_booking_notification(booking, "new_booking")
@@ -194,7 +195,7 @@ def booking_flow_view(request):
     rooms = Room.objects.filter(is_active=True)
     active_bookings = Booking.objects.filter(status__in=["pending", "approved"])
     booked_list = []
-    
+
     for b in active_bookings:
         booked_list.append({
             "room_code": b.room.room_code,
@@ -224,6 +225,7 @@ def pending_bookings_view(request):
     bookings = Booking.objects.filter(status="pending").order_by("start_date")
     return render(request, "Booking/pending_bookings.html", {"bookings": bookings, "title": "จัดการการจองที่รออนุมัติ"})
 
+
 @login_required(login_url="login")
 @require_http_methods(["POST"])
 def approve_booking(request, booking_id):
@@ -231,11 +233,20 @@ def approve_booking(request, booking_id):
         return redirect("dashboard")
 
     booking = get_object_or_404(Booking, id=booking_id)
+
     booking.status = "approved"
     booking.save()
-    
-    messages.success(request, f"อนุมัติการจองห้อง {booking.room.room_code} เรียบร้อยแล้ว")
+
+    # ส่งเมลแจ้ง user ว่าอนุมัติแล้ว
+    send_booking_notification(booking, "status_change")
+
+    messages.success(
+        request,
+        f"อนุมัติการจองห้อง {booking.room.room_code} เรียบร้อยแล้ว",
+    )
+
     return redirect("pending_bookings")
+
 
 @login_required(login_url="login")
 @require_http_methods(["POST"])
@@ -244,13 +255,23 @@ def reject_booking(request, booking_id):
         return redirect("dashboard")
 
     booking = get_object_or_404(Booking, id=booking_id)
+
     reason = request.POST.get("rejection_reason", "")
+
     booking.status = "rejected"
     booking.rejection_reason = reason
     booking.save()
 
-    messages.warning(request, f"ปฏิเสธการจองห้อง {booking.room.room_code} แล้ว")
+    # ส่งเมลแจ้ง user ว่าถูกปฏิเสธ
+    send_booking_notification(booking, "status_change")
+
+    messages.warning(
+        request,
+        f"ปฏิเสธการจองห้อง {booking.room.room_code} แล้ว",
+    )
+
     return redirect("pending_bookings")
+
 
 @login_required(login_url="login")
 @require_http_methods(["GET"])

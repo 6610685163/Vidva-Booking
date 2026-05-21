@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from Users.models import UserProfile, Room
-
+from Users.models import UserProfile
+from Booking.models import Room
 
 class Command(BaseCommand):
     help = "ใส่ข้อมูลเริ่มต้นสำหรับระบบจองห้อง (ห้อง 5 ห้อง และ Admin User)"

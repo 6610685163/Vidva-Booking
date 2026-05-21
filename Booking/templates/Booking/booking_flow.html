@@ -449,20 +449,6 @@
 {% endblock %}
 
 {% block content %}
-{% if messages %}
-<div style="max-width: 800px; margin: 0 auto 20px auto;">
-    {% for message in messages %}
-    <div style="padding: 15px; border-radius: 8px; margin-bottom: 10px; 
-            {% if message.tags == 'error' %}
-                background-color: #fee2e2; color: #991b1b; border-left: 5px solid #ef4444;
-            {% else %}
-                background-color: #d1fae5; color: #065f46; border-left: 5px solid #10b981;
-            {% endif %}">
-        <i class="fa-solid fa-circle-info"></i> {{ message }}
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
 <div class="steps">
     <div id="s1" class="step active">1. เลือกห้อง</div>
     <div id="s2" class="step">2. ตารางรายเดือน</div>

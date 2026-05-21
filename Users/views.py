@@ -65,12 +65,20 @@ def dashboard_view(request):
     """
     Main dashboard view after successful login
     """
+    if not request.user.is_authenticated:
+        return redirect("login")
+    
     try:
         user_profile = request.user.profile
     except UserProfile.DoesNotExist:
         messages.error(request, _("ไม่พบข้อมูลผู้ใช้งาน"))
         logout(request)
         return redirect("login")
+
+    # ส่งข้อความแจ้งเตือนหลัง login (เฉพาะครั้งแรก)
+    if not request.session.get('welcome_shown'):
+        messages.success(request, _("ยินดีต้อนรับ! คุณเข้าสู่ระบบสำเร็จแล้ว"))
+        request.session['welcome_shown'] = True
 
     # แยกหน้าจอตาม Role
     if user_profile.role == "lecturer":
