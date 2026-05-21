@@ -12,25 +12,22 @@ from Users.views import (
     room_management_view,
     room_report_view,
     users_management_view,
-    create_booking_view,
-    pending_bookings_view,
-    approve_booking,
-    reject_booking,
 )
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # ระบบ Users และหน้า Dashboard
     path("", RedirectView.as_view(url="/dashboard/", permanent=False), name="home"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
     path("dashboard/", dashboard_view, name="dashboard"),
     path("users/", users_management_view, name="users_management"),
     path("users/<int:user_id>/role/", assign_user_role_view, name="assign_role"),
-    path("booking/create/", create_booking_view, name="create_booking"),
-    path("bookings/pending/", pending_bookings_view, name="pending_bookings"),
-    path("bookings/<int:booking_id>/approve/", approve_booking, name="approve_booking"),
-    path("bookings/<int:booking_id>/reject/", reject_booking, name="reject_booking"),
+    
+    # ระบบ Booking (ดึงจากไฟล์ของแอป Booking ที่เราทำไว้สมบูรณ์แล้ว)
     path('booking/', include('Booking.urls')),
+
+    # ฟีเจอร์ใหม่ของเพื่อน (ระบบ Report และ Admin Dashboard)
     path('room-report/', room_report_view, name='room_report'),
     path('admin-dashboard/rooms/', room_management_view, name='room_management'),
     path('admin-dashboard/calendar/', admin_calendar_view, name='admin_calendar'),

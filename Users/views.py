@@ -7,22 +7,17 @@ from django.views.decorators.csrf import csrf_protect
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 import logging
-from django.db.models import Q
 
-from .forms import TULoginForm, UserRoleAssignmentForm, BookingForm
-from .models import UserProfile, Booking
-from .utils import send_booking_notification
+from .forms import TULoginForm, UserRoleAssignmentForm
+from .models import UserProfile
 
 logger = logging.getLogger(__name__)
-
 
 @require_http_methods(["GET", "POST"])
 @csrf_protect
 def login_view(request):
     """
     User login view using TU REST API authentication
-    GET: Display login form
-    POST: Authenticate user and create session
     """
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -45,9 +40,7 @@ def login_view(request):
                 logger.warning(f"Login failed for user: {username}")
                 messages.error(
                     request,
-                    _(
-                        "ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง หรือเซิร์ฟเวอร์ API ไม่พร้อมใช้งาน"
-                    ),
+                    _("ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง หรือเซิร์ฟเวอร์ API ไม่พร้อมใช้งาน"),
                 )
     else:
         form = TULoginForm()
@@ -58,18 +51,13 @@ def login_view(request):
     }
     return render(request, "Users/login.html", context)
 
-
 @require_http_methods(["POST"])
 def logout_view(request):
-    """
-    User logout view - destroy session
-    """
     username = request.user.username if request.user.is_authenticated else "Unknown"
     logout(request)
     logger.info(f"User {username} logged out")
     messages.success(request, _("ออกจากระบบสำเร็จ"))
     return redirect("login")
-
 
 @login_required(login_url="login")
 @require_http_methods(["GET"])
@@ -84,12 +72,20 @@ def dashboard_view(request):
         logout(request)
         return redirect("login")
 
+    # แยกหน้าจอตาม Role
     if user_profile.role == "lecturer":
+        from Booking.models import Booking  # ป้องกันการหมุนวน Import
+
+        # ดึงประวัติการจองไปแสดงที่หน้า Dashboard อาจารย์
+        my_bookings = Booking.objects.filter(booker=request.user).order_by("-created_at")
+
         context = {
             "title": _("แดชบอร์ด - อาจารย์"),
             "user_role": _("อาจารย์"),
+            "my_bookings": my_bookings,
         }
         return render(request, "Users/dashboard_lecturer.html", context)
+
     elif user_profile.role == "admin":
         context = {
             "title": _("แดชบอร์ด - เจ้าหน้าที่"),
@@ -100,13 +96,9 @@ def dashboard_view(request):
         messages.error(request, _("บทบาทของผู้ใช้งานไม่ชัดเจน"))
         return redirect("logout")
 
-
 @login_required(login_url="login")
 @require_http_methods(["GET", "POST"])
 def assign_user_role_view(request, user_id):
-    """
-    Admin view to assign roles to users on first login
-    """
     try:
         if not request.user.profile.is_admin():
             messages.error(request, _("คุณไม่มีสิทธิ์ในการทำงานนี้"))
@@ -126,9 +118,7 @@ def assign_user_role_view(request, user_id):
         form = UserRoleAssignmentForm(request.POST, user_profile=user_profile)
         if form.is_valid():
             form.save()
-            logger.info(
-                f"Admin {request.user.username} assigned role {user_profile.role} to user {target_user.username}"
-            )
+            logger.info(f"Admin {request.user.username} assigned role {user_profile.role} to user {target_user.username}")
             messages.success(request, _(f"กำหนดบทบาทให้ {target_user.username} สำเร็จ"))
             return redirect("dashboard")
     else:
@@ -142,13 +132,9 @@ def assign_user_role_view(request, user_id):
     }
     return render(request, "Users/assign_role.html", context)
 
-
 @login_required(login_url="login")
 @require_http_methods(["GET"])
 def users_management_view(request):
-    """
-    Admin view to manage users and their roles
-    """
     try:
         if not request.user.profile.is_admin():
             messages.error(request, _("คุณไม่มีสิทธิ์ในการทำงานนี้"))
@@ -158,139 +144,22 @@ def users_management_view(request):
         return redirect("login")
 
     users = UserProfile.objects.all().order_by("-created_at")
-
     context = {
         "users": users,
         "title": _("จัดการผู้ใช้งาน"),
     }
     return render(request, "Users/users_management.html", context)
 
-
-@login_required(login_url="login")
-@require_http_methods(["GET", "POST"])
-def create_booking_view(request):
-    """
-    View for users to create a new booking
-    """
-    if request.method == "POST":
-        form = BookingForm(request.POST)
-        if form.is_valid():
-            try:
-                booking = form.save(commit=False)
-                booking.booker = request.user
-                booking.days_of_week = ",".join(form.cleaned_data["selected_days"])
-
-                # ตรวจสอบการจองซ้ำ (Conflict Detection)
-                conflicts = Booking.objects.filter(
-                    room=booking.room,
-                    status__in=["pending", "approved"],
-                    start_date__lte=booking.end_date,
-                    end_date__gte=booking.start_date,
-                    start_time__lt=booking.end_time,
-                    end_time__gt=booking.start_time,
-                )
-
-                has_conflict = False
-                for conf in conflicts:
-                    conf_days = set(conf.days_of_week.split(","))
-                    req_days = set(form.cleaned_data["selected_days"])
-                    if conf_days.intersection(req_days):
-                        has_conflict = True
-                        break
-
-                if has_conflict:
-                    messages.error(
-                        request,
-                        _("ห้องถูกจองในช่วงเวลาดังกล่าวแล้ว กรุณาเลือกเวลาอื่น"),
-                    )
-                else:
-                    booking.save()
-                    logger.info(
-                        f"User {request.user.username} created booking for {booking.room}"
-                    )
-
-                    # ส่งอีเมลแจ้งเตือนเจ้าหน้าที่เมื่อมีการสร้างคำขอสำเร็จ
-                    send_booking_notification(booking, "new_booking")
-
-                    messages.success(request, _("บันทึกการจองสำเร็จ (รอการอนุมัติ)"))
-                    return redirect("dashboard")
-            except Exception as e:
-                logger.error(f"Error creating booking: {str(e)}", exc_info=True)
-                messages.error(request, _("เกิดข้อผิดพลาดในการจองห้อง กรุณาลองใหม่"))
-    else:
-        form = BookingForm()
-
-    context = {
-        "form": form,
-        "title": _("สร้างการจองห้อง"),
-    }
-    return render(request, "Users/create_booking.html", context)
-
-
-@login_required(login_url="login")
-def pending_bookings_view(request):
-    """
-    หน้าแสดงรายการจองที่รอการอนุมัติสำหรับเจ้าหน้าที่ (Admin Only)
-    """
-    if not request.user.profile.is_admin():
-        messages.error(request, "คุณไม่มีสิทธิ์เข้าถึงหน้านี้")
-        return redirect("dashboard")
-
-    bookings = Booking.objects.filter(status="pending").order_by("start_date")
-
-    context = {
-        "bookings": bookings,
-        "title": "จัดการการจองที่รออนุมัติ",
-    }
-    return render(request, "Users/pending_bookings.html", context)
-
-
-@login_required(login_url="login")
-@require_http_methods(["POST"])
-def approve_booking(request, booking_id):
-    if not request.user.profile.is_admin():
-        return redirect("dashboard")
-
-    booking = get_object_or_404(Booking, id=booking_id)
-    booking.status = "approved"
-    booking.save()
-
-    # ส่งอีเมลแจ้งผลการอนุมัติให้อาจารย์ผู้จองทราบ
-    send_booking_notification(booking, "status_change")
-
-    messages.success(
-        request, f"อนุมัติการจองห้อง {booking.room.room_code} เรียบร้อยแล้ว"
-    )
-    return redirect("pending_bookings")
-
-
-@login_required(login_url="login")
-@require_http_methods(["POST"])
-def reject_booking(request, booking_id):
-    if not request.user.profile.is_admin():
-        return redirect("dashboard")
-
-    booking = get_object_or_404(Booking, id=booking_id)
-    reason = request.POST.get("rejection_reason", "")
-
-    booking.status = "rejected"
-    booking.rejection_reason = reason
-    booking.save()
-
-    # ส่งอีเมลแจ้งผลการปฏิเสธพร้อมเหตุผลให้อาจารย์ผู้จองทราบ
-    send_booking_notification(booking, "status_change")
-
-    messages.warning(request, f"ปฏิเสธการจองห้อง {booking.room.room_code} แล้ว")
-    return redirect("pending_bookings")
-
+# ==========================================
+# ฟีเจอร์ใหม่ของเพื่อน (ระบบ Report และ Admin Dashboard)
+# เก็บไว้เพื่อให้ urls.py เรียกใช้ได้ปกติ
+# ==========================================
 @login_required
 def room_report_view(request):
-    # ในอนาคตสามารถประมวลผลช่วงเวลาและคำนวณข้อมูลจาก Database ส่งไปที่เทมเพลตได้ตรงนี้ครับ
     return render(request, 'Users/room_report.html')
 
 @login_required
 def room_management_view(request):
-    # ในอนาคตคุณสามารถ Query ข้อมูล Room Models และ Blackout Models ส่งไปวนลูปใน Template ได้ที่นี่ครับ
     return render(request, 'Users/room_management.html')
 
 @login_required
