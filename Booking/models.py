@@ -179,3 +179,33 @@ class BlackoutPeriod(models.Model):
     def clean(self):
         if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError(_("วันเริ่มต้นต้องไม่หลังวันสิ้นสุด"))
+
+class Notification(models.Model):
+    NOTIFICATION_TYPE_CHOICES = [
+        ("new_booking", _("มีการจองใหม่ (แจ้ง Admin)")),
+        ("status_change", _("สถานะการจองเปลี่ยน (แจ้งผู้จอง)")),
+        ("reminder", _("แจ้งเตือนล่วงหน้า 1 วัน")),
+    ]
+
+    booking = models.ForeignKey(
+        Booking, on_delete=models.CASCADE, related_name="notifications"
+    )
+    notification_type = models.CharField(
+        max_length=30, choices=NOTIFICATION_TYPE_CHOICES
+    )
+    recipient_email = models.EmailField()
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    is_sent = models.BooleanField(default=False)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("การแจ้งเตือน")
+        verbose_name_plural = _("การแจ้งเตือน")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        status = "✓" if self.is_sent else "✗"
+        return f"{status} [{self.get_notification_type_display()}] → {self.recipient_email}"
