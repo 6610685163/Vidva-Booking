@@ -272,6 +272,7 @@ def pending_bookings_view(request):
     )
 
 
+
 @login_required(login_url="login")
 @require_http_methods(["POST"])
 def approve_booking(request, booking_id):
