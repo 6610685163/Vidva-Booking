@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}ปฏิทินการจองของฉัน{% endblock %}
+
+{% block extra_style %}
+<style>
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+        color: #1e293b;
+        font-size: 1.8rem;
+        margin: 0 0 8px 0;
+    }
+
+    .page-header p {
+        color: #64748b;
+        margin: 0;
+    }
+
+    /* โครงสร้างปฏิทินรายเดือน */
+    .calendar-card {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        border: 1px solid #f1f5f9;
+    }
+
+    .calendar-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .calendar-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-nav-month {
+        background: white;
+        border: 1px solid #cbd5e1;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+        font-family: inherit;
+    }
+
+    .btn-nav-month:hover {
+        border-color: var(--tu-red);
+        color: var(--tu-red);
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+    }
+
+    .day-label {
+        text-align: center;
+        font-weight: 600;
+        color: #64748b;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .calendar-day {
+        min-height: 95px;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: white;
+        transition: 0.2s;
+    }
+
+    .calendar-day:not(.empty):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .calendar-day.empty {
+        background: #f8fafc;
+        border: none;
+    }
+
+    .day-number {
+        font-weight: 600;
+        color: #475569;
+        font-size: 1rem;
+    }
+
+    /* รายการกิจกรรมภายในการ์ดวัน */
+    .event-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 5px;
+    }
+
+    .event-item {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .event-approved {
+        background-color: #ecfdf5;
+        color: #065f46;
+        border-left: 3px solid #10b981;
+    }
+
+    .event-pending {
+        background-color: #fffaf0;
+        color: #92400e;
+        border-left: 3px solid #f59e0b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fa-regular fa-calendar-days" style="color: var(--tu-red); margin-right: 10px;"></i>ปฏิทินการจองของฉัน
+    </h1>
+    <p>ดูและตรวจสอบตารางเวลาการจองห้องทั้งหมดในแต่ละเดือนของคุณ</p>
+</div>
+
+<div class="calendar-card">
+    <div class="calendar-controls">
+        <button class="btn-nav-month" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i>
+            เดือนก่อนหน้า</button>
+        <div class="calendar-title">
+            <i class="fa-regular fa-calendar"></i>
+            <span id="monthYearTitle">มกราคม 2569</span>
+        </div>
+        <button class="btn-nav-month" onclick="changeMonth(1)">เดือนถัดไป <i
+                class="fa-solid fa-chevron-right"></i></button>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid">
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    let currentDate = new Date();
+    const monthsTh = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    // จำลองข้อมูลการจองเพื่อแสดงผลบนปฏิทิน (ดึงจาก Backend จริงได้ในอนาคต)
+    const mockBookings = [
+        { day: 15, month: currentDate.getMonth(), year: currentDate.getFullYear(), room: "ENG 406-3", title: "CN334 สอนชดเชย", status: "approved" },
+        { day: 20, month: currentDate.getMonth(), year: currentDate.getFullYear(), room: "ENG 408-1", title: "ประชุมโปรเจกต์", status: "pending" }
+    ];
+
+    function renderMonthlyCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const title = document.getElementById('monthYearTitle');
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        title.innerText = `${monthsTh[month]} ${year + 543}`;
+        grid.innerHTML = "";
+
+        // ใส่หัววัน อาทิตย์ - เสาร์
+        ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "เส."].forEach(day => {
+            grid.innerHTML += `<div class="day-label">${day}</div>`;
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // ช่องว่างก่อนวันแรกของเดือน
+        for (let i = 0; i < firstDay; i++) {
+            grid.innerHTML += `<div class="calendar-day empty"></div>`;
+        }
+
+        // วนลูปสร้างวัน
+        for (let d = 1; d <= daysInMonth; d++) {
+            // ค้นหาว่าวันน้ีมีนัดจองไหม
+            const dayEvents = mockBookings.filter(b => b.day === d && b.month === month && b.year === year);
+            let eventHtml = '<div class="event-container">';
+
+            dayEvents.forEach(ev => {
+                const statusClass = ev.status === 'approved' ? 'event-approved' : 'event-pending';
+                eventHtml += `<div class="event-item ${statusClass}" title="${ev.room}: ${ev.title}">
+                    <strong>${ev.room}</strong>: ${ev.title}
+                </div>`;
+            });
+            eventHtml += '</div>';
+
+            grid.innerHTML += `
+                <div class="calendar-day">
+                    <span class="day-number">${d}</span>
+                    ${eventHtml}
+                </div>
+            `;
+        }
+    }
+
+    function changeMonth(direction) {
+        currentDate.setMonth(currentDate.getMonth() + direction);
+        renderMonthlyCalendar();
+    }
+
+    // สั่งรันเมื่อโหลดหน้าจอ
+    document.addEventListener("DOMContentLoaded", renderMonthlyCalendar);
+</script>
+{% endblock %}

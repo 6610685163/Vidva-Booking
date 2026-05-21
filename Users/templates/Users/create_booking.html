@@ -108,6 +108,16 @@
             box-shadow: 0 0 0 3px rgba(194, 30, 45, 0.15);
         }
 
+        .form-control.is-invalid {
+            border-color: #f87171;
+            background-color: #fef2f2;
+        }
+
+        .form-control.is-invalid:focus {
+            border-color: #f87171;
+            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15);
+        }
+
         .checkbox-group {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -149,6 +159,26 @@
             border-left: 4px solid #f87171;
         }
 
+        .form-error-list {
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            list-style: none;
+        }
+
+        .form-error-list li {
+            color: #b91c1c;
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        .form-error-list li:before {
+            content: "⚠ ";
+            margin-right: 0.5rem;
+        }
+
         /* ซ่อนฟิลด์บางตัวไว้ก่อน จะแสดงผลด้วย JS */
         #class-fields, #training-fields {
             display: none;
@@ -176,12 +206,30 @@
                 {% endfor %}
             {% endif %}
 
+            {% if form.non_field_errors %}
+                <div class="alert-error">
+                    <strong>ข้อผิดพลาด:</strong>
+                    <ul class="form-error-list">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
             <form method="POST" action="">
                 {% csrf_token %}
                 
                 <div class="form-group">
                     <label>ห้องที่ต้องการจอง</label>
                     {{ form.room }}
+                    {% if form.room.errors %}
+                        <ul class="form-error-list">
+                            {% for error in form.room.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
                 </div>
 
                 <div class="form-group">
@@ -235,6 +283,13 @@
                             </div>
                         {% endfor %}
                     </div>
+                    {% if form.selected_days.errors %}
+                        <ul class="form-error-list">
+                            {% for error in form.selected_days.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
                 </div>
 
                 <div class="form-row">
@@ -256,6 +311,18 @@
     <script>
         // โค้ดสำหรับสลับช่องกรอกข้อมูลตามวัตถุประสงค์
         document.addEventListener('DOMContentLoaded', function() {
+            // Mark fields with errors
+            const formInputs = document.querySelectorAll('.form-group');
+            formInputs.forEach(group => {
+                const errorList = group.querySelector('.form-error-list');
+                if (errorList && errorList.querySelectorAll('li').length > 0) {
+                    const control = group.querySelector('input, select, textarea, [role="checkbox"]');
+                    if (control) {
+                        control.classList.add('is-invalid');
+                    }
+                }
+            });
+
             const purposeSelect = document.querySelector('select[name="purpose_type"]');
             const classFields = document.getElementById('class-fields');
             const trainingFields = document.getElementById('training-fields');

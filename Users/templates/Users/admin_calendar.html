@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}ปฏิทินตรวจสอบการใช้งานห้อง - ผู้ดูแลระบบ{% endblock %}
+
+{% block extra_style %}
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-header h1 {
+        color: #1e2937;
+        font-size: 1.75rem;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .page-header p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    /* ตัวเลือกห้อง (Room Selector) */
+    .room-selector-wrapper {
+        background: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .room-selector-wrapper label {
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .select-room {
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1.5px solid #cbd5e1;
+        font-family: inherit;
+        font-size: 1rem;
+        outline: none;
+        min-width: 250px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .select-room:focus {
+        border-color: var(--tu-red);
+        box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+    }
+
+    /* โครงสร้าง Layout (ซ้ายปฏิทิน ขวารายละเอียด) */
+    .calendar-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+        align-items: start;
+    }
+
+    @media (max-width: 992px) {
+        .calendar-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ส่วนของปฏิทิน */
+    .calendar-card {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e5e7eb;
+    }
+
+    .calendar-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .calendar-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e2937;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-nav {
+        background: white;
+        border: 1px solid #cbd5e1;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+        font-family: inherit;
+        color: #4b5563;
+        font-weight: 500;
+    }
+
+    .btn-nav:hover {
+        border-color: var(--tu-red);
+        color: var(--tu-red);
+        background: #fff5f5;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+    }
+
+    .day-label {
+        text-align: center;
+        font-weight: 600;
+        color: #6b7280;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .calendar-day {
+        min-height: 100px;
+        border-radius: 12px;
+        border: 1px solid #f3f4f6;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+        transition: 0.2s;
+        position: relative;
+        background: white;
+    }
+
+    .calendar-day:not(.empty):hover {
+        border-color: #94a3b8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .calendar-day.empty {
+        background: transparent;
+        border: none;
+        cursor: default;
+    }
+
+    .calendar-day.active-day {
+        border: 2px solid var(--tu-red) !important;
+        background-color: var(--tu-red-light);
+    }
+
+    .day-number {
+        font-weight: 600;
+        font-size: 1.05rem;
+        margin-bottom: 5px;
+        color: #374151;
+    }
+
+    /* สไตล์สถานะบนปฏิทิน */
+    .status-indicator {
+        margin-top: auto;
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .status-free {
+        background-color: #ecfdf5;
+        color: #059669;
+    }
+
+    .status-partial {
+        background-color: #fffbeb;
+        color: #d97706;
+    }
+
+    .status-full {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    .status-blackout {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px dashed #cbd5e1;
+    }
+
+    /* ส่วนของรายละเอียดด้านขวา */
+    .details-card {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e5e7eb;
+        position: sticky;
+        top: 100px;
+    }
+
+    .details-header {
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+
+    .details-header h3 {
+        margin: 0 0 5px 0;
+        color: #1e2937;
+        font-size: 1.25rem;
+    }
+
+    .details-header p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    .slot-item {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .slot-time {
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .slot-info {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .slot-booked {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .slot-free {
+        border-left: 4px solid #10b981;
+    }
+
+    .slot-blackout {
+        border-left: 4px solid #64748b;
+        background: #f1f5f9;
+    }
+
+    .legend-area {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #f3f4f6;
+        font-size: 0.85rem;
+        color: #6b7280;
+        justify-content: center;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="fa-regular fa-calendar-days" style="color: var(--tu-red); margin-right: 10px;"></i>
+            ปฏิทินตรวจสอบการใช้งานห้อง</h1>
+        <p>ตรวจสอบสถานะห้องว่าง คิวการจอง และช่วงเวลาปิดปรับปรุงรายห้อง</p>
+    </div>
+    <div class="room-selector-wrapper">
+        <label for="roomSelect"><i class="fa-solid fa-door-open"></i> เลือกห้อง:</label>
+        <select id="roomSelect" class="select-room" onchange="changeRoom()">
+            <option value="ENG 406-3">ENG 406-3 (ห้องประชุม 1)</option>
+            <option value="ENG 406-5">ENG 406-5 (ห้องประชุม 2)</option>
+            <option value="ENG 408-1">ENG 408-1 (ห้องประชุม 3)</option>
+        </select>
+    </div>
+</div>
+
+<div class="calendar-layout">
+    <div class="calendar-card">
+        <div class="calendar-controls">
+            <button class="btn-nav" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i> ย้อนกลับ</button>
+            <div class="calendar-title">
+                <i class="fa-regular fa-calendar"></i>
+                <span id="monthYearTitle">มกราคม 2569</span>
+            </div>
+            <button class="btn-nav" onclick="changeMonth(1)">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid">
+        </div>
+
+        <div class="legend-area">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #10b981;"></div> ว่างตลอดวัน
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f59e0b;"></div> มีจองบางเวลา
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ef4444;"></div> จองเต็มแล้ว
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #64748b;"></div> ปิดปรับปรุง (Blackout)
+            </div>
+        </div>
+    </div>
+
+    <div class="details-card">
+        <div class="details-header">
+            <h3 id="detailDateText">เลือกวันที่บนปฏิทิน</h3>
+            <p id="detailRoomText">เพื่อดูข้อมูลการจองโดยละเอียด</p>
+        </div>
+
+        <div id="dayDetailsContainer">
+            <div style="text-align: center; color: #94a3b8; padding: 40px 0;">
+                <i class="fa-solid fa-hand-pointer" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <p>คลิกที่วันที่บนปฏิทินเพื่อดูข้อมูล</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    let currentDate = new Date();
+    let selectedDayElement = null;
+    const monthsTh = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    // ฐานข้อมูลจำลอง (Mock Data) สำหรับแต่ละห้อง
+    const mockData = {
+        "ENG 406-3": [
+            { day: 15, time: "09:00 - 12:00", title: "CN334 ติวสอบกลางภาค", user: "อาจารย์ สมชาย", type: "booked" },
+            { day: 15, time: "13:00 - 16:00", title: "ประชุมคณะกรรมการ", user: "ผู้ดูแลระบบ", type: "booked" },
+            { day: 18, time: "09:00 - 12:00", title: "CN201 สอนชดเชย", user: "อาจารย์ สมหญิง", type: "booked" },
+            { day: 25, type: "blackout", title: "ซ่อมบำรุงเครื่องปรับอากาศประจำปี" },
+            { day: 26, type: "blackout", title: "ซ่อมบำรุงเครื่องปรับอากาศประจำปี" }
+        ],
+        "ENG 406-5": [
+            { day: 10, time: "13:00 - 16:00", title: "นำเสนอโปรเจกต์นักศึกษา", user: "อาจารย์ สมชาย", type: "booked" }
+        ],
+        "ENG 408-1": [
+            { day: 5, type: "blackout", title: "ระบบไฟขัดข้อง รอช่างแก้ไข" }
+        ]
+    };
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const title = document.getElementById('monthYearTitle');
+        const roomName = document.getElementById('roomSelect').value;
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        title.innerText = `${monthsTh[month]} ${year + 543}`;
+        grid.innerHTML = "";
+
+        ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => {
+            grid.innerHTML += `<div class="day-label">${day}</div>`;
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const roomEvents = mockData[roomName] || [];
+
+        // เติมช่องว่าง
+        for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="calendar-day empty"></div>`; }
+
+        // สร้างวันที่
+        for (let d = 1; d <= daysInMonth; d++) {
+            // ดึง Event ของวันนั้นๆ
+            const eventsToday = roomEvents.filter(ev => ev.day === d);
+
+            let statusHtml = '<div class="status-indicator status-free">ว่าง</div>';
+            let isBlackout = eventsToday.some(ev => ev.type === 'blackout');
+
+            if (isBlackout) {
+                statusHtml = '<div class="status-indicator status-blackout"><i class="fa-solid fa-lock"></i> ปิดใช้งาน</div>';
+            } else if (eventsToday.length >= 2) {
+                statusHtml = '<div class="status-indicator status-full">จองเต็ม</div>';
+            } else if (eventsToday.length === 1) {
+                statusHtml = '<div class="status-indicator status-partial">จองบางส่วน</div>';
+            }
+
+            grid.innerHTML += `
+                <div class="calendar-day" onclick="showDayDetails(${d}, ${month}, ${year}, this)">
+                    <span class="day-number">${d}</span>
+                    ${statusHtml}
+                </div>
+            `;
+        }
+    }
+
+    function changeMonth(direction) {
+        currentDate.setMonth(currentDate.getMonth() + direction);
+        // ล้างกล่องรายละเอียดทุกครั้งที่เปลี่ยนเดือน
+        document.getElementById('dayDetailsContainer').innerHTML = `
+            <div style="text-align: center; color: #94a3b8; padding: 40px 0;">
+                <i class="fa-solid fa-hand-pointer" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <p>คลิกที่วันที่บนปฏิทินเพื่อดูข้อมูล</p>
+            </div>
+        `;
+        document.getElementById('detailDateText').innerText = "เลือกวันที่บนปฏิทิน";
+        if (selectedDayElement) selectedDayElement.classList.remove('active-day');
+        renderCalendar();
+    }
+
+    function changeRoom() {
+        document.getElementById('detailRoomText').innerText = "ห้อง: " + document.getElementById('roomSelect').value;
+        renderCalendar();
+        // ล้างรายละเอียดฝั่งขวา
+        changeMonth(0);
+    }
+
+    function showDayDetails(day, month, year, element) {
+        // จัดการ CSS ให้ช่องที่คลิก
+        if (selectedDayElement) selectedDayElement.classList.remove('active-day');
+        element.classList.add('active-day');
+        selectedDayElement = element;
+
+        const roomName = document.getElementById('roomSelect').value;
+        document.getElementById('detailDateText').innerText = `วันที่ ${day} ${monthsTh[month]} ${year + 543}`;
+        document.getElementById('detailRoomText').innerText = `ห้อง: ${roomName}`;
+
+        const roomEvents = mockData[roomName] || [];
+        const eventsToday = roomEvents.filter(ev => ev.day === day);
+        const container = document.getElementById('dayDetailsContainer');
+        container.innerHTML = "";
+
+        let isBlackout = eventsToday.find(ev => ev.type === 'blackout');
+
+        if (isBlackout) {
+            container.innerHTML = `
+                <div class="slot-item slot-blackout">
+                    <div class="slot-time"><i class="fa-solid fa-lock" style="color: #475569;"></i> ห้องปิดปรับปรุง / ไม่พร้อมใช้งาน</div>
+                    <p class="slot-info"><strong>เหตุผล:</strong> ${isBlackout.title}</p>
+                </div>
+            `;
+            return;
+        }
+
+        // จัดการแสดงช่วงเวลา (ถ้าว่างก็บอกว่าว่าง ถ้ามีคิวก็โชว์คิว)
+        const timeslots = [
+            { time: "09:00 - 12:00", id: 1 },
+            { time: "13:00 - 16:00", id: 2 }
+        ];
+
+        timeslots.forEach(slot => {
+            const booked = eventsToday.find(ev => ev.time === slot.time);
+            if (booked) {
+                container.innerHTML += `
+                    <div class="slot-item slot-booked">
+                        <div class="slot-time"><i class="fa-regular fa-clock" style="color: #f59e0b;"></i> ${slot.time}</div>
+                        <p class="slot-info"><strong>วัตถุประสงค์:</strong> ${booked.title}</p>
+                        <p class="slot-info"><strong>ผู้จอง:</strong> ${booked.user}</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML += `
+                    <div class="slot-item slot-free">
+                        <div class="slot-time"><i class="fa-regular fa-clock" style="color: #10b981;"></i> ${slot.time}</div>
+                        <p class="slot-info" style="color: #10b981;">ว่างพร้อมใช้งาน</p>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    // สั่งรันเมื่อโหลดหน้าจอ
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('detailRoomText').innerText = "ห้อง: " + document.getElementById('roomSelect').value;
+        renderCalendar();
+    });
+</script>
+{% endblock %}

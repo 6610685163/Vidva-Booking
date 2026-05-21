@@ -5,7 +5,6 @@ models.py — Vidva Booking System
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
-# from django.core.exceptions import ValidationError
 
 class UserProfile(models.Model):
     ROLE_CHOICES = [
@@ -34,4 +33,3 @@ class UserProfile(models.Model):
 
     def is_lecturer(self):
         return self.role == "lecturer"
-
