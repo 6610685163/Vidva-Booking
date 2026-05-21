@@ -264,7 +264,7 @@
         color: #1e293b;
     }
 
-    input[type="text"] {
+    input[type="text"], input[type="email"] {
         width: 100%;
         padding: 12px;
         border: 1px solid #cbd5e1;
@@ -541,12 +541,16 @@
             <input type="hidden" name="selected_data" id="input_selected_data">
 
             <div class="form-group">
+                <label>อีเมลสำหรับรับการแจ้งเตือนผล (บังคับ) <span style="color:red">*</span></label>
+                <input type="email" name="notification_email" placeholder="ตัวอย่าง: professor.name@gmail.com" required>
+            </div>
+
+            <div class="form-group">
                 <label>รหัสวิชา / วัตถุประสงค์ <span style="color:red">*</span></label>
                 <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบภาคปลาย" required>
             </div>
 
-            <button type="submit" class="btn-submit"
-                onclick="alert('ส่งคำขอจองห้องเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">ส่งคำขอจองห้อง</button>
+            <button type="submit" class="btn-submit">ส่งคำขอจองห้อง</button>
         </form>
     </div>
 </div>
@@ -569,6 +573,11 @@
             {% csrf_token %}
             <input type="hidden" name="room_name" id="semester_input_room_name">
             <input type="hidden" name="booking_type" value="semester">
+
+            <div class="form-group" style="margin-bottom: 30px;">
+                <label>อีเมลสำหรับรับการแจ้งเตือนผล (บังคับ) <span style="color:red">*</span></label>
+                <input type="email" name="notification_email" placeholder="ตัวอย่าง: professor.name@gmail.com" required>
+            </div>
 
             <div class="form-group" style="margin-bottom: 30px;">
                 <label>รหัสวิชา / วัตถุประสงค์การใช้งาน <span style="color:red">*</span></label>
@@ -613,8 +622,7 @@
             </div>
 
             <div style="text-align: right;">
-                <button type="submit" class="btn-submit" style="width: auto; padding: 15px 40px; border-radius: 50px;"
-                    onclick="alert('ส่งคำขอจองห้องแบบทั้งเทอมเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">
+                <button type="submit" class="btn-submit" style="width: auto; padding: 15px 40px; border-radius: 50px;">
                     ส่งคำขอจองแบบทั้งเทอม <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>
                 </button>
             </div>

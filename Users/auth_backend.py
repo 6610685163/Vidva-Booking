@@ -156,11 +156,20 @@ class TURestAPIBackend(ModelBackend):
                 ] or response_data.get("valid"):
                     logger.info(f"TU REST API verification successful for {username}")
 
-                    # ดึงข้อมูลผู้ใช้จาก Array 'data'
+                    # TU API ส่งข้อมูลผู้ใช้ 2 แบบ:
+                    # 1. ใน Array 'data' (data[0])
+                    # 2. โดยตรงในระดับ root ของ response
                     user_data = None
+                    
+                    # ลองหา data array ก่อน
                     data_list = response_data.get("data", [])
-                    if data_list and isinstance(data_list, list):
+                    if data_list and isinstance(data_list, list) and len(data_list) > 0:
                         user_data = data_list[0]
+                        logger.debug("User data extracted from 'data' array")
+                    else:
+                        # ถ้าไม่มี data array ให้ใช้ response ทั้งหมด
+                        user_data = response_data
+                        logger.debug("User data extracted from root level of response")
 
                     return True, user_data
                 else:

@@ -34,8 +34,8 @@
    ```bash
    git clone <repository-url>
    cd TSE-Room-Booking
-   python -m venv venv
-   source venv/bin/activate  # สำหรับ Windows ใช้ venv\Scripts\activate
+   python -m venv .venv
+   .\venv\Scripts\activate # สำหรับ Windows  
    ```
 
 2. **ติดตั้ง Library:**
