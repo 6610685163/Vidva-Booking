@@ -18,6 +18,7 @@ from .forms import BookingForm
 from .models import Booking
 from django.shortcuts import get_object_or_404
 from .models import Booking
+from .utils import send_booking_notification
 
 logger = logging.getLogger(__name__)
 
@@ -190,39 +191,49 @@ def create_booking_view(request):
     if request.method == "POST":
         form = BookingForm(request.POST)
         if form.is_valid():
-            booking = form.save(commit=False)
-            booking.booker = request.user  # FR-BOOK-07
-            booking.days_of_week = ",".join(form.cleaned_data["selected_days"])
+            try:
+                booking = form.save(commit=False)
+                booking.booker = request.user  # FR-BOOK-07
+                booking.days_of_week = ",".join(form.cleaned_data["selected_days"])
 
-            # FR-BOOK-06 Conflict Detection
-            conflicts = Booking.objects.filter(
-                room=booking.room,
-                status__in=["pending", "approved"],
-                start_date__lte=booking.end_date,
-                end_date__gte=booking.start_date,
-                start_time__lt=booking.end_time,
-                end_time__gt=booking.start_time,
-            )
-
-            # ตรวจสอบเพิ่มเติมว่าวันในสัปดาห์ทับซ้อนกันหรือไม่
-            has_conflict = False
-            for conf in conflicts:
-                conf_days = set(conf.days_of_week.split(","))
-                req_days = set(form.cleaned_data["selected_days"])
-                if conf_days.intersection(req_days):
-                    has_conflict = True
-                    break
-
-            if has_conflict:
-                messages.error(request, _("ห้องถูกจองในช่วงเวลาดังกล่าวแล้ว กรุณาเลือกเวลาอื่น"))
-            else:
-                booking.save()
-                logger.info(
-                    f"User {request.user.username} created booking for {booking.room}"
+                # FR-BOOK-06 Conflict Detection
+                conflicts = Booking.objects.filter(
+                    room=booking.room,
+                    status__in=["pending", "approved"],
+                    start_date__lte=booking.end_date,
+                    end_date__gte=booking.start_date,
+                    start_time__lt=booking.end_time,
+                    end_time__gt=booking.start_time,
                 )
-                messages.success(request, _("บันทึกการจองสำเร็จ (รอการอนุมัติ)"))
-                # หมายเหตุ: การส่งอีเมลแจ้ง Admin (FR-NOTI-01) จะนำมาใส่ตรงนี้ในอนาคต
-                return redirect("dashboard")
+
+                # ตรวจสอบเพิ่มเติมว่าวันในสัปดาห์ทับซ้อนกันหรือไม่
+                has_conflict = False
+                for conf in conflicts:
+                    conf_days = set(conf.days_of_week.split(","))
+                    req_days = set(form.cleaned_data["selected_days"])
+                    if conf_days.intersection(req_days):
+                        has_conflict = True
+                        break
+
+                if has_conflict:
+                    messages.error(request, _("ห้องถูกจองในช่วงเวลาดังกล่าวแล้ว กรุณาเลือกเวลาอื่น"))
+                else:
+                    booking.save()
+                    logger.info(
+                        f"User {request.user.username} created booking for {booking.room}"
+                    )
+
+                    # Send notification to admin
+                    send_booking_notification(booking, "new_booking")
+
+                    messages.success(request, _("บันทึกการจองสำเร็จ (รอการอนุมัติ)"))
+                    return redirect("dashboard")
+            except Exception as e:
+                logger.error(f"Error creating booking: {str(e)}", exc_info=True)
+                messages.error(request, _("เกิดข้อผิดพลาดในการจองห้อง กรุณาลองใหม่"))
+        else:
+            # Form validation failed - errors will be displayed in template
+            logger.warning(f"Booking form validation failed for user {request.user.username}: {form.errors}")
     else:
         form = BookingForm()
 
@@ -266,7 +277,7 @@ def approve_booking(request, booking_id):
     booking.status = "approved"
     booking.save()
 
-    # ตรงนี้สามารถเพิ่ม logic ส่ง Email แจ้งเตือนผู้จองได้ (FR-APPR-04)
+    send_booking_notification(booking, "status_change")
 
     messages.success(request, f"อนุมัติการจองห้อง {booking.room.room_code} เรียบร้อยแล้ว")
     return redirect("pending_bookings")
@@ -287,6 +298,8 @@ def reject_booking(request, booking_id):
     booking.status = "rejected"
     booking.rejection_reason = reason
     booking.save()
+
+    send_booking_notification(booking, "status_change")
 
     messages.warning(request, f"ปฏิเสธการจองห้อง {booking.room.room_code} แล้ว")
     return redirect("pending_bookings")

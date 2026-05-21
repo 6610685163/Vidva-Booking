@@ -92,6 +92,8 @@ class BookingForm(forms.ModelForm):
         choices=DAYS_CHOICES,
         widget=forms.CheckboxSelectMultiple,
         label=_("วันในสัปดาห์ที่ต้องการใช้งาน"),
+        required=True,
+        error_messages={'required': _('กรุณาเลือกวันในสัปดาห์อย่างน้อยหนึ่งวัน')}
     )
 
     class Meta:
@@ -138,14 +140,31 @@ class BookingForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         purpose_type = cleaned_data.get("purpose_type")
+        selected_days = cleaned_data.get("selected_days")
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+
+        # Validate selected days
+        if not selected_days:
+            raise forms.ValidationError(_("กรุณาเลือกวันในสัปดาห์อย่างน้อยหนึ่งวัน"))
+
+        # Validate date range
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError(_("วันเริ่มต้นต้องไม่หลังวันสิ้นสุด"))
+
+        # Validate time range
+        if start_time and end_time and start_time >= end_time:
+            raise forms.ValidationError(_("เวลาเริ่มต้นต้องก่อนเวลาสิ้นสุด"))
 
         if purpose_type == "class":
             if not cleaned_data.get("subject_code") or not cleaned_data.get(
                 "subject_name"
             ):
-                raise forms.ValidationError("กรุณาระบุรหัสวิชาและชื่อวิชา สำหรับการสอน")
+                raise forms.ValidationError(_("กรุณาระบุรหัสวิชาและชื่อวิชา สำหรับการสอน"))
         elif purpose_type == "training":
             if not cleaned_data.get("topic"):
-                raise forms.ValidationError("กรุณาระบุชื่อเรื่อง สำหรับการจัดอบรม/จัดติว")
+                raise forms.ValidationError(_("กรุณาระบุชื่อเรื่อง สำหรับการจัดอบรม/จัดติว"))
 
         return cleaned_data
