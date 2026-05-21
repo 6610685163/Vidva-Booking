@@ -7,8 +7,8 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
+from .models import Booking, Room, AcademicSemester
 from django.http import JsonResponse
-from .models import Booking, Room
 from .forms import BookingForm
 
 # นำเข้าฟังก์ชันส่งแจ้งเตือนของเพื่อน
@@ -58,7 +58,6 @@ def booking_flow_view(request):
     if request.method == "POST":
         room_raw = request.POST.get("room_name", "")
         room_code = room_raw.split("(")[0].strip() if "(" in room_raw else room_raw
-        room_code = room_code.replace("ENG ", "").strip()
         room = Room.objects.filter(room_code=room_code).first()
 
         if not room:
@@ -154,6 +153,13 @@ def booking_flow_view(request):
         else:
             days_list = request.POST.getlist("days")
             times_list = request.POST.getlist("times")
+            # start_date_str = request.POST.get("start_date", "").strip()
+            # end_date_str = request.POST.get("end_date", "").strip()
+            purpose_type_raw = request.POST.get("purpose_type", "class").strip()
+            subject_code_raw = request.POST.get("subject_code", "").strip()
+            subject_name_raw = request.POST.get("subject_name", "").strip()
+            curriculum_raw = request.POST.get("curriculum", "").strip()
+            topic_raw = request.POST.get("topic", "").strip()
 
             if not days_list or not times_list:
                 messages.error(
@@ -161,11 +167,42 @@ def booking_flow_view(request):
                 )
                 return redirect("booking_flow")
 
+            # if not start_date_str or not end_date_str:
+            #     messages.error(request, "กรุณาระบุวันเริ่มต้นและวันสิ้นสุดของเทอม")
+            #     return redirect("booking_flow")
+
+            if purpose_type_raw == "class" and (
+                not subject_code_raw or not subject_name_raw
+            ):
+                messages.error(request, "กรุณาระบุรหัสวิชาและชื่อวิชาสำหรับการสอน")
+                return redirect("booking_flow")
+
+            if purpose_type_raw == "training" and not topic_raw:
+                messages.error(request, "กรุณาระบุชื่อเรื่องสำหรับการจัดอบรม/จัดติว")
+                return redirect("booking_flow")
+
+            # รอเปลี่ยนให้รับจากฝั่ง admin ในภายหลัง
+            active_semester = AcademicSemester.objects.filter(is_active=True).first()
+
+            if not active_semester:
+                messages.error(
+                    request,
+                    "❌ ระบบยังไม่ได้ตั้งค่าช่วงเวลาภาคการศึกษาปัจจุบัน กรุณาติดต่อเจ้าหน้าที่ (Admin)",
+                )
+                return redirect("booking_flow")
+
+            start_semester = active_semester.start_date
+            end_semester = active_semester.end_date
+
+            # if start_semester > end_semester:
+            #     messages.error(request, "วันเริ่มต้นต้องไม่หลังวันสิ้นสุด")
+            #     return redirect("booking_flow")
+
             db_days = [THAI_DAYS.get(d) for d in days_list if d in THAI_DAYS]
             days_of_week_str = ",".join(db_days)
 
-            start_semester = date.today()
-            end_semester = start_semester + timedelta(days=120)
+            # start_semester = date.today()
+            # end_semester = start_semester + timedelta(days=120)
 
             for time_slot in times_list:
                 time_str_clean = time_slot.replace(" - ", "-")
@@ -200,14 +237,10 @@ def booking_flow_view(request):
                     return redirect("booking_flow")
 
                 # บันทึกลงฐานข้อมูล
-                booking = Booking.objects.create(
+                create_kwargs = dict(
                     room=room,
                     booker=request.user,
-                    purpose_type="class",
-                    subject_code=(
-                        purpose.split()[0] if len(purpose.split()) > 0 else purpose
-                    ),
-                    subject_name=purpose,
+                    purpose_type=purpose_type_raw,
                     start_date=start_semester,
                     end_date=end_semester,
                     start_time=start_time,
@@ -216,6 +249,16 @@ def booking_flow_view(request):
                     status="pending",
                     notification_email=notification_email,
                 )
+                if purpose_type_raw == "class":
+                    create_kwargs["subject_code"] = subject_code_raw
+                    create_kwargs["subject_name"] = subject_name_raw
+                    create_kwargs["curriculum"] = (
+                        curriculum_raw if curriculum_raw else None
+                    )
+                else:
+                    create_kwargs["topic"] = topic_raw
+
+                booking = Booking.objects.create(**create_kwargs)
 
                 # 🎯 ส่ง Email แจ้งเตือน
                 try:
@@ -240,6 +283,8 @@ def booking_flow_view(request):
             {
                 "room_code": b.room.room_code,
                 "start_date": b.start_date.strftime("%Y-%m-%d"),
+                "end_date": b.end_date.strftime("%Y-%m-%d"),
+                "days_of_week": b.days_of_week if b.days_of_week else "",
                 "start_time": b.start_time.strftime("%H:%M"),
                 "end_time": b.end_time.strftime("%H:%M"),
             }
@@ -270,7 +315,6 @@ def pending_bookings_view(request):
         "Booking/pending_bookings.html",
         {"bookings": bookings, "title": "จัดการการจองที่รออนุมัติ"},
     )
-
 
 
 @login_required(login_url="login")

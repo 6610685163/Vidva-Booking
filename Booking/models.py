@@ -116,36 +116,23 @@ class Booking(models.Model):
         if self.start_time and self.end_time and self.start_time >= self.end_time:
             raise ValidationError(_("เวลาเริ่มต้นต้องก่อนเวลาสิ้นสุด"))
 
-
-class Notification(models.Model):
-    NOTIFICATION_TYPE_CHOICES = [
-        ("new_booking", _("มีการจองใหม่ (แจ้ง Admin)")),  # FR-NOTI-01
-        ("status_change", _("สถานะการจองเปลี่ยน (แจ้งผู้จอง)")),  # FR-NOTI-02
-        ("reminder", _("แจ้งเตือนล่วงหน้า 1 วัน")),  # FR-NOTI-03
-    ]
-
-    booking = models.ForeignKey(
-        Booking, on_delete=models.CASCADE, related_name="notifications"
-    )
-    notification_type = models.CharField(
-        max_length=30, choices=NOTIFICATION_TYPE_CHOICES
-    )
-    recipient_email = models.EmailField()
-    subject = models.CharField(max_length=255)
-    body = models.TextField()
-    is_sent = models.BooleanField(default=False)
-    sent_at = models.DateTimeField(null=True, blank=True)
-    error_message = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = _("การแจ้งเตือน")
-        verbose_name_plural = _("การแจ้งเตือน")
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        status = "✓" if self.is_sent else "✗"
-        return f"{status} [{self.get_notification_type_display()}] → {self.recipient_email}"
+    def get_thai_days_of_week(self):
+        thai_days_map = {
+            "0": "จันทร์",
+            "1": "อังคาร",
+            "2": "พุธ",
+            "3": "พฤหัสบดี",
+            "4": "ศุกร์",
+            "5": "เสาร์",
+            "6": "อาทิตย์",
+        }
+        if not self.days_of_week:
+            return ""
+        days = self.days_of_week.split(",")
+        thai_days = [
+            thai_days_map.get(d.strip(), "") for d in days if d.strip() in thai_days_map
+        ]
+        return ", ".join(thai_days)
 
 
 class BlackoutPeriod(models.Model):
@@ -182,6 +169,7 @@ class BlackoutPeriod(models.Model):
         if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError(_("วันเริ่มต้นต้องไม่หลังวันสิ้นสุด"))
 
+
 class Notification(models.Model):
     NOTIFICATION_TYPE_CHOICES = [
         ("new_booking", _("มีการจองใหม่ (แจ้ง Admin)")),
@@ -211,3 +199,21 @@ class Notification(models.Model):
     def __str__(self):
         status = "✓" if self.is_sent else "✗"
         return f"{status} [{self.get_notification_type_display()}] → {self.recipient_email}"
+
+
+class AcademicSemester(models.Model):
+    name = models.CharField(max_length=100, verbose_name=_("ภาคการศึกษา (เช่น 1/2569)"))
+    start_date = models.DateField(verbose_name=_("วันเริ่มต้นเทอม"))
+    end_date = models.DateField(verbose_name=_("วันสิ้นสุดเทอม"))
+    is_active = models.BooleanField(
+        default=False, verbose_name=_("เปิดใช้งานเป็นเทอมปัจจุบัน")
+    )
+
+    class Meta:
+        verbose_name = _("ภาคการศึกษา")
+        verbose_name_plural = _("ภาคการศึกษา")
+        ordering = ["-start_date"]
+
+    def __str__(self):
+        status = " (เทอมปัจจุบัน)" if self.is_active else ""
+        return f"{self.name}{status}"

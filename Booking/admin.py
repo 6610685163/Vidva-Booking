@@ -1,11 +1,12 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Room, Booking, Notification, BlackoutPeriod
+from .models import Room, Booking, Notification, BlackoutPeriod, AcademicSemester
 
 # Register your models here.
 admin.site.register(Booking)
 admin.site.register(Notification)
 admin.site.register(BlackoutPeriod)
+
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
@@ -26,3 +27,9 @@ class RoomAdmin(admin.ModelAdmin):
         (_("สถานะ"), {"fields": ("is_active",)}),
     )
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(AcademicSemester)
+class AcademicSemesterAdmin(admin.ModelAdmin):
+    list_display = ("name", "start_date", "end_date", "is_active")
+    list_editable = ("is_active",)
