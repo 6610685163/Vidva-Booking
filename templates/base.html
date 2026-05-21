@@ -175,22 +175,41 @@
             </div>
             <button class="btn-close-sidebar" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
         </div>
+
         <ul class="sidebar-menu">
+            {% if user.profile.role == 'lecturer' %}
             <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <a href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> แดชบอร์ด</a>
             </li>
             <li class="{% if request.resolver_match.url_name == 'booking_flow' %}active{% endif %}">
                 <a href="{% url 'booking_flow' %}"><i class="fa-solid fa-calendar-plus"></i> จองห้องใหม่</a>
             </li>
-            <li><a href="#"><i class="fa-solid fa-list-check"></i> รายการจองของฉัน</a></li>
-            <li><a href="#"><i class="fa-solid fa-calendar-days"></i> ปฏิทินตารางห้อง</a></li>
+            <li class="{% if request.resolver_match.url_name == 'my_bookings' %}active{% endif %}">
+                <a href="{% url 'my_bookings' %}"><i class="fa-solid fa-list-check"></i> รายการจองของฉัน</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'booking_calendar' %}active{% endif %}">
+                <a href="{% url 'booking_calendar' %}"><i class="fa-solid fa-calendar-days"></i> ปฏิทินตารางห้อง</a>
+            </li>
+            {% endif %}
 
             {% if user.profile.role == 'admin' %}
-            <li style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;"></li>
-            <li style="padding: 0 25px; margin-bottom: 10px; font-size: 0.85rem; color: #94a3b8; font-weight: 600;">
-                เมนูผู้ดูแลระบบ</li>
+            <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <a href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> แดชบอร์ด</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'pending_bookings' %}active{% endif %}">
+                <a href="{% url 'pending_bookings' %}"><i class="fa-solid fa-clock"></i> รายการจองที่รอการอนุมัติ</a>
+            </li>
             <li class="{% if request.resolver_match.url_name == 'users_management' %}active{% endif %}">
                 <a href="{% url 'users_management' %}"><i class="fa-solid fa-users-gear"></i> จัดการผู้ใช้งาน</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'room_management' %}active{% endif %}">
+                <a href="{% url 'room_management' %}"><i class="fa-solid fa-building"></i> จัดการห้อง</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'room_report' %}active{% endif %}">
+                <a href="{% url 'room_report' %}"><i class="fa-solid fa-chart-line"></i> รายงานห้อง</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'admin_calendar' %}active{% endif %}">
+                <a href="{% url 'admin_calendar' %}"><i class="fa-regular fa-calendar-days"></i> ปฏิทินห้อง</a>
             </li>
             <li><a href="/admin/"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ</a></li>
             {% endif %}

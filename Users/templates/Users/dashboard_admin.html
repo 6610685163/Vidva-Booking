@@ -1,257 +1,306 @@
-<!DOCTYPE html>
-<html lang="th">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - ระบบจองห้อง มธ.</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --tu-red: #c21e2d;
-            --tu-red-hover: #a01825;
-            --tu-red-light: #fef2f2;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --bg-color: #f8fafc;
-            --surface-color: #ffffff;
-            --border-color: #e5e7eb;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-            --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
-            --shadow-red: 0 4px 14px 0 rgba(194, 30, 45, 0.25);
-        }
+{% block title %}Dashboard - ผู้ดูแลระบบ{% endblock %}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+{% block extra_style %}
+<style>
+    :root {
+        --tu-red-hover: #a01825;
+        --tu-red-light: #fef2f2;
+        --text-main: #1f2937;
+        --text-muted: #6b7280;
+        --surface-color: #ffffff;
+        --border-color: #e5e7eb;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        --shadow-red: 0 4px 14px 0 rgba(194, 30, 45, 0.25);
+    }
 
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-        }
+    .alert {
+        background-color: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: var(--shadow-sm);
+    }
 
-        .navbar {
-            background: linear-gradient(135deg, var(--tu-red) 0%, #90121e 100%);
-            color: white;
-            padding: 1rem 2.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow-md);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    /* แก้ไขเลย์เอาต์ตรงนี้: บังคับให้เรียง 3 การ์ดต่อแถวบนหน้าจอเดสก์ท็อป */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
 
-        .navbar h1 {
-            font-size: 1.4rem; font-weight: 600; letter-spacing: 0.5px;
-            display: flex; align-items: center;
-        }
-
-        .admin-badge {
-            background-color: rgba(255, 255, 255, 0.15); color: white;
-            padding: 0.2rem 0.75rem; border-radius: 20px; font-size: 0.8rem;
-            margin-left: 0.75rem; border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 500;
-        }
-
-        .navbar-right { display: flex; gap: 1.5rem; align-items: center; }
-
-        .user-info { display: flex; flex-direction: column; justify-content: center; text-align: right; }
-
-        .user-name { font-weight: 600; font-size: 0.95rem; }
-
-        .user-role {
-            font-size: 0.8rem; color: rgba(255, 255, 255, 0.8);
-            background: rgba(0, 0, 0, 0.15); padding: 0.1rem 0.6rem;
-            border-radius: 12px; margin-top: 0.2rem; display: inline-block;
-            width: fit-content; margin-left: auto;
-        }
-
-        .logout-btn {
-            background-color: transparent; color: white; border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 0.5rem 1.2rem; border-radius: 8px; cursor: pointer;
-            font-family: 'Sarabun', sans-serif; font-weight: 500; transition: all 0.3s ease;
-        }
-
-        .logout-btn:hover { background-color: rgba(255, 255, 255, 0.1); border-color: white; }
-
-        .container { max-width: 1200px; margin: 2.5rem auto; padding: 0 1.5rem; }
-
-        .alert {
-            background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;
-            padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 2.5rem;
-            display: flex; align-items: center; gap: 0.75rem; box-shadow: var(--shadow-sm);
-        }
-
-        .alert strong { color: #047857; }
-
+    /* รองรับการแสดงผลบนมือถือให้หดเหลือ 1 แถวอัตโนมัติ */
+    @media (max-width: 992px) {
         .dashboard-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;
+            grid-template-columns: repeat(2, 1fr);
         }
+    }
 
-        .card {
-            background: var(--surface-color); border-radius: 16px; padding: 2.5rem 2rem;
-            box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
-            overflow: hidden; display: flex; flex-direction: column;
+    @media (max-width: 640px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
         }
+    }
 
-        .card::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
-            background: var(--tu-red); opacity: 0; transition: opacity 0.3s ease;
-        }
+    .card {
+        background: var(--surface-color);
+        border-radius: 16px;
+        padding: 2.5rem 2rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 
-        .card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: transparent; }
-        .card:hover::before { opacity: 1; }
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--tu-red);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
 
-        /* จัดการไอคอนสีเดียวตรงนี้ */
-        .card-icon {
-            font-size: 1.8rem;
-            color: var(--tu-red);
-            background: var(--tu-red-light);
-            width: 55px;
-            height: 55px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-            margin-bottom: 1.2rem;
-        }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+        border-color: transparent;
+    }
 
-        .card h2 { color: var(--text-main); font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .card > p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+    .card:hover::before {
+        opacity: 1;
+    }
 
-        .feature-list { list-style: none; margin-bottom: 2rem; flex-grow: 1; }
-        .feature-list li { padding: 0.4rem 0 0.4rem 1.8rem; position: relative; color: var(--text-main); font-size: 0.95rem; }
-        
-        .feature-list li::before {
-            content: ""; position: absolute; left: 0; top: 10px; width: 6px; height: 10px;
-            border: solid var(--tu-red); border-width: 0 2px 2px 0; transform: rotate(45deg);
-        }
+    .card-icon {
+        font-size: 1.8rem;
+        color: var(--tu-red);
+        background: var(--tu-red-light);
+        width: 55px;
+        height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        margin-bottom: 1.2rem;
+    }
 
-        .btn {
-            display: block; width: 100%; text-align: center; padding: 0.85rem 1.5rem;
-            background-color: var(--tu-red); color: white; text-decoration: none;
-            border-radius: 10px; font-weight: 600; font-size: 1rem;
-            transition: all 0.3s ease; border: none; cursor: pointer; box-shadow: var(--shadow-red);
-        }
+    .card h2 {
+        color: var(--text-main);
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        margin-top: 0;
+    }
 
-        .btn:hover {
-            background-color: var(--tu-red-hover); transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(194, 30, 45, 0.35);
-        }
+    .card>p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
 
-        .btn-outline {
-            background-color: transparent; color: var(--tu-red);
-            border: 2px solid var(--tu-red); box-shadow: none;
-        }
+    .feature-list {
+        list-style: none;
+        margin-bottom: 2rem;
+        flex-grow: 1;
+        padding: 0;
+    }
 
-        .btn-outline:hover {
-            background-color: var(--tu-red-light); transform: translateY(-2px); box-shadow: none;
-        }
-    </style>
-</head>
+    .feature-list li {
+        padding: 0.4rem 0 0.4rem 1.8rem;
+        position: relative;
+        color: var(--text-main);
+        font-size: 0.95rem;
+    }
 
-<body>
-    <nav class="navbar">
-        <h1>TSE Room Booking System <span class="admin-badge"><i class="fa-solid fa-shield-halved" style="margin-right: 4px;"></i> Admin Panel</span></h1>
-        <div class="navbar-right">
-            <div class="user-info">
-                <span class="user-name">{{ user.first_name|default:user.username }}</span>
-                <span class="user-role">{{ user_role|default:"เจ้าหน้าที่" }}</span>
-            </div>
-            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn"><i class="fa-solid fa-right-from-bracket" style="margin-right: 5px;"></i> ออกจากระบบ</button>
-            </form>
-        </div>
-    </nav>
+    .feature-list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 10px;
+        width: 6px;
+        height: 10px;
+        border: solid var(--tu-red);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
 
-    <main class="container">
-        <div class="alert">
-            <i class="fa-solid fa-shield-check" style="font-size: 1.2rem; color: #047857;"></i>
-            <div>
-                <strong>ยินดีต้อนรับ!</strong> คุณเข้าสู่ระบบในฐานะผู้ดูแลระบบ
-            </div>
-        </div>
+    .btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 0.85rem 1.5rem;
+        background-color: var(--tu-red);
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        box-shadow: var(--shadow-red);
+    }
 
-        <div class="dashboard-grid">
-            <div class="card">
-                <div class="card-icon"><i class="fa-solid fa-check-to-slot"></i></div>
-                <h2>อนุมัติการจอง</h2>
-                <p>ตรวจสอบและอนุมัติการจองใหม่</p>
-                <ul class="feature-list">
-                    <li>ดูการจองที่รอการอนุมัติ</li>
-                    <li>อนุมัติหรือปฏิเสธพร้อมระบุเหตุผล</li>
-                    <li>ส่งแจ้งเตือนผู้จองอัตโนมัติ</li>
-                </ul>
-                <a href="{% url 'pending_bookings' %}" class="btn">ตรวจสอบการจอง</a>
-            </div>
+    .btn:hover {
+        background-color: var(--tu-red-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px 0 rgba(194, 30, 45, 0.35);
+        color: white;
+    }
 
-            <div class="card">
-                <div class="card-icon"><i class="fa-solid fa-users-gear"></i></div>
-                <h2>จัดการผู้ใช้งาน</h2>
-                <p>กำหนดบทบาทและจัดการบัญชีผู้ใช้</p>
-                <ul class="feature-list">
-                    <li>ดูรายชื่อผู้ใช้ทั้งหมดในระบบ</li>
-                    <li>กำหนดบทบาท (อาจารย์/เจ้าหน้าที่)</li>
-                    <li>ปิด/เปิดบัญชีผู้ใช้</li>
-                </ul>
-                <a href="{% url 'users_management' %}" class="btn btn-outline">จัดการผู้ใช้</a>
-            </div>
+    .btn-outline {
+        background-color: transparent;
+        color: var(--tu-red);
+        border: 2px solid var(--tu-red);
+        box-shadow: none;
+    }
 
-            <div class="card">
-                <div class="card-icon"><i class="fa-solid fa-building"></i></div>
-                <h2>จัดการห้อง</h2>
-                <p>เพิ่ม แก้ไข ห้องและจัดการข้อมูล</p>
-                <ul class="feature-list">
-                    <li>เพิ่มห้องประชุม/ห้องเรียนใหม่</li>
-                    <li>แก้ไขความจุและข้อมูลห้อง</li>
-                    <li>ปิด/เปิดการใช้งานห้องชั่วคราว</li>
-                </ul>
-                <a href="/admin/" class="btn btn-outline">จัดการห้อง</a>
-            </div>
+    .btn-outline:hover {
+        background-color: var(--tu-red-light);
+        transform: translateY(-2px);
+        box-shadow: none;
+        color: var(--tu-red);
+    }
 
-            <div class="card">
-                <div class="card-icon"><i class="fa-solid fa-chart-pie"></i></div>
-                <h2>รายงานสถิติ</h2>
-                <p>ดูสถิติและรายงานการใช้ห้อง</p>
-                <ul class="feature-list">
-                    <li>ดูอัตราการใช้งาน (Utilization Rate)</li>
-                    <li>สถิติแยกตามประเภท (สอน/อบรม)</li>
-                    <li>Export รายงานเป็นไฟล์</li>
-                </ul>
-                <a href="#" class="btn btn-outline">ดูรายงาน</a>
-            </div>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
 
-            <div class="card">
-                <div class="card-icon"><i class="fa-regular fa-calendar-days"></i></div>
-                <h2>ปฏิทินห้อง</h2>
-                <p>ดูตารางการใช้งานห้องทั้งหมดในรูปแบบปฏิทิน</p>
-                <ul class="feature-list">
-                    <li>ดูภาพรวมรายสัปดาห์และรายเดือน</li>
-                    <li>กรองข้อมูลตามห้องที่ต้องการ</li>
-                    <li>ตรวจสอบช่วงเวลาที่ห้องว่าง</li>
-                </ul>
-                <a href="#" class="btn btn-outline">เปิดปฏิทิน</a>
-            </div>
+    th {
+        text-align: left;
+        padding: 1rem;
+        color: #718096;
+        font-weight: 600;
+        border-bottom: 2px solid #edf2f7;
+    }
 
-            <div class="card">
-                <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
-                <h2>การตั้งค่าระบบ</h2>
-                <p>จัดการการตั้งค่าทั่วไปของระบบหลังบ้าน</p>
-                <ul class="feature-list">
-                    <li>เข้าสู่ระบบฐานข้อมูล (Django Admin)</li>
-                    <li>ตรวจสอบ Log การทำงาน</li>
-                    <li>ตั้งค่าการแจ้งเตือนต่างๆ</li>
-                </ul>
-                <a href="/admin/" class="btn btn-outline">ตั้งค่าระบบ</a>
-            </div>
-        </div>
-    </main>
-</body>
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid #edf2f7;
+        color: #4a5568;
+        vertical-align: middle;
+    }
 
-</html>
+    .action-btn {
+        background: white;
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .action-btn:hover {
+        border-color: var(--tu-red);
+        color: var(--tu-red);
+        background: #fff5f5;
+    }
+
+    .btn-approve:hover {
+        border-color: #10b981;
+        color: #10b981;
+        background: #ecfdf5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="alert">
+    <i class="fa-solid fa-shield-check" style="font-size: 1.2rem; color: #047857;"></i>
+    <div>
+        <strong>ยินดีต้อนรับ!</strong> คุณเข้าสู่ระบบในฐานะผู้ดูแลระบบ
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-check-to-slot"></i></div>
+        <h2>อนุมัติการจอง</h2>
+        <p>ตรวจสอบและอนุมัติการจองใหม่</p>
+        <ul class="feature-list">
+            <li>ดูการจองที่รอการอนุมัติ</li>
+            <li>อนุมัติหรือปฏิเสธการจอง</li>
+            <li>ส่งแจ้งเตือนผู้จองอัตโนมัติ</li>
+        </ul>
+        <a href="{% url 'pending_bookings' %}" class="btn">ตรวจสอบการจอง</a>
+    </div>
+
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-users-gear"></i></div>
+        <h2>จัดการผู้ใช้งาน</h2>
+        <p>กำหนดบทบาทและจัดการบัญชีผู้ใช้</p>
+        <ul class="feature-list">
+            <li>ดูรายชื่อผู้ใช้ทั้งหมดในระบบ</li>
+            <li>กำหนดบทบาท (อาจารย์/เจ้าหน้าที่)</li>
+            <li>ปิด/เปิดบัญชีผู้ใช้</li>
+        </ul>
+        <a href="{% url 'users_management' %}" class="btn btn-outline">จัดการผู้ใช้</a>
+    </div>
+
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-building"></i></div>
+        <h2>จัดการห้อง</h2>
+        <p>เพิ่ม แก้ไข ห้องและจัดการข้อมูล</p>
+        <ul class="feature-list">
+            <li>เพิ่มห้องประชุม/ห้องเรียนใหม่</li>
+            <li>แก้ไขความจุและข้อมูลห้อง</li>
+            <li>ปิด/เปิดการใช้งานห้องชั่วคราว</li>
+        </ul>
+        <a href="{% url 'room_management' %}" class="btn btn-outline">จัดการห้อง</a>
+    </div>
+
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        <h2>รายงานสถิติ</h2>
+        <p>ดูสถิติและรายงานการใช้ห้อง</p>
+        <ul class="feature-list">
+            <li>ดูอัตราการใช้งานห้องพัก</li>
+            <li>สถิติแยกตามวัตถุประสงค์และหลักสูตร</li>
+            <li>Export รายงานเป็น Excel / CSV</li>
+        </ul>
+        <a href="{% url 'room_report' %}" class="btn btn-outline">ดูรายงานสถิติ</a>
+    </div>
+
+    <div class="card">
+        <div class="card-icon"><i class="fa-regular fa-calendar-days"></i></div>
+        <h2>ปฏิทินห้อง</h2>
+        <p>ดูตารางการใช้งานห้องทั้งหมดในรูปแบบปฏิทิน</p>
+        <ul class="feature-list">
+            <li>ดูภาพรวมรายสัปดาห์และรายเดือน</li>
+            <li>กรองข้อมูลตามห้องที่ต้องการ</li>
+            <li>ตรวจสอบช่วงเวลาที่ห้องว่าง</li>
+        </ul>
+        <a href="{% url 'admin_calendar' %}" class="btn btn-outline">เปิดปฏิทิน</a>
+    </div>
+
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
+        <h2>การตั้งค่าระบบ</h2>
+        <p>จัดการการตั้งค่าทั่วไปของระบบหลังบ้าน</p>
+        <ul class="feature-list">
+            <li>เข้าสู่ระบบฐานข้อมูล (Django Admin)</li>
+            <li>ตรวจสอบ Log การทำงาน</li>
+            <li>ตั้งค่าการแจ้งเตือนต่างๆ</li>
+        </ul>
+        <a href="/admin/" class="btn btn-outline">ตั้งค่าระบบ</a>
+    </div>
+</div>
+
+{% endblock %}

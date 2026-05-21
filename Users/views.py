@@ -282,3 +282,17 @@ def reject_booking(request, booking_id):
 
     messages.warning(request, f"ปฏิเสธการจองห้อง {booking.room.room_code} แล้ว")
     return redirect("pending_bookings")
+
+@login_required
+def room_report_view(request):
+    # ในอนาคตสามารถประมวลผลช่วงเวลาและคำนวณข้อมูลจาก Database ส่งไปที่เทมเพลตได้ตรงนี้ครับ
+    return render(request, 'Users/room_report.html')
+
+@login_required
+def room_management_view(request):
+    # ในอนาคตคุณสามารถ Query ข้อมูล Room Models และ Blackout Models ส่งไปวนลูปใน Template ได้ที่นี่ครับ
+    return render(request, 'Users/room_management.html')
+
+@login_required
+def admin_calendar_view(request):
+    return render(request, 'Users/admin_calendar.html')

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}รายงานสถิติการใช้งานห้อง - ผู้ดูแลระบบ{% endblock %}
+
+{% block extra_style %}
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        color: #1e2937;
+        font-size: 1.75rem;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .page-header p {
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .report-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+    }
+
+    .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+        align-items: flex-end;
+        background: #f8fafc;
+        padding: 1.25rem;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4b5563;
+    }
+
+    .input-date {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        outline: none;
+        background: white;
+    }
+
+    .input-date:focus {
+        border-color: var(--tu-red);
+    }
+
+    .btn-filter {
+        background-color: var(--tu-red);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: 0.2s;
+        height: 38px;
+        font-family: inherit;
+    }
+
+    .btn-filter:hover {
+        background-color: #a01825;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+    }
+
+    .btn-export {
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: 0.2s;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-family: inherit;
+        color: white;
+    }
+
+    .btn-export-csv {
+        background-color: #16a34a;
+    }
+
+    .btn-export-csv:hover {
+        background-color: #15803d;
+    }
+
+    .btn-export-excel {
+        background-color: #2563eb;
+    }
+
+    .btn-export-excel:hover {
+        background-color: #1d4ed8;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        margin-top: 1rem;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        background-color: #f8fafc;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    th {
+        padding: 1rem;
+        text-align: center;
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.9rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    td {
+        padding: 1rem;
+        border: 1px solid #edf2f7;
+        color: #374151;
+        font-size: 0.9rem;
+    }
+
+    tbody tr:hover {
+        background-color: #fcfcfc;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fa-solid fa-chart-line" style="color: var(--tu-red); margin-right: 10px;"></i>
+        รายงานสถิติการใช้งานห้อง</h1>
+    <p>ดูอัตราการใช้งานห้องเรียนและห้องประชุม จำแนกตามวัตถุประสงค์และหลักสูตรการเรียนการสอน</p>
+</div>
+
+<div class="report-card">
+    <form method="GET" action="" class="filter-bar">
+        <div class="filter-group">
+            <label><i class="fa-regular fa-calendar"></i> เริ่มต้นวันที่</label>
+            <input type="date" name="date_from" class="input-date" required>
+        </div>
+        <div class="filter-group">
+            <label><i class="fa-regular fa-calendar"></i> ถึงวันที่</label>
+            <input type="date" name="date_to" class="input-date" required>
+        </div>
+        <button type="submit" class="btn-filter"><i class="fa-solid fa-magnifying-glass"></i> ประมวลผล</button>
+
+        <div class="export-buttons">
+            <a href="?export=csv" class="btn-export btn-export-csv"
+                onclick="alert('ระบบกำลังดาวน์โหลดรายงานรูปแบบ CSV');"><i class="fa-solid fa-file-csv"></i> Export
+                CSV</a>
+            <a href="?export=excel" class="btn-export btn-export-excel"
+                onclick="alert('ระบบกำลังดาวน์โหลดรายงานรูปแบบ Excel');"><i class="fa-solid fa-file-excel"></i> Export
+                Excel</a>
+        </div>
+    </form>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2" style="text-align: left; vertical-align: middle; min-width: 180px;">ชื่อห้องเรียน /
+                        ห้องประชุม</th>
+                    <th rowspan="2" style="vertical-align: middle;">จำนวนครั้งที่ใช้</th>
+                    <th rowspan="2" style="vertical-align: middle;">ชั่วโมงรวม</th>
+                    <th rowspan="2" style="vertical-align: middle;">อัตราการใช้งาน<br>(Utilization Rate)</th>
+                    <th colspan="2">แยกตามประเภทวัตถุประสงค์ (ครั้ง/ชม.)</th>
+                    <th colspan="2">แยกตามสังกัดหลักสูตร (ครั้ง/ชม.)</th>
+                </tr>
+                <tr>
+                    <th>เพื่อการเรียนการสอน</th>
+                    <th>เพื่อการจัดอบรม/ประชุม</th>
+                    <th>หลักสูตรภาคปกติ (ไทย)</th>
+                    <th>หลักสูตรนานาชาติ (TEP/TEPE)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight:600; text-align: left;">ENG 406-3 (ห้องประชุม 1)</td>
+                    <td style="text-align: center;">24</td>
+                    <td style="text-align: center;">72 ชม.</td>
+                    <td style="text-align: center;"><strong style="color: #10b981;">80%</strong></td>
+                    <td style="text-align: center; color: #4b5563;">18 ครั้ง / 54 ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">6 ครั้ง / 18 ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">14 ครั้ง / 42 ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">10 ครั้ง / 30 ชม.</td>
+                </tr>
+                <tr>
+                    <td style="font-weight:600; text-align: left;">ENG 406-5 (ห้องประชุม 2)</td>
+                    <td style="text-align: center;">14</td>
+                    <td style="text-align: center;">42 ชม.</td>
+                    <td style="text-align: center;"><strong style="color: #f59e0b;">55%</strong></td>
+                    <td style="text-align: center; color: #4b5563;">10 ครั้ง / 30 ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">4 ครั้ง / 12 ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">8 ครั้ง / 24 ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">6 ครั้ง / 18 ชม.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

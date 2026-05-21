@@ -1,0 +1,705 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}จัดการห้องเรียนและห้องประชุม - ผู้ดูแลระบบ{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root {
+        --tu-red-hover: #a01825;
+        --tu-red-light: #fef2f2;
+        --text-main: #1f2937;
+        --text-muted: #6b7280;
+        --surface-color: #ffffff;
+        --border-color: #e5e7eb;
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        color: #1e2937;
+        font-size: 1.75rem;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .page-header p {
+        color: #6b7280;
+        margin: 0;
+    }
+
+    /* ปุ่มควบคุมด้านบน */
+    .action-group {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-action-primary {
+        background-color: var(--tu-red);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+        transition: 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-action-primary:hover {
+        background-color: var(--tu-red-hover);
+    }
+
+    .btn-action-secondary {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+        transition: 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-action-secondary:hover {
+        background-color: #1d4ed8;
+    }
+
+    /* การจัดการแท็บสลับหน้าจอ */
+    .management-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 8px;
+    }
+
+    .tab-item {
+        background: none;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #6b7280;
+        cursor: pointer;
+        border-radius: 8px;
+        font-family: inherit;
+        transition: 0.2s;
+    }
+
+    .tab-item:hover {
+        background: #f3f4f6;
+        color: #1f2937;
+    }
+
+    .tab-item.active {
+        background-color: var(--tu-red-light);
+        color: var(--tu-red);
+    }
+
+    /* กล่องเนื้อหาและตาราง */
+    .content-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        margin-top: 1rem;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        background-color: #f8fafc;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.95rem;
+    }
+
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid #edf2f7;
+        color: #374151;
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+
+    tbody tr:hover {
+        background-color: #fbfbfb;
+    }
+
+    /* Badges สถานะ */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .badge-active {
+        background-color: #ecfdf5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+
+    .badge-disabled {
+        background-color: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+
+    .badge-warning {
+        background-color: #fffaf0;
+        color: #c2410c;
+        border: 1px solid #fcd34d;
+    }
+
+    /* ปุ่มการจัดการย่อยในตาราง */
+    .row-btn {
+        background: white;
+        border: 1px solid #cbd5e1;
+        color: #4b5563;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        font-family: inherit;
+        transition: 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .row-btn:hover {
+        border-color: var(--tu-red);
+        color: var(--tu-red);
+        background-color: var(--tu-red-light);
+    }
+
+    .row-btn-toggle:hover {
+        border-color: #2563eb;
+        color: #2563eb;
+        background-color: #eff6ff;
+    }
+
+    /* ----- สไตล์สำหรับ Popup Modal ฟอร์มเขียนใหม่/แก้ไข ----- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: var(--shadow-lg);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.show .modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #edf2f7;
+        padding-bottom: 10px;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        color: var(--text-main);
+        font-size: 1.35rem;
+        font-weight: 700;
+    }
+
+    .btn-close-modal {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 1.25rem;
+        transition: 0.2s;
+    }
+
+    .btn-close-modal:hover {
+        color: #475569;
+    }
+
+    /* ฟอร์มและอินพุต */
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        outline: none;
+        transition: 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 25px;
+        border-top: 1px solid #edf2f7;
+        padding-top: 15px;
+    }
+
+    .btn-cancel {
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+    .btn-cancel:hover {
+        background: #e2e8f0;
+    }
+
+    .btn-submit {
+        background: var(--tu-red);
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: 0.2s;
+    }
+
+    .btn-submit:hover {
+        background: var(--tu-red-hover);
+    }
+
+    .btn-submit-blue {
+        background: #2563eb;
+    }
+
+    .btn-submit-blue:hover {
+        background: #1d4ed8;
+    }
+
+    /* สีพิเศษสำหรับปุ่มแก้ไข */
+    .btn-submit-yellow {
+        background: #f59e0b;
+    }
+
+    .btn-submit-yellow:hover {
+        background: #d97706;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="fa-solid fa-building" style="color: var(--tu-red); margin-right: 10px;"></i>
+            จัดการระบบห้องเรียนและห้องประชุม</h1>
+        <p style="margin-top: 4px;">เพิ่ม แก้ไขข้อมูล เปิด/ปิดการใช้งานห้อง
+            และล็อกช่วงเวลาไม่พร้อมใช้งานสำหรับเทศกาลหรือปิดเทอม</p>
+    </div>
+    <div class="action-group">
+        <button class="btn-action-primary" onclick="openModal('addRoomModal')">
+            <i class="fa-solid fa-plus"></i> เพิ่มห้องใหม่
+        </button>
+        <button class="btn-action-secondary" onclick="openModal('addBlackoutModal')">
+            <i class="fa-solid fa-calendar-lock"></i> กำหนดช่วงล็อกห้อง (Blackout)
+        </button>
+    </div>
+</div>
+
+<div class="management-tabs">
+    <button id="tabRooms" class="tab-item active" onclick="switchTab('rooms')">
+        <i class="fa-solid fa-door-open"></i> รายการห้องทั้งหมด (3)
+    </button>
+    <button id="tabBlackouts" class="tab-item" onclick="switchTab('blackouts')">
+        <i class="fa-solid fa-calendar-xmark"></i> ช่วงเวลาปิดใช้งานปฏิทิน (Blackout Periods)
+    </button>
+</div>
+
+<div id="viewRooms" class="content-box">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>ชื่อห้อง</th>
+                    <th>ประเภทห้อง</th>
+                    <th style="text-align: center;">ความจุ (คน)</th>
+                    <th>สถานะระบบ</th>
+                    <th style="text-align: center;">การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 600; color: var(--text-main);">ENG 406-3 (ห้องประชุม 1)</td>
+                    <td>ห้องประชุมภาควิชา</td>
+                    <td style="text-align: center;">60</td>
+                    <td><span class="status-badge badge-active"><i class="fa-solid fa-circle-check"></i>
+                            เปิดใช้งานปกติ</span></td>
+                    <td style="text-align: center; display: flex; justify-content: center; gap: 8px;">
+                        <button class="row-btn"
+                            onclick="openEditRoomModal('1', 'ENG 406-3 (ห้องประชุม 1)', 'meeting', '60', 'true')">
+                            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
+                        </button>
+                        <button class="row-btn row-btn-toggle" onclick="alert('เปลี่ยนสถานะห้องเป็น ปิดใช้งาน');">
+                            <i class="fa-solid fa-power-off"></i> ปิดใช้งาน
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--text-main);">ENG 406-5 (ห้องประชุม 2)</td>
+                    <td>ห้องประชุมภาควิชา</td>
+                    <td style="text-align: center;">15</td>
+                    <td><span class="status-badge badge-active"><i class="fa-solid fa-circle-check"></i>
+                            เปิดใช้งานปกติ</span></td>
+                    <td style="text-align: center; display: flex; justify-content: center; gap: 8px;">
+                        <button class="row-btn"
+                            onclick="openEditRoomModal('2', 'ENG 406-5 (ห้องประชุม 2)', 'meeting', '15', 'true')">
+                            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
+                        </button>
+                        <button class="row-btn row-btn-toggle" onclick="alert('เปลี่ยนสถานะห้องเป็น ปิดใช้งาน');">
+                            <i class="fa-solid fa-power-off"></i> ปิดใช้งาน
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--text-main);">ENG 408-1 (ห้องประชุม 3)</td>
+                    <td>ห้องปฏิบัติการ (Lab)</td>
+                    <td style="text-align: center;">10</td>
+                    <td><span class="status-badge badge-disabled"><i class="fa-solid fa-circle-xmark"></i>
+                            ปิดใช้งานระบบ</span></td>
+                    <td style="text-align: center; display: flex; justify-content: center; gap: 8px;">
+                        <button class="row-btn"
+                            onclick="openEditRoomModal('3', 'ENG 408-1 (ห้องประชุม 3)', 'lab', '10', 'false')">
+                            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
+                        </button>
+                        <button class="row-btn row-btn-toggle" style="color: #16a34a; border-color: #bbf7d0;"
+                            onclick="alert('เปลี่ยนสถานะห้องเป็น เปิดใช้งาน');"><i class="fa-solid fa-bolt"></i>
+                            เปิดใช้งาน
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="viewBlackouts" class="content-box hidden">
+    <div
+        style="background-color: #eff6ff; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #2563eb; color: #1e40af; font-size: 0.95rem; margin-bottom: 1.5rem;">
+        <i class="fa-solid fa-circle-info"></i> <strong>ข้อมูลระบบล็อกห้อง:</strong>
+        ช่วงเวลาที่กำหนดด้านล่างนี้จะส่งผลให้ปฏิทินในระบบจองล็อกสถานะเป็นไม่พร้อมใช้งานโดยอัตโนมัติ
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>ห้องที่ได้รับผลกระทบ</th>
+                    <th>วันที่เริ่มต้น</th>
+                    <th>วันที่สิ้นสุด</th>
+                    <th>สาเหตุ/กิจกรรม</th>
+                    <th style="text-align: center;">สถานะล็อก</th>
+                    <th style="text-align: center;">การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 600; color: var(--text-main);">ทุกห้องในระบบ (All Rooms)</td>
+                    <td>1 มิถุนายน 2569</td>
+                    <td>31 กรกฎาคม 2569</td>
+                    <td>ช่วงปิดภาคการศึกษา / สรุปยอดระบบประจำปี</td>
+                    <td><span class="status-badge badge-warning"><i class="fa-solid fa-lock"></i>
+                            บังคับล็อกช่วงเวลา</span></td>
+                    <td style="text-align: center;">
+                        <button class="row-btn" style="color: #ef4444; border-color: #fecaca;"
+                            onclick="alert('ปลดล็อกช่วงเวลานี้');"><i class="fa-solid fa-unlock"></i> ปลดล็อก</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="addRoomModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-circle-plus" style="color: var(--tu-red); margin-right: 5px;"></i>
+                เพิ่มห้องใหม่เข้าระบบ</h2>
+            <button class="btn-close-modal" onclick="closeModal('addRoomModal')"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="action_type" value="add_room">
+
+            <div class="form-group">
+                <label>ชื่อห้องเรียน / ห้องประชุม <span style="color: red;">*</span></label>
+                <input type="text" name="room_name" class="form-control" placeholder="เช่น ENG 406-6 (ห้องเรียน 5)"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>ประเภทห้อง <span style="color: red;">*</span></label>
+                <select name="room_type" class="form-control" required>
+                    <option value="lecture">ห้องเรียน / ห้องบรรยาย</option>
+                    <option value="meeting">ห้องประชุมภาควิชา</option>
+                    <option value="lab">ห้องปฏิบัติการ (Lab)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>ความจุสูงสุด (จำนวนคน) <span style="color: red;">*</span></label>
+                <input type="number" name="capacity" class="form-control" placeholder="เช่น 30" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>สถานะเริ่มต้น</label>
+                <select name="is_active" class="form-control">
+                    <option value="true">เปิดใช้งานทันที</option>
+                    <option value="false">ปิดใช้งานชั่วคราว</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('addRoomModal')">ยกเลิก</button>
+                <button type="submit" class="btn-submit"
+                    onclick="alert('บันทึกข้อมูลห้องใหม่สำเร็จ!'); closeModal('addRoomModal'); return false;">บันทึกห้องใหม่</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="editRoomModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-pen-to-square" style="color: #f59e0b; margin-right: 5px;"></i>
+                แก้ไขข้อมูลห้อง</h2>
+            <button class="btn-close-modal" onclick="closeModal('editRoomModal')"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="action_type" value="edit_room">
+            <input type="hidden" name="room_id" id="edit_room_id">
+
+            <div class="form-group">
+                <label>ชื่อห้องเรียน / ห้องประชุม <span style="color: red;">*</span></label>
+                <input type="text" name="room_name" id="edit_room_name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>ประเภทห้อง <span style="color: red;">*</span></label>
+                <select name="room_type" id="edit_room_type" class="form-control" required>
+                    <option value="lecture">ห้องเรียน / ห้องบรรยาย</option>
+                    <option value="meeting">ห้องประชุมภาควิชา</option>
+                    <option value="lab">ห้องปฏิบัติการ (Lab)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>ความจุสูงสุด (จำนวนคน) <span style="color: red;">*</span></label>
+                <input type="number" name="capacity" id="edit_room_capacity" class="form-control" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>สถานะระบบ</label>
+                <select name="is_active" id="edit_is_active" class="form-control">
+                    <option value="true">เปิดใช้งานปกติ</option>
+                    <option value="false">ปิดใช้งานระบบ (ซ่อนจากปฏิทิน)</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('editRoomModal')">ยกเลิก</button>
+                <button type="submit" class="btn-submit btn-submit-yellow"
+                    onclick="alert('อัปเดตข้อมูลห้องสำเร็จ!'); closeModal('editRoomModal'); return false;">บันทึกการแก้ไข</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="addBlackoutModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-calendar-lock" style="color: #2563eb; margin-right: 5px;"></i>
+                ตั้งค่าช่วงเวลาปิดใช้งาน (Blackout)</h2>
+            <button class="btn-close-modal" onclick="closeModal('addBlackoutModal')"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="action_type" value="add_blackout">
+
+            <div class="form-group">
+                <label>เลือกห้องที่ต้องการล็อกปฏิทิน <span style="color: red;">*</span></label>
+                <select name="target_room" class="form-control" required>
+                    <option value="all">-- ทุกห้องในระบบ (All Rooms) --</option>
+                    <option value="ENG 406-3">ENG 406-3 (ห้องประชุม 1)</option>
+                    <option value="ENG 406-5">ENG 406-5 (ห้องประชุม 2)</option>
+                    <option value="ENG 408-1">ENG 408-1 (ห้องประชุม 3)</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>เริ่มต้นวันที่ <span style="color: red;">*</span></label>
+                    <input type="date" name="start_date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>สิ้นสุดวันที่ <span style="color: red;">*</span></label>
+                    <input type="date" name="end_date" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>สาเหตุ / หมายเหตุกิจกรรม <span style="color: red;">*</span></label>
+                <input type="text" name="reason" class="form-control"
+                    placeholder="เช่น ช่วงปิดภาคการศึกษา หรือ ปิดปรับปรุงระบบไฟ" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('addBlackoutModal')">ยกเลิก</button>
+                <button type="submit" class="btn-submit btn-submit-blue"
+                    onclick="alert('บันทึกการล็อกช่วงเวลาปฏิทินสำเร็จ!'); closeModal('addBlackoutModal'); return false;">ยืนยันการล็อกห้อง</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    // ฟังก์ชันจัดการแท็บสลับหน้าจอ
+    function switchTab(type) {
+        const tabRooms = document.getElementById('tabRooms');
+        const tabBlackouts = document.getElementById('tabBlackouts');
+        const viewRooms = document.getElementById('viewRooms');
+        const viewBlackouts = document.getElementById('viewBlackouts');
+
+        if (type === 'rooms') {
+            tabRooms.classList.add('active');
+            tabBlackouts.classList.remove('active');
+            viewRooms.classList.remove('hidden');
+            viewBlackouts.classList.add('hidden');
+        } else if (type === 'blackouts') {
+            tabRooms.classList.remove('active');
+            tabBlackouts.classList.add('active');
+            viewRooms.classList.add('hidden');
+            viewBlackouts.classList.remove('hidden');
+        }
+    }
+
+    // ฟังก์ชันควบคุมเปิด Modal (ทั่วไป)
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+    }
+
+    // ฟังก์ชันเปิด Modal แก้ไขห้อง พร้อมดึงข้อมูลเดิมไปใส่ใน Input
+    function openEditRoomModal(id, name, type, capacity, isActive) {
+        document.getElementById('edit_room_id').value = id;
+        document.getElementById('edit_room_name').value = name;
+        document.getElementById('edit_room_type').value = type;
+        document.getElementById('edit_room_capacity').value = capacity;
+        document.getElementById('edit_is_active').value = isActive;
+
+        openModal('editRoomModal');
+    }
+
+    // ฟังก์ชันควบคุมปิด Modal
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+    }
+</script>
+{% endblock %}

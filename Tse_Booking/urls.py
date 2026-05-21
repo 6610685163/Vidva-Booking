@@ -2,11 +2,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
+from Booking import views
 from Users.views import (
+    admin_calendar_view,
     login_view,
     logout_view,
     dashboard_view,
     assign_user_role_view,
+    room_management_view,
+    room_report_view,
     users_management_view,
     create_booking_view,
     pending_bookings_view,
@@ -26,6 +30,8 @@ urlpatterns = [
     path("bookings/pending/", pending_bookings_view, name="pending_bookings"),
     path("bookings/<int:booking_id>/approve/", approve_booking, name="approve_booking"),
     path("bookings/<int:booking_id>/reject/", reject_booking, name="reject_booking"),
-    # ดึงเส้นทางจากแอป Booking สำหรับระบบปฏิทินและการจองของอาจารย์
-    path("booking/", include("Booking.urls")),
+    path('booking/', include('Booking.urls')),
+    path('room-report/', room_report_view, name='room_report'),
+    path('admin-dashboard/rooms/', room_management_view, name='room_management'),
+    path('admin-dashboard/calendar/', admin_calendar_view, name='admin_calendar'),
 ]
