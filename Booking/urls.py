@@ -10,5 +10,5 @@ urlpatterns = [
     path("history/", views.my_bookings_view, name="my_bookings"),
     # path('my-bookings/', views.my_bookings_view, name='my_bookings'),
     path("my-calendar/", views.booking_calendar_view, name="booking_calendar"),
-    path("<int:booking_id>/cancel/", views.cancel_booking, name="cancel_booking"),
+    path("api/chatbot/", views.chatbot_api, name="chatbot_api"),
 ]

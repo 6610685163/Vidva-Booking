@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from .models import Booking, Room, AcademicSemester
+from django.http import JsonResponse
 from .forms import BookingForm
 
 # นำเข้าฟังก์ชันส่งแจ้งเตือนของเพื่อน
@@ -379,22 +380,55 @@ def booking_calendar_view(request):
     return render(request, "Booking/booking_calendar.html")
 
 
+# ==========================================
+# Chatbot API View
+# ==========================================
 @login_required(login_url="login")
-@require_http_methods(["POST"])
-def cancel_booking(request, booking_id):
-    # หาการจองที่เป็นของ user คนนี้จริงๆ
-    booking = get_object_or_404(Booking, id=booking_id, booker=request.user)
+def chatbot_api(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            user_message = data.get("message", "").strip().lower()
 
-    # ให้ยกเลิกได้เฉพาะที่ยัง "รออนุมัติ" เท่านั้น
-    if booking.status == "pending":
-        booking.status = "cancelled"
-        booking.save()
-        messages.success(
-            request, f"ยกเลิกการจองห้อง {booking.room.room_code} เรียบร้อยแล้ว"
-        )
-    else:
-        messages.error(
-            request, "ไม่สามารถยกเลิกการจองนี้ได้ เนื่องจากสถานะถูกเปลี่ยนไปแล้ว"
-        )
+            # Rule-based Logic (เช็ค Keyword)
+            if any(word in user_message for word in ["สวัสดี", "ดีจ้า", "ทักทาย"]):
+                reply = f"สวัสดีครับคุณ {request.user.first_name or request.user.username}! ผมคือผู้ช่วย Vidva Booking มีอะไรให้ผมช่วยไหมครับ?"
 
-    return redirect("my_bookings")
+            elif any(word in user_message for word in ["ว่าง", "ห้องว่าง", "เช็คห้อง"]):
+                reply = "คุณสามารถเช็คห้องว่างได้ที่หน้า 'ปฏิทินตารางห้อง' หรือกดเลือกเวลาในเมนู 'จองห้องใหม่' ระบบจะตรวจสอบให้ทันทีครับ 📅"
+
+            elif any(word in user_message for word in ["จอง", "วิธีจอง", "อยากจอง"]):
+                reply = "การจองห้องทำได้ง่ายๆ:\n1. ไปที่เมนู 'จองห้องใหม่'\n2. เลือกห้องและวัตถุประสงค์\n3. เลือกวัน-เวลาที่ต้องการ\n4. กดยืนยันเพื่อรอเจ้าหน้าที่อนุมัติครับ 📝"
+
+            elif any(word in user_message for word in ["ยกเลิก", "ไม่จองแล้ว"]):
+                reply = "หากต้องการยกเลิก ให้ไปที่เมนู 'รายการจองของฉัน' แล้วกดปุ่มยกเลิกในรายการที่ยังไม่ถึงวันใช้งานได้เลยครับ ❌"
+
+            elif any(word in user_message for word in ["อนุมัติ", "สถานะ", "รอนานไหม"]):
+                reply = "ปกติเจ้าหน้าที่จะใช้เวลาพิจารณาอนุมัติภายใน 1-2 วันทำการ หากได้รับการอนุมัติจะมี Email แจ้งเตือนส่งไปให้ครับ 📧"
+
+            # เมนูคำสั่งทั้งหมด
+            elif any(
+                word in user_message
+                for word in ["เมนู", "ช่วยเหลือ", "คำสั่ง", "ทำอะไรได้บ้าง"]
+            ):
+                reply = (
+                    "นี่คือคำสั่งที่ผมสามารถช่วยได้ครับ กดพิมพ์คำเหล่านี้มาได้เลย:\n"
+                    "- 📅 **'วิธีจอง'** (ดูขั้นตอนการจอง)\n"
+                    "- 🔍 **'เช็คห้อง'** (วิธีดูตารางว่าง)\n"
+                    "- ❌ **'ยกเลิก'** (วิธียกเลิกการจอง)\n"
+                    "- ⏳ **'สถานะ'** (ระยะเวลาอนุมัติ)"
+                )
+
+            # ข้อความเมื่อบอทไม่เข้าใจ (Fallback)
+            else:
+                reply = (
+                    "ขออภัยครับ ผมยังไม่ค่อยเข้าใจคำถามนี้ 😅\n"
+                    "ลองพิมพ์คำสั่งสั้นๆ เช่น 'วิธีจอง', 'เช็คห้อง', หรือพิมพ์ 'เมนู' เพื่อดูว่าผมช่วยอะไรได้บ้างนะครับ"
+                )
+
+            return JsonResponse({"reply": reply})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
