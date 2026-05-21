@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - ระบบจองห้อง มธ.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --tu-red: #c21e2d;
+            --tu-red-hover: #a01825;
+            --text-main: #374151;
+            --text-muted: #6b7280;
+            --bg-color: #f3f4f6;
+            --border-color: #d1d5db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .navbar {
+            background-color: var(--tu-red);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .navbar a:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            color: var(--tu-red);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--tu-red);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Sarabun', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--tu-red);
+            box-shadow: 0 0 0 3px rgba(194, 30, 45, 0.15);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--tu-red);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            font-family: 'Sarabun', sans-serif;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 1.5rem;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--tu-red-hover);
+        }
+
+        .alert-error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #f87171;
+        }
+
+        /* ซ่อนฟิลด์บางตัวไว้ก่อน จะแสดงผลด้วย JS */
+        #class-fields, #training-fields {
+            display: none;
+            background-color: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border: 1px dashed var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>สร้างการจองห้องใหม่</h1>
+        <a href="{% url 'dashboard' %}">กลับไปแดชบอร์ด</a>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>รายละเอียดการจอง</h2>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert-error">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" action="">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label>ห้องที่ต้องการจอง</label>
+                    {{ form.room }}
+                </div>
+
+                <div class="form-group">
+                    <label>วัตถุประสงค์การใช้งาน</label>
+                    {{ form.purpose_type }}
+                </div>
+
+                <div id="class-fields">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>รหัสวิชา</label>
+                            {{ form.subject_code }}
+                        </div>
+                        <div class="form-group">
+                            <label>ชื่อวิชา</label>
+                            {{ form.subject_name }}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>หลักสูตร</label>
+                        {{ form.curriculum }}
+                    </div>
+                </div>
+
+                <div id="training-fields">
+                    <div class="form-group">
+                        <label>ชื่อเรื่องการอบรม/ติว</label>
+                        {{ form.topic }}
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ตั้งแต่วันที่</label>
+                        {{ form.start_date }}
+                    </div>
+                    <div class="form-group">
+                        <label>ถึงวันที่</label>
+                        {{ form.end_date }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>วันในสัปดาห์ที่ต้องการใช้งาน</label>
+                    <div class="checkbox-group">
+                        {% for checkbox in form.selected_days %}
+                            <div class="checkbox-item">
+                                {{ checkbox.tag }} <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ตั้งแต่เวลา</label>
+                        {{ form.start_time }}
+                    </div>
+                    <div class="form-group">
+                        <label>ถึงเวลา</label>
+                        {{ form.end_time }}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">ยืนยันการจองห้อง</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // โค้ดสำหรับสลับช่องกรอกข้อมูลตามวัตถุประสงค์
+        document.addEventListener('DOMContentLoaded', function() {
+            const purposeSelect = document.querySelector('select[name="purpose_type"]');
+            const classFields = document.getElementById('class-fields');
+            const trainingFields = document.getElementById('training-fields');
+
+            function toggleFields() {
+                const value = purposeSelect.value;
+                if (value === 'class') {
+                    classFields.style.display = 'block';
+                    trainingFields.style.display = 'none';
+                } else if (value === 'training') {
+                    classFields.style.display = 'none';
+                    trainingFields.style.display = 'block';
+                } else {
+                    classFields.style.display = 'none';
+                    trainingFields.style.display = 'none';
+                }
+            }
+
+            // เรียกใช้ตอนโหลดหน้าเผื่อมีการเลือกค้างไว้
+            toggleFields();
+
+            // เรียกใช้เมื่อมีการเปลี่ยนค่าใน Dropdown
+            purposeSelect.addEventListener('change', toggleFields);
+        });
+    </script>
+</body>
+</html>

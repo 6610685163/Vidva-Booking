@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import UserProfile, Room
+from .models import UserProfile
 
 
 @admin.register(UserProfile)
@@ -38,27 +38,4 @@ class UserProfileAdmin(admin.ModelAdmin):
                 f"Admin {request.user.username} changed {obj.tu_username} role to {obj.role}"
             )
 
-
-@admin.register(Room)
-class RoomAdmin(admin.ModelAdmin):
-    """
-    Admin interface for Room management
-    Requirement: FR-ADM-01 - Room management
-    """
-    list_display = ('room_code', 'room_name', 'room_type', 'capacity', 'is_active')
-    list_filter = ('room_type', 'is_active')
-    search_fields = ('room_code', 'room_name')
-    fieldsets = (
-        (_('ข้อมูลห้อง'), {
-            'fields': ('room_code', 'room_name', 'room_type', 'capacity')
-        }),
-        (_('รายละเอียด'), {
-            'fields': ('description',),
-            'classes': ('collapse',)
-        }),
-        (_('สถานะ'), {
-            'fields': ('is_active',)
-        }),
-    )
-    readonly_fields = ('created_at', 'updated_at')
 

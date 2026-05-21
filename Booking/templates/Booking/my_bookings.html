@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}ประวัติการจองของฉัน{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h2 style="color: var(--tu-red); margin: 0;">
+            <i class="fa-solid fa-list-check"></i> ประวัติการจองของฉัน
+        </h2>
+        <a href="{% url 'dashboard' %}" style="text-decoration: none; color: #64748b;">
+            <i class="fa-solid fa-chevron-left"></i> กลับไปแดชบอร์ด
+        </a>
+    </div>
+
+    <div style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+        {% if my_bookings %}
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid #e2e8f0; color: #64748b;">
+                    <th style="padding: 15px 12px;">ห้องที่จอง</th>
+                    <th style="padding: 15px 12px;">วันที่ใช้งาน</th>
+                    <th style="padding: 15px 12px;">ช่วงเวลา</th>
+                    <th style="padding: 15px 12px;">วัตถุประสงค์</th>
+                    <th style="padding: 15px 12px;">สถานะ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in my_bookings %}
+                <tr style="border-bottom: 1px solid #f1f5f9; transition: 0.2s;">
+                    <td style="padding: 15px 12px; font-weight: 600; color: #1e293b;">{{ booking.room.room_code }}</td>
+                    <td style="padding: 15px 12px; color: #475569;">{{ booking.start_date|date:"d M Y" }}</td>
+                    <td style="padding: 15px 12px; color: #475569;">{{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</td>
+                    <td style="padding: 15px 12px; color: #475569;">{{ booking.topic|default:booking.subject_name }}
+                    </td>
+                    <td style="padding: 15px 12px;">
+                        {% if booking.status == 'pending' %}
+                        <span
+                            style="background: #fef3c7; color: #d97706; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">⏳
+                            รออนุมัติ</span>
+                        {% elif booking.status == 'approved' %}
+                        <span
+                            style="background: #d1fae5; color: #059669; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">✅
+                            อนุมัติแล้ว</span>
+                        {% elif booking.status == 'rejected' %}
+                        <span
+                            style="background: #fee2e2; color: #dc2626; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">❌
+                            ปฏิเสธ</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+            <i class="fa-regular fa-calendar-xmark" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+            <p style="font-size: 1.1rem; margin: 0;">คุณยังไม่มีประวัติการจองห้องในระบบ</p>
+            <a href="{% url 'booking_flow' %}"
+                style="display: inline-block; margin-top: 15px; color: var(--tu-red); text-decoration: none; font-weight: 500;">เริ่มต้นจองห้องแรกของคุณเลย
+                <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

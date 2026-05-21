@@ -182,7 +182,9 @@
             <li class="{% if request.resolver_match.url_name == 'booking_flow' %}active{% endif %}">
                 <a href="{% url 'booking_flow' %}"><i class="fa-solid fa-calendar-plus"></i> จองห้องใหม่</a>
             </li>
-            <li><a href="#"><i class="fa-solid fa-list-check"></i> รายการจองของฉัน</a></li>
+            <li class="{% if request.resolver_match.url_name == 'my_bookings' %}active{% endif %}">
+                <a href="{% url 'my_bookings' %}"><i class="fa-solid fa-list-check"></i> รายการจองของฉัน</a>
+            </li>
             <li><a href="#"><i class="fa-solid fa-calendar-days"></i> ปฏิทินตารางห้อง</a></li>
 
             {% if user.profile.role == 'admin' %}

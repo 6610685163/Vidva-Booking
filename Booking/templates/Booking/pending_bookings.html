@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - ระบบจองห้อง มธ.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --tu-red: #c21e2d;
+            --tu-red-hover: #a01825;
+            --tu-green: #28a745;
+            --tu-green-hover: #218838;
+            --text-main: #374151;
+            --text-muted: #6b7280;
+            --bg-color: #f3f4f6;
+            --border-color: #d1d5db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .navbar {
+            background-color: var(--tu-red);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .navbar a:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            color: var(--tu-red);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--tu-red);
+            padding-bottom: 0.5rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        thead {
+            background-color: var(--bg-color);
+            border-bottom: 2px solid var(--tu-red);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--tu-red);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-family: 'Sarabun', sans-serif;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-approve {
+            background-color: var(--tu-green);
+            color: white;
+            margin-right: 0.5rem;
+        }
+
+        .btn-approve:hover {
+            background-color: var(--tu-green-hover);
+        }
+
+        .btn-reject {
+            background-color: var(--tu-red);
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background-color: var(--tu-red-hover);
+        }
+
+        .purpose-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+
+        /* Modal Styling */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content h3 {
+            color: var(--tu-red);
+            margin-bottom: 1rem;
+        }
+
+        .modal-content textarea {
+            width: 100%;
+            height: 120px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Sarabun', sans-serif;
+            margin-bottom: 1.5rem;
+            resize: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .btn-secondary {
+            background-color: #9ca3af;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>{{ title }}</h1>
+        <a href="{% url 'dashboard' %}">กลับสู่แดชบอร์ด</a>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>รายการจองที่รอการอนุมัติ</h2>
+
+            {% if bookings %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ผู้จอง</th>
+                            <th>ห้อง</th>
+                            <th>วัตถุประสงค์</th>
+                            <th>วัน/เวลา</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bookings %}
+                        <tr>
+                            <td>
+                                <strong>{{ b.booker.username }}</strong><br>
+                                <small style="color: var(--text-muted);">{{ b.booker.email }}</small>
+                            </td>
+                            <td>{{ b.room.room_code }}</td>
+                            <td>
+                                <span class="purpose-badge">
+                                    {% if b.purpose_type == 'class' %}
+                                        วิชา: {{ b.subject_name }} ({{ b.subject_code }})
+                                    {% else %}
+                                        อบรม: {{ b.topic }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {{ b.start_date|date:"d M Y" }}<br>
+                                <small>{{ b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}</small>
+                            </td>
+                            <td>
+                                <form method="POST" action="{% url 'approve_booking' b.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-approve">อนุมัติ</button>
+                                </form>
+                                <button type="button" class="btn btn-reject" onclick="showRejectModal('{{ b.id }}')">ปฏิเสธ</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>ไม่มีรายการที่รอการอนุมัติในขณะนี้</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="rejectModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>ระบุเหตุผลการปฏิเสธ</h3>
+            <form id="rejectForm" method="POST" action="">
+                {% csrf_token %}
+                <textarea name="rejection_reason" placeholder="กรุณาระบุเหตุผลที่ไม่อนุมัติการจองนี้..." required></textarea>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hideRejectModal()">ยกเลิก</button>
+                    <button type="submit" class="btn btn-reject">ยืนยันการปฏิเสธ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showRejectModal(bookingId) {
+            // ปรับ Path ให้ตรงกับ URL Configuration ของคุณ
+            document.getElementById('rejectForm').action = "/bookings/" + bookingId + "/reject/";
+            document.getElementById('rejectModal').style.display = 'block';
+        }
+
+        function hideRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+
+        // ปิด Modal เมื่อคลิกพื้นที่ด้านนอก
+        window.onclick = function(event) {
+            const modal = document.getElementById('rejectModal');
+            if (event.target == modal) {
+                hideRejectModal();
+            }
+        }
+    </script>
+</body>
+</html>

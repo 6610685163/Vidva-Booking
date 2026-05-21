@@ -449,6 +449,20 @@
 {% endblock %}
 
 {% block content %}
+{% if messages %}
+<div style="max-width: 800px; margin: 0 auto 20px auto;">
+    {% for message in messages %}
+    <div style="padding: 15px; border-radius: 8px; margin-bottom: 10px; 
+            {% if message.tags == 'error' %}
+                background-color: #fee2e2; color: #991b1b; border-left: 5px solid #ef4444;
+            {% else %}
+                background-color: #d1fae5; color: #065f46; border-left: 5px solid #10b981;
+            {% endif %}">
+        <i class="fa-solid fa-circle-info"></i> {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 <div class="steps">
     <div id="s1" class="step active">1. เลือกห้อง</div>
     <div id="s2" class="step">2. ตารางรายเดือน</div>
@@ -545,8 +559,7 @@
                 <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบภาคปลาย" required>
             </div>
 
-            <button type="submit" class="btn-submit"
-                onclick="alert('ส่งคำขอจองห้องเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">ส่งคำขอจองห้อง</button>
+            <button type="submit" class="btn-submit">ส่งคำขอจองห้อง</button>
         </form>
     </div>
 </div>
@@ -613,8 +626,7 @@
             </div>
 
             <div style="text-align: right;">
-                <button type="submit" class="btn-submit" style="width: auto; padding: 15px 40px; border-radius: 50px;"
-                    onclick="alert('ส่งคำขอจองห้องแบบทั้งเทอมเรียบร้อยแล้ว!'); window.location.href='{% url 'dashboard' %}'; return false;">
+                <button type="submit" class="btn-submit" style="width: auto; padding: 15px 40px; border-radius: 50px;">
                     ส่งคำขอจองแบบทั้งเทอม <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>
                 </button>
             </div>
@@ -651,6 +663,8 @@
     let selectedDates = [];
     let selectedTimeSlots = [];
     const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    const serverBookings = JSON.parse('{{ booked_data_json|escapejs }}');
 
     function openBookingModal(roomName) {
         pendingRoom = roomName;
@@ -710,9 +724,24 @@
         for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="day empty"></div>`; }
 
         for (let d = 1; d <= daysInMonth; d++) {
-            let statusNum = 0;
-            if ((d + month) % 5 === 0) statusNum = 2;
-            else if ((d + month) % 3 === 0) statusNum = 1;
+            let statusNum = 0; // 0 = ว่าง (สีเขียว)
+
+            // แปลงวันที่ในปฏิทินให้เป็น Format "YYYY-MM-DD" เพื่อเทียบกับ Database
+            let mStr = (month + 1).toString().padStart(2, '0');
+            let dStr = d.toString().padStart(2, '0');
+            let dateString = `${year}-${mStr}-${dStr}`;
+
+            // หาชื่อห้องปัจจุบัน (เช่น "ENG 406-3(ห้องประชุม 1)" -> "ENG 406-3")
+            let roomCode = currentRoom.split("(")[0].trim();
+
+            // เช็คว่ามีคิวการจองใน Database ที่ตรงกับห้องนี้และวันนี้หรือไม่
+            let todaysBookings = serverBookings.filter(b => b.room_code === roomCode && b.start_date === dateString);
+
+            if (todaysBookings.length >= 2) {
+                statusNum = 2; // สีแดง (จองไปแล้ว 2 ช่วงเวลา = เต็ม)
+            } else if (todaysBookings.length === 1) {
+                statusNum = 1; // สีเหลือง (จองไปแล้ว 1 ช่วงเวลา = ว่างบางส่วน)
+            }
 
             const s = [{ c: 'status-available', d: '#10b981' }, { c: 'status-partial', d: '#f59e0b' }, { c: 'status-full', d: '#ef4444' }][statusNum];
             const isChecked = selectedDates.some(sd => sd.day === d && sd.month === month && sd.year === year);
@@ -758,18 +787,48 @@
         section.style.display = "block";
         selectedDates.sort((a, b) => new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day));
 
+        // 🎯 ดึงรหัสห้องที่กำลังเลือกอยู่
+        let roomCode = currentRoom.split("(")[0].trim();
+
         selectedDates.forEach(sd => {
             const dayFull = `${sd.day} ${sd.monthName} ${sd.year + 543}`;
-            const isSlot1 = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '09:00 - 12:00') ? 'selected-slot' : '';
-            const isSlot2 = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '13:00 - 16:00') ? 'selected-slot' : '';
 
+            // 🎯 สร้างวันที่แบบ YYYY-MM-DD เพื่อไปเช็คกับ serverBookings
+            let mStr = (sd.month + 1).toString().padStart(2, '0');
+            let dStr = sd.day.toString().padStart(2, '0');
+            let dbDateStr = `${sd.year}-${mStr}-${dStr}`;
+
+            // 🎯 ตรวจสอบว่าเวลานี้ถูกจองไปหรือยัง (ใน Database)
+            let isSlot1Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "09:00");
+            let isSlot2Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "13:00");
+            let isSlot3Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "16:00");
+
+            // ตรวจสอบว่า User กำลังคลิกเลือกอยู่หรือไม่
+            const isSlot1Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '09:00 - 12:00') ? 'selected-slot' : '';
+            const isSlot2Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '13:00 - 16:00') ? 'selected-slot' : '';
+            const isSlot3Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '16:00 - 18:00') ? 'selected-slot' : '';
+
+            // 🎯 สร้างปุ่มเวลา (ถ้าจองแล้วให้ล็อกเป็นสีเทาและแม่กุญแจแดง ถ้ายังให้กดได้ปกติ)
+            let btn1HTML = isSlot1Booked
+                ? `<div class="slot-btn disabled"><span>09:00 - 12:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
+                : `<div class="slot-btn ${isSlot1Selected}" onclick="toggleSlotSelection('${dayFull}', '09:00 - 12:00')"><span>09:00 - 12:00</span> ${isSlot1Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
+
+            let btn2HTML = isSlot2Booked
+                ? `<div class="slot-btn disabled"><span>13:00 - 16:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
+                : `<div class="slot-btn ${isSlot2Selected}" onclick="toggleSlotSelection('${dayFull}', '13:00 - 16:00')"><span>13:00 - 16:00</span> ${isSlot2Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
+
+            let btn3HTML = isSlot3Booked 
+                ? `<div class="slot-btn disabled"><span>16:00 - 18:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
+                : `<div class="slot-btn ${isSlot3Selected}" onclick="toggleSlotSelection('${dayFull}', '16:00 - 18:00')"><span>16:00 - 18:00</span> ${isSlot3Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
+
+            // นำปุ่มมาประกอบร่างเข้าด้วยกัน
             container.innerHTML += `
                 <div class="day-slot-group">
                     <div class="day-slot-header"><i class="fa-regular fa-calendar"></i> วันที่ ${dayFull}</div>
                     <div class="slot-grid">
-                        <div class="slot-btn ${isSlot1}" onclick="toggleSlotSelection('${dayFull}', '09:00 - 12:00')"><span>09:00 - 12:00</span> ${isSlot1 ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>
-                        <div class="slot-btn ${isSlot2}" onclick="toggleSlotSelection('${dayFull}', '13:00 - 16:00')"><span>13:00 - 16:00</span> ${isSlot2 ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>
-                        <div class="slot-btn disabled"><span>16:00 - 18:00</span> <i class="fa-solid fa-lock"></i></div>
+                        ${btn1HTML}
+                        ${btn2HTML}
+                        ${btn3HTML}
                     </div>
                 </div>
             `;
