@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
-
+ 
 {% block title %}จองห้องเรียน/ห้องประชุม{% endblock %}
-
+ 
 {% block extra_style %}
 <style>
     /* ----- แถบสถานะ ----- */
@@ -14,19 +14,19 @@
         font-weight: 500;
         color: #94a3b8;
     }
-
+ 
     .step.active {
         color: var(--tu-red);
         border-bottom: 2px solid var(--tu-red);
     }
-
+ 
     /* ----- หน้า 1: เลือกห้อง ----- */
     .room-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
         gap: 25px;
     }
-
+ 
     .card {
         background: white;
         border-radius: 15px;
@@ -39,20 +39,20 @@
         flex-direction: column;
         padding: 10px;
     }
-
+ 
     .card:hover {
         transform: translateY(-5px);
         border-color: var(--tu-red);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
-
+ 
     .card-title {
         color: var(--tu-red);
         font-size: 1.25rem;
         font-weight: 600;
         margin-bottom: 10px;
     }
-
+ 
     .room-img-placeholder {
         height: 150px;
         background: #f1f5f9;
@@ -63,13 +63,13 @@
         justify-content: center;
         overflow: hidden;
     }
-
+ 
     .room-img-placeholder img {
         width: 100%;
         height: 100%;
         object-fit: cover;
     }
-
+ 
     /* ----- หน้า 2: ปฏิทิน ----- */
     .calendar-container {
         background: white;
@@ -77,13 +77,13 @@
         border-radius: 20px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
-
+ 
     .calendar-controls {
         display: flex;
         gap: 10px;
         align-items: center;
     }
-
+ 
     .select-input {
         padding: 8px 12px;
         border-radius: 8px;
@@ -93,25 +93,25 @@
         cursor: pointer;
         outline: none;
     }
-
+ 
     .select-input:focus {
         border-color: var(--tu-red);
     }
-
+ 
     .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 10px;
         margin-top: 20px;
     }
-
+ 
     .day-label {
         text-align: center;
         font-weight: 600;
         color: #64748b;
         padding-bottom: 10px;
     }
-
+ 
     .day {
         height: 80px;
         border-radius: 12px;
@@ -124,55 +124,55 @@
         border: 1px solid #f1f5f9;
         position: relative;
     }
-
+ 
     .day:not(.empty):hover {
         transform: scale(1.05);
         z-index: 10;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
-
+ 
     .day.empty {
         border: none;
         cursor: default;
         background: transparent;
     }
-
+ 
     .day .date {
         font-weight: 600;
         font-size: 1.1rem;
     }
-
+ 
     .day .status-dot {
         width: 8px;
         height: 8px;
         border-radius: 50%;
         margin-top: 5px;
     }
-
+ 
     .status-full {
         background-color: #fee2e2;
         color: var(--red);
         border-color: #fecaca;
         cursor: not-allowed;
     }
-
+ 
     .status-partial {
         background-color: #fef3c7;
         color: var(--yellow);
         border-color: #fde68a;
     }
-
+ 
     .status-available {
         background-color: #ecfdf5;
         color: var(--green);
         border-color: #d1fae5;
     }
-
+ 
     .day.selected-day {
         border: 2px solid #3b82f6 !important;
         background-color: #eff6ff !important;
     }
-
+ 
     /* ----- สไตล์กลุ่มเวลา Minimal & มีมิติ ----- */
     .time-slots {
         margin-top: 30px;
@@ -181,14 +181,14 @@
         display: none;
         animation: fadeIn 0.4s;
     }
-
+ 
     .day-slot-group {
         margin-bottom: 20px;
         background: transparent;
         padding: 0 0 15px 0;
         border-bottom: 1px solid #e2e8f0;
     }
-
+ 
     .day-slot-header {
         font-weight: 600;
         color: #334155;
@@ -198,13 +198,13 @@
         gap: 8px;
         font-size: 1.05rem;
     }
-
+ 
     .slot-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 12px;
     }
-
+ 
     .slot-btn {
         padding: 12px 18px;
         border-radius: 30px;
@@ -219,21 +219,21 @@
         font-weight: 500;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
     }
-
+ 
     .slot-btn:hover:not(.disabled) {
         border-color: var(--tu-red);
         color: var(--tu-red);
         box-shadow: 0 6px 12px rgba(139, 0, 0, 0.08);
         transform: translateY(-2px);
     }
-
+ 
     .slot-btn.selected-slot {
         border-color: #3b82f6 !important;
         background-color: #eff6ff !important;
         color: #1e3a8a;
         box-shadow: 0 6px 12px rgba(59, 130, 246, 0.15);
     }
-
+ 
     .slot-btn.disabled {
         opacity: 0.6;
         cursor: not-allowed;
@@ -242,7 +242,7 @@
         box-shadow: none;
         color: #94a3b8;
     }
-
+ 
     /* ----- ฟอร์ม (หน้า 3 และ 4) ----- */
     .form-box {
         max-width: 600px;
@@ -252,18 +252,18 @@
         border-radius: 20px;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
     }
-
+ 
     .form-group {
         margin-bottom: 20px;
     }
-
+ 
     label {
         display: block;
         margin-bottom: 8px;
         font-weight: 600;
         color: #1e293b;
     }
-
+ 
     input[type="text"], input[type="email"] {
         width: 100%;
         padding: 12px;
@@ -271,7 +271,7 @@
         border-radius: 8px;
         font-family: inherit;
     }
-
+ 
     .btn-submit {
         background: var(--tu-red);
         color: white;
@@ -284,12 +284,12 @@
         cursor: pointer;
         transition: 0.3s;
     }
-
+ 
     .btn-submit:hover {
         background: #6b0000;
         box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
     }
-
+ 
     /* ----- สไตล์สำหรับ Popup Modal ----- */
     .modal-overlay {
         position: fixed;
@@ -306,12 +306,12 @@
         opacity: 0;
         transition: opacity 0.3s ease;
     }
-
+ 
     .modal-overlay.show {
         display: flex;
         opacity: 1;
     }
-
+ 
     .modal-content {
         background: white;
         padding: 30px;
@@ -322,18 +322,18 @@
         transform: translateY(20px);
         transition: transform 0.3s ease;
     }
-
+ 
     .modal-overlay.show .modal-content {
         transform: translateY(0);
     }
-
+ 
     .modal-buttons {
         display: flex;
         flex-direction: column;
         gap: 15px;
         margin-top: 25px;
     }
-
+ 
     .btn-option {
         background: #f8fafc;
         border: 2px solid #e2e8f0;
@@ -347,14 +347,14 @@
         gap: 8px;
         font-family: inherit;
     }
-
+ 
     .btn-option:hover {
         border-color: var(--tu-red);
         background: #fff5f5;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(139, 0, 0, 0.08);
     }
-
+ 
     .btn-option strong {
         font-size: 1.15rem;
         color: var(--tu-red);
@@ -362,13 +362,13 @@
         align-items: center;
         gap: 10px;
     }
-
+ 
     .btn-option small {
         color: #64748b;
         font-size: 0.95rem;
         line-height: 1.4;
     }
-
+ 
     .btn-close-modal {
         margin-top: 20px;
         background: none;
@@ -380,33 +380,33 @@
         padding: 10px;
         transition: 0.2s;
     }
-
+ 
     .btn-close-modal:hover {
         color: #334155;
         text-decoration: underline;
     }
-
+ 
     /* ----- สไตล์สำหรับ Checkbox แบบปุ่มกด (Minimal) ----- */
     .custom-checkbox-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
         gap: 10px;
     }
-
+ 
     .time-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
-
+ 
     .check-box-btn {
         display: block;
         cursor: pointer;
         margin: 0;
     }
-
+ 
     .check-box-btn input {
         display: none;
     }
-
+ 
     .check-box-btn span {
         display: block;
         border: 1.5px solid #e2e8f0;
@@ -418,28 +418,28 @@
         font-weight: 500;
         background: white;
     }
-
+ 
     .check-box-btn:hover span {
         border-color: #cbd5e1;
     }
-
+ 
     .check-box-btn input:checked+span {
         border-color: #3b82f6;
         background: #eff6ff;
         color: #1e3a8a;
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
     }
-
+ 
     .hidden {
         display: none;
     }
-
+ 
     @keyframes fadeIn {
         from {
             opacity: 0;
             transform: translateY(10px);
         }
-
+ 
         to {
             opacity: 1;
             transform: translateY(0);
@@ -447,7 +447,7 @@
     }
 </style>
 {% endblock %}
-
+ 
 {% block content %}
 <div class="steps">
     <div id="s1" class="step active">1. เลือกห้อง</div>
@@ -455,7 +455,7 @@
     <div id="s3" class="step">3. ข้อมูลการจอง</div>
     <div id="s4" class="step hidden" style="display: none;">2. จองทั้งเทอม</div>
 </div>
-
+ 
 <div id="view1" class="room-grid">
     <div class="card" onclick="openBookingModal('ENG 406-3(ห้องประชุม 1)')">
         <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
@@ -493,7 +493,7 @@
         <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
     </div>
 </div>
-
+ 
 <div id="view2" class="hidden">
     <div class="calendar-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
@@ -507,13 +507,13 @@
                 <select id="yearSelect" class="select-input" onchange="renderCalendar()"></select>
             </div>
         </div>
-
+ 
         <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">
             <i class="fa-solid fa-circle-info"></i> เลือกวันที่ต้องการ (เลือกได้หลายวัน) เพื่อดูเวลาว่างด้านล่าง
         </p>
-
+ 
         <div class="calendar-grid" id="calendarGrid"></div>
-
+ 
         <div id="time-slots-section" class="time-slots">
             <h3
                 style="color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-top: 40px; font-weight: 600;">
@@ -522,39 +522,39 @@
         </div>
     </div>
 </div>
-
+ 
 <div id="view3" class="hidden">
     <div class="form-box">
         <h2 style="color:var(--tu-red); margin-top:0;">ยืนยันการจอง</h2>
-
+ 
         <button onclick="showStep(2, currentRoom)"
             style="border:none; background:none; cursor:pointer; color:var(--tu-red); margin-bottom: 15px; font-family: inherit;">
             <i class="fa-solid fa-chevron-left"></i> ย้อนกลับไปแก้ไขวัน/เวลา
         </button>
-
+ 
         <div id="summary-content" style="background:#f1f5f9; padding:18px; border-radius:12px; margin-bottom: 20px;">
         </div>
-
+ 
         <form method="POST" action="">
             {% csrf_token %}
             <input type="hidden" name="room_name" id="input_room_name">
             <input type="hidden" name="selected_data" id="input_selected_data">
-
+ 
             <div class="form-group">
                 <label>อีเมลสำหรับรับการแจ้งเตือนผล (บังคับ) <span style="color:red">*</span></label>
                 <input type="email" name="notification_email" placeholder="ตัวอย่าง: professor.name@gmail.com" required>
             </div>
-
+ 
             <div class="form-group">
                 <label>รหัสวิชา / วัตถุประสงค์ <span style="color:red">*</span></label>
                 <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบภาคปลาย" required>
             </div>
-
+ 
             <button type="submit" class="btn-submit">ส่งคำขอจองห้อง</button>
         </form>
     </div>
 </div>
-
+ 
 <div id="view4" class="hidden" style="display: none;">
     <div class="form-box" style="max-width: 800px;">
         <h2 style="color:var(--tu-red); margin-top:0;">รายละเอียดการจองทั้งเทอม</h2>
@@ -562,80 +562,119 @@
             style="border:none; background:none; cursor:pointer; color:var(--tu-red); margin-bottom: 20px; font-family: inherit;">
             <i class="fa-solid fa-chevron-left"></i> ยกเลิกและกลับไปหน้าแรก
         </button>
-
-        <div
-            style="background:#eff6ff; border: 1px solid #bfdbfe; padding:18px; border-radius:12px; margin-bottom: 25px; color: #1e3a8a;">
+ 
+        <div style="background:#eff6ff; border: 1px solid #bfdbfe; padding:18px; border-radius:12px; margin-bottom: 25px; color: #1e3a8a;">
             <div style="font-size: 1.1rem;"><strong><i class="fa-solid fa-location-dot"></i>
                     ห้องที่เลือกจองประจำ:</strong> <span id="semesterRoomName"></span></div>
         </div>
-
-        <form method="POST" action="">
+ 
+        <form method="POST" action="" id="semesterForm">
             {% csrf_token %}
             <input type="hidden" name="room_name" id="semester_input_room_name">
             <input type="hidden" name="booking_type" value="semester">
-
-            <div class="form-group" style="margin-bottom: 30px;">
+ 
+            {# อีเมล  #}
+            <div class="form-group" style="margin-bottom: 25px;">
                 <label>อีเมลสำหรับรับการแจ้งเตือนผล (บังคับ) <span style="color:red">*</span></label>
-                <input type="email" name="notification_email" placeholder="ตัวอย่าง: professor.name@gmail.com" required>
+                <input type="email" name="notification_email" placeholder="ตัวอย่าง: professor.name@gmail.com" required
+                    style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; box-sizing:border-box;">
             </div>
 
-            <div class="form-group" style="margin-bottom: 30px;">
-                <label>รหัสวิชา / วัตถุประสงค์การใช้งาน <span style="color:red">*</span></label>
-                <input type="text" name="purpose" placeholder="เช่น CN311 หรือ ติวสอบประจำสัปดาห์" required>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 30px;">
-                <label>เลือกวันในสัปดาห์ที่ต้องการใช้งาน <span style="color:red">*</span></label>
-                <div class="custom-checkbox-grid">
-                    <label class="check-box-btn"><input type="checkbox" name="days"
-                            value="จันทร์"><span>จันทร์</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="days"
-                            value="อังคาร"><span>อังคาร</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="days" value="พุธ"><span>พุธ</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="days"
-                            value="พฤหัสบดี"><span>พฤหัสบดี</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="days"
-                            value="ศุกร์"><span>ศุกร์</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="days"
-                            value="เสาร์"><span>เสาร์</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="days"
-                            value="อาทิตย์"><span>อาทิตย์</span></label>
+            {# วัตถุประสงค์  #}
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label>วัตถุประสงค์การใช้งาน <span style="color:red">*</span></label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+                    <label class="check-box-btn" id="purposeClassBtn">
+                        <input type="radio" name="purpose_type" value="class" checked onchange="togglePurposeFields('class')">
+                        <span style="border-radius:10px; padding:14px 10px; display:flex; align-items:center; gap:8px; justify-content:center;">
+                            <i class="fa-solid fa-chalkboard-teacher"></i> สอนปกติ/ชดเชย/เสริม
+                        </span>
+                    </label>
+                    <label class="check-box-btn" id="purposeTrainingBtn">
+                        <input type="radio" name="purpose_type" value="training" onchange="togglePurposeFields('training')">
+                        <span style="border-radius:10px; padding:14px 10px; display:flex; align-items:center; gap:8px; justify-content:center;">
+                            <i class="fa-solid fa-people-group"></i> จัดอบรม/จัดติว
+                        </span>
+                    </label>
+                </div>
+ 
+                {# Fields สำหรับ class  #}
+                <div id="classFields">
+                    <div style="display:grid; grid-template-columns:1fr 2fr; gap:12px; margin-bottom:12px;">
+                        <div>
+                            <label style="font-weight:400; font-size:0.9rem; color:#64748b;">รหัสวิชา <span style="color:red">*</span></label>
+                            <input type="text" name="subject_code" placeholder="เช่น CN311"
+                                style="width:100%; padding:11px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-weight:400; font-size:0.9rem; color:#64748b;">ชื่อวิชา <span style="color:red">*</span></label>
+                            <input type="text" name="subject_name" placeholder="เช่น Computer Networks"
+                                style="width:100%; padding:11px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; box-sizing:border-box;">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-weight:400; font-size:0.9rem; color:#64748b;">หลักสูตร</label>
+                        <select name="curriculum"
+                            style="width:100%; padding:11px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; background:white; box-sizing:border-box;">
+                            <option value="">-- เลือกหลักสูตร (ไม่บังคับ) --</option>
+                            <option value="regular">ปริญญาตรีภาคปกติ</option>
+                            <option value="master">ปริญญาโท</option>
+                            <option value="tep_tepe">TEP-TEPE</option>
+                            <option value="tu_pine">TU-PINE</option>
+                        </select>
+                    </div>
+                </div>
+ 
+                {# Fields สำหรับ training  #}
+                <div id="trainingFields" style="display:none;">
+                    <label style="font-weight:400; font-size:0.9rem; color:#64748b;">ชื่อเรื่อง/หัวข้ออบรม <span style="color:red">*</span></label>
+                    <input type="text" name="topic" placeholder="เช่น อบรม Python สำหรับนักศึกษา"
+                        style="width:100%; padding:11px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; box-sizing:border-box;">
                 </div>
             </div>
-
+ 
+            {# วันในสัปดาห์  #}
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label>เลือกวันในสัปดาห์ที่ต้องการใช้งาน <span style="color:red">*</span></label>
+                <div class="custom-checkbox-grid">
+                    <label class="check-box-btn"><input type="checkbox" name="days" value="จันทร์"><span>จันทร์</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days" value="อังคาร"><span>อังคาร</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days" value="พุธ"><span>พุธ</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days" value="พฤหัสบดี"><span>พฤหัสบดี</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days" value="ศุกร์"><span>ศุกร์</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days" value="เสาร์"><span>เสาร์</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="days" value="อาทิตย์"><span>อาทิตย์</span></label>
+                </div>
+            </div>
+ 
+            {# ช่วงเวลา  #}
             <div class="form-group" style="margin-bottom: 30px;">
                 <label>เลือกช่วงเวลา (เลือกได้หลายช่วง) <span style="color:red">*</span></label>
                 <div class="custom-checkbox-grid time-grid">
-                    <label class="check-box-btn"><input type="checkbox" name="times" value="08:00 - 09:30"><span>08:00 -
-                            09:30</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="times" value="09:30 - 11:00"><span>09:30 -
-                            11:00</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="times" value="11:00 - 12:30"><span>11:00 -
-                            12:30</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="times" value="13:30 - 15:00"><span>13:30 -
-                            15:00</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="times" value="15:00 - 16:30"><span>15:00 -
-                            16:30</span></label>
-                    <label class="check-box-btn"><input type="checkbox" name="times" value="16:30 - 18:00"><span>16:30 -
-                            18:00</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="08:00 - 09:30"><span>08:00 - 09:30</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="09:30 - 11:00"><span>09:30 - 11:00</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="11:00 - 12:30"><span>11:00 - 12:30</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="13:30 - 15:00"><span>13:30 - 15:00</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="15:00 - 16:30"><span>15:00 - 16:30</span></label>
+                    <label class="check-box-btn"><input type="checkbox" name="times" value="16:30 - 18:00"><span>16:30 - 18:00</span></label>
                 </div>
             </div>
-
+ 
             <div style="text-align: right;">
-                <button type="submit" class="btn-submit" style="width: auto; padding: 15px 40px; border-radius: 50px;">
+                <button type="button" class="btn-submit" style="width: auto; padding: 15px 40px; border-radius: 50px;" onclick="submitSemesterForm()">
                     ส่งคำขอจองแบบทั้งเทอม <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>
                 </button>
             </div>
         </form>
     </div>
 </div>
-
+ 
 <div id="bookingTypeModal" class="modal-overlay">
     <div class="modal-content">
         <h2 style="color: var(--tu-red); margin-top: 0; margin-bottom: 10px;">รูปแบบการจองห้อง</h2>
         <p style="color: #64748b; margin-bottom: 20px;">ห้อง: <strong style="color:#1e293b;"
                 id="modalRoomName"></strong></p>
-
+ 
         <div class="modal-buttons">
             <button class="btn-option" onclick="selectBookingType('semester')">
                 <strong><i class="fa-solid fa-calendar-week"></i> จองแบบทั้งเทอม</strong>
@@ -649,9 +688,9 @@
         <button class="btn-close-modal" onclick="closeModal()">ย้อนกลับ</button>
     </div>
 </div>
-
+ 
 {% endblock %}
-
+ 
 {% block extra_script %}
 <script>
     let currentRoom = "";
@@ -659,9 +698,9 @@
     let selectedDates = [];
     let selectedTimeSlots = [];
     const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-
+ 
     const serverBookings = JSON.parse('{{ booked_data_json|escapejs }}');
-
+ 
     function openBookingModal(roomName) {
         pendingRoom = roomName;
         document.getElementById('modalRoomName').innerText = roomName;
@@ -669,19 +708,19 @@
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('show'), 10);
     }
-
+ 
     function closeModal() {
         const modal = document.getElementById('bookingTypeModal');
         modal.classList.remove('show');
         setTimeout(() => modal.style.display = 'none', 300);
     }
-
+ 
     function selectBookingType(type) {
         closeModal();
         if (type === 'daily') { showStep(2, pendingRoom); }
         else if (type === 'semester') { showStep(4, pendingRoom); }
     }
-
+ 
     function initCalendarSelects() {
         const mSelect = document.getElementById('monthSelect');
         const ySelect = document.getElementById('yearSelect');
@@ -700,50 +739,61 @@
             ySelect.appendChild(opt);
         }
     }
+    
+    function isTimeOverlap(start1, end1, start2, end2) {
+        return (start1 < end2) && (end1 > start2);
+    }
 
     function renderCalendar() {
         initCalendarSelects();
         const grid = document.getElementById('calendarGrid');
         let month = parseInt(document.getElementById('monthSelect').value);
         let year = parseInt(document.getElementById('yearSelect').value);
-
+ 
         if (isNaN(month) || isNaN(year)) {
             const now = new Date(); month = now.getMonth(); year = now.getFullYear();
         }
-
+ 
         grid.innerHTML = "";
         ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => { grid.innerHTML += `<div class="day-label">${day}</div>`; });
-
+ 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-
+ 
         for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="day empty"></div>`; }
-
+ 
         for (let d = 1; d <= daysInMonth; d++) {
             let statusNum = 0; // 0 = ว่าง (สีเขียว)
-
+ 
             // แปลงวันที่ในปฏิทินให้เป็น Format "YYYY-MM-DD" เพื่อเทียบกับ Database
             let mStr = (month + 1).toString().padStart(2, '0');
             let dStr = d.toString().padStart(2, '0');
             let dateString = `${year}-${mStr}-${dStr}`;
-
+ 
             // หาชื่อห้องปัจจุบัน (เช่น "ENG 406-3(ห้องประชุม 1)" -> "ENG 406-3")
             let roomCode = currentRoom.split("(")[0].trim();
+            
+            let currentJSDate = new Date(year, month, d);
+            let pyDayStr = ((currentJSDate.getDay() === 0) ? 6 : currentJSDate.getDay() - 1).toString();
 
             // เช็คว่ามีคิวการจองใน Database ที่ตรงกับห้องนี้และวันนี้หรือไม่
-            let todaysBookings = serverBookings.filter(b => b.room_code === roomCode && b.start_date === dateString);
-
-            if (todaysBookings.length >= 2) {
-                statusNum = 2; // สีแดง (จองไปแล้ว 2 ช่วงเวลา = เต็ม)
-            } else if (todaysBookings.length === 1) {
-                statusNum = 1; // สีเหลือง (จองไปแล้ว 1 ช่วงเวลา = ว่างบางส่วน)
-            }
-
+            let todaysBookings = serverBookings.filter(b => {
+                if (b.room_code !== roomCode) return false;
+                if (dateString >= b.start_date && dateString <= b.end_date) {
+                    if (b.start_date === b.end_date) return true; // รายวัน
+                    if (b.days_of_week && b.days_of_week.split(',').includes(pyDayStr)) return true; // ทั้งเทอม
+                }
+                return false;
+            });
+ 
+            if (todaysBookings.length >= 6) statusNum = 2; // เต็ม
+            else if (todaysBookings.length > 0) statusNum = 1;
+            
             const s = [{ c: 'status-available', d: '#10b981' }, { c: 'status-partial', d: '#f59e0b' }, { c: 'status-full', d: '#ef4444' }][statusNum];
             const isChecked = selectedDates.some(sd => sd.day === d && sd.month === month && sd.year === year);
             const selectedClass = isChecked ? 'selected-day' : '';
-            const clickAction = (s.c !== 'status-full') ? `onclick="toggleDateSelection(${d}, ${month}, ${year})"` : "";
-
+            const clickAction = `onclick="toggleDateSelection(${d}, ${month}, ${year})"`;
+ 
             grid.innerHTML += `
                 <div class="day ${s.c} ${selectedClass}" ${clickAction}>
                     <span class="date">${d}</span>
@@ -753,7 +803,7 @@
         }
         renderTimeSlots();
     }
-
+ 
     function toggleDateSelection(d, m, y) {
         const idx = selectedDates.findIndex(sd => sd.day === d && sd.month === m && sd.year === y);
         if (idx > -1) {
@@ -765,58 +815,75 @@
         }
         renderCalendar();
     }
-
+ 
     function toggleSlotSelection(dateStr, timeStr) {
         const idx = selectedTimeSlots.findIndex(s => s.dateStr === dateStr && s.timeStr === timeStr);
         if (idx > -1) selectedTimeSlots.splice(idx, 1);
         else selectedTimeSlots.push({ dateStr, timeStr });
         renderTimeSlots();
     }
-
+ 
     function renderTimeSlots() {
         const container = document.getElementById('selected-days-slots-container');
         const section = document.getElementById('time-slots-section');
         container.innerHTML = "";
-
+ 
         if (selectedDates.length === 0) { section.style.display = "none"; return; }
-
+ 
         section.style.display = "block";
         selectedDates.sort((a, b) => new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day));
-
+ 
         // 🎯 ดึงรหัสห้องที่กำลังเลือกอยู่
         let roomCode = currentRoom.split("(")[0].trim();
-
+ 
         selectedDates.forEach(sd => {
             const dayFull = `${sd.day} ${sd.monthName} ${sd.year + 543}`;
-
+ 
             // 🎯 สร้างวันที่แบบ YYYY-MM-DD เพื่อไปเช็คกับ serverBookings
             let mStr = (sd.month + 1).toString().padStart(2, '0');
             let dStr = sd.day.toString().padStart(2, '0');
             let dbDateStr = `${sd.year}-${mStr}-${dStr}`;
+            
+            let currentJSDate = new Date(sd.year, sd.month, sd.day);
+            let pyDayStr = ((currentJSDate.getDay() === 0) ? 6 : currentJSDate.getDay() - 1).toString();
+
+            // 🎯 เช็คการทับซ้อนของเวลาให้แม่นยำขึ้น
+            let checkOverlap = (startTime, endTime) => {
+                return serverBookings.some(b => {
+                    if (b.room_code !== roomCode) return false;
+                    let inDateRange = (dbDateStr >= b.start_date && dbDateStr <= b.end_date);
+                    let isDayMatch = (b.start_date === b.end_date) || (b.days_of_week && b.days_of_week.split(',').includes(pyDayStr));
+                    
+                    if (inDateRange && isDayMatch) {
+                        return isTimeOverlap(startTime, endTime, b.start_time, b.end_time);
+                    }
+                    return false;
+                });
+            };
 
             // 🎯 ตรวจสอบว่าเวลานี้ถูกจองไปหรือยัง (ใน Database)
             let isSlot1Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "09:00");
             let isSlot2Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "13:00");
             let isSlot3Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "16:00");
-
+ 
             // ตรวจสอบว่า User กำลังคลิกเลือกอยู่หรือไม่
             const isSlot1Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '09:00 - 12:00') ? 'selected-slot' : '';
             const isSlot2Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '13:00 - 16:00') ? 'selected-slot' : '';
             const isSlot3Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '16:00 - 18:00') ? 'selected-slot' : '';
-
+ 
             // 🎯 สร้างปุ่มเวลา (ถ้าจองแล้วให้ล็อกเป็นสีเทาและแม่กุญแจแดง ถ้ายังให้กดได้ปกติ)
             let btn1HTML = isSlot1Booked
                 ? `<div class="slot-btn disabled"><span>09:00 - 12:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
                 : `<div class="slot-btn ${isSlot1Selected}" onclick="toggleSlotSelection('${dayFull}', '09:00 - 12:00')"><span>09:00 - 12:00</span> ${isSlot1Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
-
+ 
             let btn2HTML = isSlot2Booked
                 ? `<div class="slot-btn disabled"><span>13:00 - 16:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
                 : `<div class="slot-btn ${isSlot2Selected}" onclick="toggleSlotSelection('${dayFull}', '13:00 - 16:00')"><span>13:00 - 16:00</span> ${isSlot2Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
-
+ 
             let btn3HTML = isSlot3Booked 
                 ? `<div class="slot-btn disabled"><span>16:00 - 18:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
                 : `<div class="slot-btn ${isSlot3Selected}" onclick="toggleSlotSelection('${dayFull}', '16:00 - 18:00')"><span>16:00 - 18:00</span> ${isSlot3Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
-
+ 
             // นำปุ่มมาประกอบร่างเข้าด้วยกัน
             container.innerHTML += `
                 <div class="day-slot-group">
@@ -829,7 +896,7 @@
                 </div>
             `;
         });
-
+ 
         if (selectedDates.length > 0) {
             container.innerHTML += `
                 <div style="margin-top: 25px; text-align: right;">
@@ -840,29 +907,75 @@
             `;
         }
     }
-
+ 
     function confirmMultipleBookings() {
         if (selectedTimeSlots.length === 0) { alert("กรุณาเลือกเวลาอย่างน้อย 1 ช่วง"); return; }
         showStep(3, selectedTimeSlots);
     }
-
+ 
+    // ==========================================
+    // Semester Form: toggle purpose fields
+    // ==========================================
+    function togglePurposeFields(type) {
+        const classFields = document.getElementById('classFields');
+        const trainingFields = document.getElementById('trainingFields');
+        if (type === 'class') {
+            classFields.style.display = 'block';
+            trainingFields.style.display = 'none';
+            // ล้าง topic field
+            const topicInput = document.querySelector('[name="topic"]');
+            if (topicInput) topicInput.value = '';
+        } else {
+            classFields.style.display = 'none';
+            trainingFields.style.display = 'block';
+            // ล้าง class fields
+            const scInput = document.querySelector('[name="subject_code"]');
+            const snInput = document.querySelector('[name="subject_name"]');
+            if (scInput) scInput.value = '';
+            if (snInput) snInput.value = '';
+        }
+    }
+ 
+    function submitSemesterForm() {
+        const form = document.getElementById('semesterForm');
+        const purposeType = form.querySelector('[name="purpose_type"]:checked')?.value;
+        const days = form.querySelectorAll('[name="days"]:checked');
+        const times = form.querySelectorAll('[name="times"]:checked');
+        const email = form.querySelector('[name="notification_email"]').value;
+ 
+        if (!email) { alert('กรุณากรอกอีเมลสำหรับรับการแจ้งเตือน'); return; }
+        if (days.length === 0) { alert('กรุณาเลือกวันในสัปดาห์อย่างน้อย 1 วัน'); return; }
+        if (times.length === 0) { alert('กรุณาเลือกช่วงเวลาอย่างน้อย 1 ช่วง'); return; }
+ 
+        if (purposeType === 'class') {
+            const sc = form.querySelector('[name="subject_code"]').value.trim();
+            const sn = form.querySelector('[name="subject_name"]').value.trim();
+            if (!sc || !sn) { alert('กรุณาระบุรหัสวิชาและชื่อวิชา'); return; }
+        } else if (purposeType === 'training') {
+            const topic = form.querySelector('[name="topic"]').value.trim();
+            if (!topic) { alert('กรุณาระบุชื่อเรื่อง/หัวข้ออบรม'); return; }
+        }
+ 
+        form.submit();
+    }
+ 
     function showStep(step, data) {
         document.getElementById('view1').style.display = 'none';
         document.getElementById('view2').style.display = 'none';
         document.getElementById('view3').style.display = 'none';
         document.getElementById('view4').style.display = 'none';
-
+ 
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-
+ 
         const targetView = document.getElementById('view' + step);
         if (targetView) {
             if (step === 1) targetView.style.display = 'grid';
             else targetView.style.display = 'block';
         }
-
+ 
         const targetStep = document.getElementById('s' + step);
         if (targetStep) targetStep.classList.add('active');
-
+ 
         if (step === 1) {
             document.getElementById('s2').style.display = 'block';
             document.getElementById('s3').style.display = 'block';
@@ -877,11 +990,11 @@
             document.getElementById('s3').style.display = 'block';
             document.getElementById('s4').style.display = 'none';
         }
-
+ 
         if (step === 2 || step === 4) {
             if (typeof data === 'string' && data.includes('ENG')) { currentRoom = data; }
         }
-
+ 
         if (step === 2) {
             document.getElementById('room-header').innerText = currentRoom;
             renderCalendar();

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -217,6 +218,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="navbar">
         <h1>{{ title }}</h1>
@@ -250,14 +252,19 @@
                             <td>
                                 <span class="purpose-badge">
                                     {% if b.purpose_type == 'class' %}
-                                        วิชา: {{ b.subject_name }} ({{ b.subject_code }})
+                                    วิชา: {{ b.subject_name }} ({{ b.subject_code }})
                                     {% else %}
-                                        อบรม: {{ b.topic }}
+                                    อบรม: {{ b.topic }}
                                     {% endif %}
                                 </span>
                             </td>
                             <td>
+                                {% if b.start_date == b.end_date %}
                                 {{ b.start_date|date:"d M Y" }}<br>
+                                {% else %}
+                                <span style="color: var(--tu-red); font-weight: 600;">ทุกวัน{{ b.get_thai_days_of_week }}</span><br>
+                                <small>{{ b.start_date|date:"d M Y" }} - {{ b.end_date|date:"d M Y" }}</small><br>
+                                {% endif %}
                                 <small>{{ b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}</small>
                             </td>
                             <td>
@@ -265,7 +272,8 @@
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-approve">อนุมัติ</button>
                                 </form>
-                                <button type="button" class="btn btn-reject" onclick="showRejectModal('{{ b.id }}')">ปฏิเสธ</button>
+                                <button type="button" class="btn btn-reject"
+                                    onclick="showRejectModal('{{ b.id }}')">ปฏิเสธ</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -285,7 +293,8 @@
             <h3>ระบุเหตุผลการปฏิเสธ</h3>
             <form id="rejectForm" method="POST" action="">
                 {% csrf_token %}
-                <textarea name="rejection_reason" placeholder="กรุณาระบุเหตุผลที่ไม่อนุมัติการจองนี้..." required></textarea>
+                <textarea name="rejection_reason" placeholder="กรุณาระบุเหตุผลที่ไม่อนุมัติการจองนี้..."
+                    required></textarea>
                 <div class="modal-buttons">
                     <button type="button" class="btn btn-secondary" onclick="hideRejectModal()">ยกเลิก</button>
                     <button type="submit" class="btn btn-reject">ยืนยันการปฏิเสธ</button>
@@ -306,7 +315,7 @@
         }
 
         // ปิด Modal เมื่อคลิกพื้นที่ด้านนอก
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const modal = document.getElementById('rejectModal');
             if (event.target == modal) {
                 hideRejectModal();
@@ -314,4 +323,5 @@
         }
     </script>
 </body>
+
 </html>

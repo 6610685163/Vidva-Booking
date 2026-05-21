@@ -114,6 +114,12 @@
         border: 1px solid #fee2e2;
     }
 
+    .badge-cancelled {
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
     /* ปุ่ม Action */
     .btn-action {
         background: white;
@@ -136,6 +142,40 @@
         color: #ef4444;
         background: #fef2f2;
     }
+
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .close-modal {
+        float: right;
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: #94a3b8;
+    }
+
+    .close-modal:hover {
+        color: #1e293b;
+    }
 </style>
 {% endblock %}
 
@@ -147,9 +187,10 @@
 
 <div class="table-container">
     <div class="filter-tabs">
-        <button class="tab-btn active">ทั้งหมด</button>
-        <button class="tab-btn">รออนุมัติ</button>
-        <button class="tab-btn">อนุมัติแล้ว</button>
+        <button class="tab-btn active" onclick="filterTable('all', this)">ทั้งหมด</button>
+        <button class="tab-btn" onclick="filterTable('pending', this)">รออนุมัติ</button>
+        <button class="tab-btn" onclick="filterTable('approved', this)">อนุมัติแล้ว</button>
+        <button class="tab-btn" onclick="filterTable('rejected', this)">ปฏิเสธ / ยกเลิก</button>
     </div>
 
     {% if my_bookings %}
@@ -165,14 +206,19 @@
         </thead>
         <tbody>
             {% for booking in my_bookings %}
-            <tr>
+            <tr class="booking-row" data-status="{{ booking.status }}">
                 <td>
                     <div style="font-weight: 600; font-size: 1.05rem;">{{ booking.room.room_code }}</div>
-                    <div style="font-size: 0.85rem; color: #94a3b8;">ห้องประชุม/ห้องเรียน</div>
+                    <div style="font-size: 0.85rem; color: #94a3b8;">{{ booking.room.room_name|default:"ห้องประชุม/ห้องเรียน" }}</div>
                 </td>
                 <td>{{ booking.topic|default:booking.subject_name }}</td>
-                <td>
-                    <div>{{ booking.start_date|date:"d M Y" }}</div>
+                <td style="color: #475569;">
+                    {% if booking.start_date == booking.end_date %}
+                        <div style="font-weight: 500;">{{ booking.start_date|date:"d M Y" }}</div>
+                    {% else %}
+                        <div style="font-weight: 600; color: var(--tu-red);">ทุกวัน{{ booking.get_thai_days_of_week }}</div>
+                        <div style="font-size: 0.85rem; color: #64748b;">{{ booking.start_date|date:"d M Y" }} - {{ booking.end_date|date:"d M Y" }}</div>
+                    {% endif %}
                     <div style="font-size: 0.85rem; color: #64748b;"><i class="fa-regular fa-clock"></i> {{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</div>
                 </td>
                 <td>
@@ -182,12 +228,25 @@
                         <span class="badge badge-approved"><i class="fa-solid fa-check"></i> อนุมัติแล้ว</span>
                     {% elif booking.status == 'rejected' %}
                         <span class="badge badge-rejected"><i class="fa-solid fa-xmark"></i> ปฏิเสธ</span>
+                    {% elif booking.status == 'cancelled' %}
+                        <span class="badge badge-cancelled"><i class="fa-solid fa-ban"></i> ยกเลิกแล้ว</span>
                     {% endif %}
                 </td>
                 <td style="text-align: center; gap: 8px; display: flex; justify-content: center;">
-                    <button class="btn-action" title="ดูรายละเอียด"><i class="fa-solid fa-eye"></i></button>
+                    <button class="btn-action" title="ดูรายละเอียด" 
+                        data-room="{{ booking.room.room_code }}" 
+                        data-topic="{{ booking.topic|default:booking.subject_name }}"
+                        data-status="{{ booking.get_status_display }}"
+                        data-reason="{{ booking.rejection_reason|default:'-' }}"
+                        onclick="showDetails(this)">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    
                     {% if booking.status == 'pending' %}
-                    <button class="btn-action btn-cancel" title="ยกเลิกการจอง"><i class="fa-solid fa-trash-can"></i></button>
+                    <form method="POST" action="{% url 'cancel_booking' booking.id %}" onsubmit="return confirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้?');" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-action btn-cancel" title="ยกเลิกการจอง"><i class="fa-solid fa-trash-can"></i></button>
+                    </form>
                     {% endif %}
                 </td>
             </tr>
@@ -204,4 +263,70 @@
     </div>
     {% endif %}
 </div>
+
+<div id="detailsModal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeDetails()">&times;</span>
+        <h2 style="color: var(--tu-red); margin-top: 0;">รายละเอียดการจอง</h2>
+        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0;">
+        <p><strong>ห้อง:</strong> <span id="m-room"></span></p>
+        <p><strong>วัตถุประสงค์:</strong> <span id="m-topic"></span></p>
+        <p><strong>สถานะ:</strong> <span id="m-status"></span></p>
+        <div id="m-reason-box" style="display: none; background: #fef2f2; border: 1px solid #fee2e2; padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <strong style="color: #dc2626;"><i class="fa-solid fa-circle-info"></i> เหตุผลที่ถูกปฏิเสธ:</strong>
+            <p id="m-reason" style="margin: 5px 0 0 0; color: #1e293b;"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 🎯 ฟังก์ชันสำหรับสลับแท็บหมวดหมู่การจอง
+    function filterTable(status, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        document.querySelectorAll('.booking-row').forEach(row => {
+            if (status === 'all') {
+                row.style.display = '';
+            } else if (status === 'rejected' && (row.dataset.status === 'rejected' || row.dataset.status === 'cancelled')) {
+                row.style.display = '';
+            } else if (row.dataset.status === status) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // 🎯 ฟังก์ชันแสดงรายละเอียดใน Popup Modal
+    function showDetails(btn) {
+        document.getElementById('m-room').innerText = btn.dataset.room;
+        document.getElementById('m-topic').innerText = btn.dataset.topic;
+        document.getElementById('m-status').innerText = btn.dataset.status;
+        
+        const reasonBox = document.getElementById('m-reason-box');
+        const reason = btn.dataset.reason;
+        
+        if (reason && reason !== '-') {
+            reasonBox.style.display = 'block';
+            document.getElementById('m-reason').innerText = reason;
+        } else {
+            reasonBox.style.display = 'none';
+        }
+        
+        document.getElementById('detailsModal').style.display = 'flex';
+    }
+
+    function closeDetails() {
+        document.getElementById('detailsModal').style.display = 'none';
+    }
+
+    // ปิด Modal เมื่อคลิกด้านนอกกล่องเนื้อหา
+    window.onclick = function(event) {
+        const modal = document.getElementById('detailsModal');
+        if (event.target == modal) {
+            closeDetails();
+        }
+    }
+</script>
 {% endblock %}
