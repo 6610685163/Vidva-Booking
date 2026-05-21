@@ -22,18 +22,19 @@ def _send_email_async(subject, message, from_email, recipient_email, notificatio
         )
         # อัพเดท notification ว่าส่งสำเร็จ
         Notification.objects.filter(id=notification_id).update(
-            is_sent=True,
-            sent_at=timezone.now(),
-            error_message=""
+            is_sent=True, sent_at=timezone.now(), error_message=""
         )
-        logger.info(f"Email sent successfully to {recipient_email} (notification {notification_id})")
+        logger.info(
+            f"Email sent successfully to {recipient_email} (notification {notification_id})"
+        )
     except Exception as e:
         error_msg = str(e)
-        logger.error(f"Error sending email to {recipient_email}: {error_msg}", exc_info=True)
+        logger.error(
+            f"Error sending email to {recipient_email}: {error_msg}", exc_info=True
+        )
         # บันทึก error message
         Notification.objects.filter(id=notification_id).update(
-            is_sent=False,
-            error_message=error_msg
+            is_sent=False, error_message=error_msg
         )
 
 
@@ -56,7 +57,7 @@ def send_booking_notification(booking, notification_type):
 
         # ถ้าไม่มีอีเมล Admin ในระบบเลย ให้ใช้อีเมล Default จาก settings
         if not recipient_emails:
-            recipient_emails = [settings.ADMIN_EMAIL]
+            recipient_emails = [getattr(settings, "ADMIN_EMAIL", "")]
 
         message = (
             f"เรียน เจ้าหน้าที่ (Admin),\n\n"
@@ -72,7 +73,12 @@ def send_booking_notification(booking, notification_type):
         # แจ้งเตือนผู้จองเมื่อสถานะเปลี่ยน (FR-NOTI-02, FR-APPR-04)
         status_th = booking.get_status_display()
         subject = f"[ระบบจองห้อง TSE] อัปเดตสถานะการจองห้อง: {booking.room.room_name}"
-        recipient_emails = [booking.booker.email]
+
+        # ตรวจสอบว่าถ้ามีการกรอกอีเมลแจ้งเตือนแยกไว้ ให้ใช้เมลนั้นส่งหาอาจารย์ทันที
+        if getattr(booking, "notification_email", None):
+            recipient_emails = [booking.notification_email]
+        else:
+            recipient_emails = [booking.booker.email]
 
         message = (
             f"เรียน {booking.booker.get_full_name() or booking.booker.username},\n\n"
@@ -91,6 +97,9 @@ def send_booking_notification(booking, notification_type):
 
     # บันทึก notification ทั้งหมดแล้วส่งเมลแบบ async
     for email in recipient_emails:
+        if not email:  # ข้ามการส่งหากไม่มีที่อยู่อีเมล
+            continue
+
         # สร้าง notification record ก่อน (pending)
         notification = Notification.objects.create(
             booking=booking,
@@ -101,20 +110,22 @@ def send_booking_notification(booking, notification_type):
             is_sent=False,  # ยังไม่ได้ส่ง
             error_message="",
         )
-        
+
         # ส่งเมลแบบ async ใน background thread
         thread = threading.Thread(
             target=_send_email_async,
             args=(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL,
+                getattr(settings, "DEFAULT_FROM_EMAIL", ""),
                 email,
-                notification.id
+                notification.id,
             ),
-            daemon=True  # ให้ thread ทำงานเป็น daemon
+            daemon=True,  # ให้ thread ทำงานเป็น daemon
         )
         thread.start()
 
-    logger.info(f"Booking notification queued for {len(recipient_emails)} recipients (notification_type={notification_type})")
+    logger.info(
+        f"Booking notification queued for {len(recipient_emails)} recipients (notification_type={notification_type})"
+    )
     return True

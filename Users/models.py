@@ -113,6 +113,10 @@ class Booking(models.Model):
         max_length=200, blank=True, null=True, verbose_name=_("ชื่อเรื่อง")
     )
 
+    notification_email = models.EmailField(
+        max_length=254, null=True, blank=True, verbose_name="อีเมลสำหรับรับการแจ้งเตือน"
+    )
+
     # วันและเวลา
     start_date = models.DateField(verbose_name=_("ตั้งแต่วันที่"))
     end_date = models.DateField(verbose_name=_("ถึงวันที่"))
