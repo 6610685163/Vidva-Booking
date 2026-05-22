@@ -13,7 +13,7 @@ class UserProfile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    tu_username = models.CharField(max_length=100, unique=True)  # TU REST API username
+    tu_username = models.CharField(max_length=100, unique=True, null=True, blank=True)  # TU REST API username
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="lecturer")
     full_name = models.CharField(max_length=255, blank=True)
     email = models.EmailField()

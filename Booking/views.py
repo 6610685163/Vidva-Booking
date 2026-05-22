@@ -7,8 +7,8 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
-from .models import Booking, Room, AcademicSemester
 from django.http import JsonResponse
+from .models import Booking, Room, AcademicSemester, BlackoutPeriod  # นำเข้าครบทุก Model ทั้ง Semester และ Blackout
 from .forms import BookingForm
 
 # นำเข้าฟังก์ชันส่งแจ้งเตือนของเพื่อน
@@ -42,6 +42,39 @@ THAI_DAYS = {
 }
 
 
+def _blackout_blocking_for_date(room, target_date):
+    """
+    ตรวจสอบว่ามี BlackoutPeriod ใดบล็อกห้องนี้ในวันที่กำหนดหรือไม่
+    Returns BlackoutPeriod instance ถ้าโดนบล็อก, ไม่งั้น None
+    """
+    blackouts = BlackoutPeriod.objects.filter(
+        is_active=True,
+        start_date__lte=target_date,
+        end_date__gte=target_date,
+    ).prefetch_related("rooms")
+    for blk in blackouts:
+        # ถ้า rooms ว่าง = ปิดทุกห้อง; ถ้ามีระบุ = เช็คว่าห้องนี้อยู่ในนั้นไหม
+        if not blk.rooms.exists() or blk.rooms.filter(id=room.id).exists():
+            return blk
+    return None
+
+
+def _blackout_blocking_in_range(room, start_dt, end_dt, days_set):
+    """
+    ตรวจสอบว่ามี BlackoutPeriod ใดบล็อกห้องนี้ในช่วง [start_dt, end_dt]
+    โดยพิจารณาเฉพาะวันที่ weekday ตรงกับ days_set (Mon=0..Sun=6)
+    Returns tuple (BlackoutPeriod, conflict_date) ถ้าเจอ, ไม่งั้น (None, None)
+    """
+    cur = start_dt
+    while cur <= end_dt:
+        if cur.weekday() in days_set:
+            blk = _blackout_blocking_for_date(room, cur)
+            if blk:
+                return blk, cur
+        cur += timedelta(days=1)
+    return None, None
+
+
 def parse_thai_date(date_str):
     try:
         parts = date_str.split()
@@ -58,6 +91,8 @@ def booking_flow_view(request):
     if request.method == "POST":
         room_raw = request.POST.get("room_name", "")
         room_code = room_raw.split("(")[0].strip() if "(" in room_raw else room_raw
+        # ฟอร์มส่งเป็น "ENG 406-3(...)" แต่ DB เก็บ "406-3" → ต้องตัด prefix
+        room_code = room_code.replace("ENG ", "").strip()
         room = Room.objects.filter(room_code=room_code).first()
 
         if not room:
@@ -70,9 +105,7 @@ def booking_flow_view(request):
         # 🎯 รับค่าอีเมลแจ้งเตือน (ฟีเจอร์ของเพื่อน)
         notification_email = request.POST.get("notification_email", "").strip()
         if not notification_email:
-            notification_email = (
-                request.user.email
-            )  # ถ้าไม่กรอก ให้ใช้อีเมลของ User แทน
+            notification_email = request.user.email  # ถ้าไม่กรอก ให้ใช้อีเมลของ User แทน
 
         # ==========================================
         # 1. จองแบบรายวัน
@@ -121,6 +154,16 @@ def booking_flow_view(request):
                     )
                     return redirect("booking_flow")
 
+                # 🛡️ Blackout Detection (FR-ADM-03) สำหรับรายวัน
+                blocking_blackout = _blackout_blocking_for_date(room, booking_date)
+                if blocking_blackout:
+                    messages.error(
+                        request,
+                        f"❌ ไม่สามารถจองได้ในวันที่ {slot.get('dateStr')} เนื่องจากอยู่ในช่วงปิดใช้งาน '{blocking_blackout.title}' "
+                        f"({blocking_blackout.start_date.strftime('%d/%m/%Y')} - {blocking_blackout.end_date.strftime('%d/%m/%Y')})"
+                    )
+                    return redirect("booking_flow")
+
                 # บันทึกลงฐานข้อมูล
                 booking = Booking.objects.create(
                     room=room,
@@ -153,8 +196,6 @@ def booking_flow_view(request):
         else:
             days_list = request.POST.getlist("days")
             times_list = request.POST.getlist("times")
-            # start_date_str = request.POST.get("start_date", "").strip()
-            # end_date_str = request.POST.get("end_date", "").strip()
             purpose_type_raw = request.POST.get("purpose_type", "class").strip()
             subject_code_raw = request.POST.get("subject_code", "").strip()
             subject_name_raw = request.POST.get("subject_name", "").strip()
@@ -167,10 +208,6 @@ def booking_flow_view(request):
                 )
                 return redirect("booking_flow")
 
-            # if not start_date_str or not end_date_str:
-            #     messages.error(request, "กรุณาระบุวันเริ่มต้นและวันสิ้นสุดของเทอม")
-            #     return redirect("booking_flow")
-
             if purpose_type_raw == "class" and (
                 not subject_code_raw or not subject_name_raw
             ):
@@ -181,28 +218,22 @@ def booking_flow_view(request):
                 messages.error(request, "กรุณาระบุชื่อเรื่องสำหรับการจัดอบรม/จัดติว")
                 return redirect("booking_flow")
 
-            # รอเปลี่ยนให้รับจากฝั่ง admin ในภายหลัง
+            # ดึงข้อมูลเทอมการศึกษาปัจจุบันจาก Admin (ถ้ามี)
             active_semester = AcademicSemester.objects.filter(is_active=True).first()
 
-            if not active_semester:
-                messages.error(
-                    request,
-                    "❌ ระบบยังไม่ได้ตั้งค่าช่วงเวลาภาคการศึกษาปัจจุบัน กรุณาติดต่อเจ้าหน้าที่ (Admin)",
+            if active_semester:
+                start_semester = active_semester.start_date
+                end_semester = active_semester.end_date
+            else:
+                # Fallback: ถ้า Admin ยังไม่ได้ตั้งภาคการศึกษา → ใช้ค่า default (วันนี้ + 120 วัน)
+                start_semester = date.today()
+                end_semester = start_semester + timedelta(days=120)
+                logger.warning(
+                    "ไม่พบ AcademicSemester ที่ active — ใช้ค่า fallback start=today end=today+120days"
                 )
-                return redirect("booking_flow")
-
-            start_semester = active_semester.start_date
-            end_semester = active_semester.end_date
-
-            # if start_semester > end_semester:
-            #     messages.error(request, "วันเริ่มต้นต้องไม่หลังวันสิ้นสุด")
-            #     return redirect("booking_flow")
 
             db_days = [THAI_DAYS.get(d) for d in days_list if d in THAI_DAYS]
             days_of_week_str = ",".join(db_days)
-
-            # start_semester = date.today()
-            # end_semester = start_semester + timedelta(days=120)
 
             for time_slot in times_list:
                 time_str_clean = time_slot.replace(" - ", "-")
@@ -233,6 +264,20 @@ def booking_flow_view(request):
                     messages.error(
                         request,
                         f"❌ ไม่สามารถจองทั้งเทอมได้ เนื่องจากช่วงเวลา {time_slot} มีวิชาอื่นจองอยู่แล้ว",
+                    )
+                    return redirect("booking_flow")
+
+                # 🛡️ Blackout Detection (FR-ADM-03) สำหรับทั้งเทอม
+                days_set_int = {int(d) for d in db_days if d and d.isdigit()}
+                blocking_blackout, blocked_date = _blackout_blocking_in_range(
+                    room, start_semester, end_semester, days_set_int
+                )
+                if blocking_blackout:
+                    messages.error(
+                        request,
+                        f"❌ ไม่สามารถจองทั้งเทอมได้ เนื่องจากตรงกับช่วงปิดใช้งานห้อง '{blocking_blackout.title}' "
+                        f"(ตรงกับวันที่ {blocked_date.strftime('%d/%m/%Y')}). "
+                        f"กรุณาแจ้งเจ้าหน้าที่หรือเลือกช่วงเวลาอื่น"
                     )
                     return redirect("booking_flow")
 
@@ -324,7 +369,6 @@ def approve_booking(request, booking_id):
         return redirect("dashboard")
 
     booking = get_object_or_404(Booking, id=booking_id)
-
     booking.status = "approved"
     booking.save()
 
@@ -335,7 +379,6 @@ def approve_booking(request, booking_id):
         request,
         f"อนุมัติการจองห้อง {booking.room.room_code} เรียบร้อยแล้ว",
     )
-
     return redirect("pending_bookings")
 
 
@@ -346,7 +389,6 @@ def reject_booking(request, booking_id):
         return redirect("dashboard")
 
     booking = get_object_or_404(Booking, id=booking_id)
-
     reason = request.POST.get("rejection_reason", "")
 
     booking.status = "rejected"
@@ -360,7 +402,6 @@ def reject_booking(request, booking_id):
         request,
         f"ปฏิเสธการจองห้อง {booking.room.room_code} แล้ว",
     )
-
     return redirect("pending_bookings")
 
 
@@ -373,6 +414,41 @@ def my_bookings_view(request):
         "Booking/my_bookings.html",
         {"title": "ประวัติการจองของฉัน", "my_bookings": my_bookings},
     )
+
+
+@login_required(login_url="login")
+@require_http_methods(["POST"])
+def cancel_booking(request, booking_id):
+    """
+    ผู้จองยกเลิกการจองของตัวเอง (FR-BOOK-08)
+    เงื่อนไข: ต้องเป็นเจ้าของ booking และ status ต้องเป็น pending หรือ approved
+    และวันจองยังไม่ถึง
+    """
+    booking = get_object_or_404(Booking, id=booking_id)
+
+    # เช็คเจ้าของ
+    if booking.booker_id != request.user.id:
+        messages.error(request, "คุณไม่มีสิทธิ์ยกเลิกการจองนี้")
+        return redirect("my_bookings")
+
+    # เช็คสถานะ
+    if booking.status not in ("pending", "approved"):
+        messages.warning(request, f"การจองนี้อยู่ในสถานะ '{booking.get_status_display()}' ยกเลิกไม่ได้")
+        return redirect("my_bookings")
+
+    # เช็คว่าวันสิ้นสุดยังไม่ผ่าน
+    if booking.end_date < date.today():
+        messages.warning(request, "การจองนี้ผ่านวันใช้งานไปแล้ว ยกเลิกไม่ได้")
+        return redirect("my_bookings")
+
+    booking.status = "cancelled"
+    booking.save()
+    logger.info(f"User {request.user.username} cancelled booking #{booking.id}")
+    messages.success(
+        request,
+        f"ยกเลิกการจองห้อง {booking.room.room_code} เรียบร้อยแล้ว",
+    )
+    return redirect("my_bookings")
 
 
 @login_required(login_url="login")
@@ -407,10 +483,7 @@ def chatbot_api(request):
                 reply = "ปกติเจ้าหน้าที่จะใช้เวลาพิจารณาอนุมัติภายใน 1-2 วันทำการ หากได้รับการอนุมัติจะมี Email แจ้งเตือนส่งไปให้ครับ 📧"
 
             # เมนูคำสั่งทั้งหมด
-            elif any(
-                word in user_message
-                for word in ["เมนู", "ช่วยเหลือ", "คำสั่ง", "ทำอะไรได้บ้าง"]
-            ):
+            elif any(word in user_message for word in ["เมนู", "ช่วยเหลือ", "คำสั่ง", "ทำอะไรได้บ้าง"]):
                 reply = (
                     "นี่คือคำสั่งที่ผมสามารถช่วยได้ครับ กดพิมพ์คำเหล่านี้มาได้เลย:\n"
                     "- 📅 **'วิธีจอง'** (ดูขั้นตอนการจอง)\n"

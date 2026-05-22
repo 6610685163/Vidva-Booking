@@ -393,10 +393,10 @@
 
 <div class="management-tabs">
     <button id="tabRooms" class="tab-item active" onclick="switchTab('rooms')">
-        <i class="fa-solid fa-door-open"></i> รายการห้องทั้งหมด (3)
+        <i class="fa-solid fa-door-open"></i> รายการห้องทั้งหมด ({{ rooms|length }})
     </button>
     <button id="tabBlackouts" class="tab-item" onclick="switchTab('blackouts')">
-        <i class="fa-solid fa-calendar-xmark"></i> ช่วงเวลาปิดใช้งานปฏิทิน (Blackout Periods)
+        <i class="fa-solid fa-calendar-xmark"></i> ช่วงเวลาปิดใช้งานปฏิทิน ({{ blackouts|length }})
     </button>
 </div>
 
@@ -405,6 +405,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>รหัสห้อง</th>
                     <th>ชื่อห้อง</th>
                     <th>ประเภทห้อง</th>
                     <th style="text-align: center;">ความจุ (คน)</th>
@@ -413,55 +414,51 @@
                 </tr>
             </thead>
             <tbody>
+                {% for room in rooms %}
                 <tr>
-                    <td style="font-weight: 600; color: var(--text-main);">ENG 406-3 (ห้องประชุม 1)</td>
-                    <td>ห้องประชุมภาควิชา</td>
-                    <td style="text-align: center;">60</td>
-                    <td><span class="status-badge badge-active"><i class="fa-solid fa-circle-check"></i>
-                            เปิดใช้งานปกติ</span></td>
-                    <td style="text-align: center; display: flex; justify-content: center; gap: 8px;">
-                        <button class="row-btn"
-                            onclick="openEditRoomModal('1', 'ENG 406-3 (ห้องประชุม 1)', 'meeting', '60', 'true')">
-                            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
-                        </button>
-                        <button class="row-btn row-btn-toggle" onclick="alert('เปลี่ยนสถานะห้องเป็น ปิดใช้งาน');">
-                            <i class="fa-solid fa-power-off"></i> ปิดใช้งาน
-                        </button>
+                    <td style="font-weight: 600;">{{ room.room_code }}</td>
+                    <td style="color: var(--text-main);">{{ room.room_name }}</td>
+                    <td>{{ room.get_room_type_display }}</td>
+                    <td style="text-align: center;">{{ room.capacity }}</td>
+                    <td>
+                        {% if room.is_active %}
+                        <span class="status-badge badge-active"><i class="fa-solid fa-circle-check"></i> เปิดใช้งานปกติ</span>
+                        {% else %}
+                        <span class="status-badge badge-disabled"><i class="fa-solid fa-circle-xmark"></i> ปิดใช้งานระบบ</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; justify-content: center; gap: 8px;">
+                            <button class="row-btn"
+                                onclick="openEditRoomModal('{{ room.id }}', '{{ room.room_code|escapejs }}', '{{ room.room_name|escapejs }}', '{{ room.room_type }}', '{{ room.capacity }}', '{{ room.is_active|yesno:'true,false' }}')">
+                                <i class="fa-solid fa-pen-to-square"></i> แก้ไข
+                            </button>
+                            <form method="POST" action="" style="display:inline; margin:0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action_type" value="toggle_room">
+                                <input type="hidden" name="room_id" value="{{ room.id }}">
+                                {% if room.is_active %}
+                                <button type="submit" class="row-btn row-btn-toggle"
+                                    onclick="return confirm('ยืนยันปิดใช้งานห้อง {{ room.room_code }}?')">
+                                    <i class="fa-solid fa-power-off"></i> ปิดใช้งาน
+                                </button>
+                                {% else %}
+                                <button type="submit" class="row-btn row-btn-toggle" style="color: #16a34a; border-color: #bbf7d0;">
+                                    <i class="fa-solid fa-bolt"></i> เปิดใช้งาน
+                                </button>
+                                {% endif %}
+                            </form>
+                        </div>
                     </td>
                 </tr>
+                {% empty %}
                 <tr>
-                    <td style="font-weight: 600; color: var(--text-main);">ENG 406-5 (ห้องประชุม 2)</td>
-                    <td>ห้องประชุมภาควิชา</td>
-                    <td style="text-align: center;">15</td>
-                    <td><span class="status-badge badge-active"><i class="fa-solid fa-circle-check"></i>
-                            เปิดใช้งานปกติ</span></td>
-                    <td style="text-align: center; display: flex; justify-content: center; gap: 8px;">
-                        <button class="row-btn"
-                            onclick="openEditRoomModal('2', 'ENG 406-5 (ห้องประชุม 2)', 'meeting', '15', 'true')">
-                            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
-                        </button>
-                        <button class="row-btn row-btn-toggle" onclick="alert('เปลี่ยนสถานะห้องเป็น ปิดใช้งาน');">
-                            <i class="fa-solid fa-power-off"></i> ปิดใช้งาน
-                        </button>
+                    <td colspan="6" style="text-align:center; padding:2rem; color:#94a3b8;">
+                        <i class="fa-solid fa-door-closed" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
+                        ยังไม่มีห้องในระบบ — กดปุ่ม "เพิ่มห้องใหม่" ด้านบนเพื่อเริ่ม
                     </td>
                 </tr>
-                <tr>
-                    <td style="font-weight: 600; color: var(--text-main);">ENG 408-1 (ห้องประชุม 3)</td>
-                    <td>ห้องปฏิบัติการ (Lab)</td>
-                    <td style="text-align: center;">10</td>
-                    <td><span class="status-badge badge-disabled"><i class="fa-solid fa-circle-xmark"></i>
-                            ปิดใช้งานระบบ</span></td>
-                    <td style="text-align: center; display: flex; justify-content: center; gap: 8px;">
-                        <button class="row-btn"
-                            onclick="openEditRoomModal('3', 'ENG 408-1 (ห้องประชุม 3)', 'lab', '10', 'false')">
-                            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
-                        </button>
-                        <button class="row-btn row-btn-toggle" style="color: #16a34a; border-color: #bbf7d0;"
-                            onclick="alert('เปลี่ยนสถานะห้องเป็น เปิดใช้งาน');"><i class="fa-solid fa-bolt"></i>
-                            เปิดใช้งาน
-                        </button>
-                    </td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
@@ -487,18 +484,41 @@
                 </tr>
             </thead>
             <tbody>
+                {% for blackout in blackouts %}
                 <tr>
-                    <td style="font-weight: 600; color: var(--text-main);">ทุกห้องในระบบ (All Rooms)</td>
-                    <td>1 มิถุนายน 2569</td>
-                    <td>31 กรกฎาคม 2569</td>
-                    <td>ช่วงปิดภาคการศึกษา / สรุปยอดระบบประจำปี</td>
-                    <td><span class="status-badge badge-warning"><i class="fa-solid fa-lock"></i>
-                            บังคับล็อกช่วงเวลา</span></td>
+                    <td style="font-weight: 600; color: var(--text-main);">
+                        {% if blackout.rooms.all %}
+                            {% for r in blackout.rooms.all %}{{ r.room_code }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        {% else %}
+                            ทุกห้องในระบบ (All Rooms)
+                        {% endif %}
+                    </td>
+                    <td>{{ blackout.start_date|date:"d M Y" }}</td>
+                    <td>{{ blackout.end_date|date:"d M Y" }}</td>
+                    <td>{{ blackout.title }}</td>
                     <td style="text-align: center;">
-                        <button class="row-btn" style="color: #ef4444; border-color: #fecaca;"
-                            onclick="alert('ปลดล็อกช่วงเวลานี้');"><i class="fa-solid fa-unlock"></i> ปลดล็อก</button>
+                        <span class="status-badge badge-warning"><i class="fa-solid fa-lock"></i> บังคับล็อกช่วงเวลา</span>
+                    </td>
+                    <td style="text-align: center;">
+                        <form method="POST" action="" style="display:inline; margin:0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action_type" value="delete_blackout">
+                            <input type="hidden" name="blackout_id" value="{{ blackout.id }}">
+                            <button type="submit" class="row-btn" style="color: #ef4444; border-color: #fecaca;"
+                                onclick="return confirm('ยืนยันปลดล็อกช่วงเวลา &quot;{{ blackout.title|escapejs }}&quot;?')">
+                                <i class="fa-solid fa-unlock"></i> ปลดล็อก
+                            </button>
+                        </form>
                     </td>
                 </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:2rem; color:#94a3b8;">
+                        <i class="fa-solid fa-calendar-check" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
+                        ยังไม่มีช่วงเวลาปิดใช้งาน
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
@@ -517,17 +537,21 @@
             <input type="hidden" name="action_type" value="add_room">
 
             <div class="form-group">
-                <label>ชื่อห้องเรียน / ห้องประชุม <span style="color: red;">*</span></label>
-                <input type="text" name="room_name" class="form-control" placeholder="เช่น ENG 406-6 (ห้องเรียน 5)"
-                    required>
+                <label>รหัสห้อง <span style="color: red;">*</span></label>
+                <input type="text" name="room_code" class="form-control" placeholder="เช่น 408-3" required>
+                <small style="color:#64748b; margin-top:4px; display:block;">* รหัสห้องต้องไม่ซ้ำกับห้องที่มีอยู่</small>
+            </div>
+
+            <div class="form-group">
+                <label>ชื่อห้อง <span style="color: red;">*</span></label>
+                <input type="text" name="room_name" class="form-control" placeholder="เช่น ห้องบรรยาย 3" required>
             </div>
 
             <div class="form-group">
                 <label>ประเภทห้อง <span style="color: red;">*</span></label>
                 <select name="room_type" class="form-control" required>
-                    <option value="lecture">ห้องเรียน / ห้องบรรยาย</option>
-                    <option value="meeting">ห้องประชุมภาควิชา</option>
-                    <option value="lab">ห้องปฏิบัติการ (Lab)</option>
+                    <option value="classroom">ห้องเรียน / ห้องบรรยาย</option>
+                    <option value="meeting">ห้องประชุม</option>
                 </select>
             </div>
 
@@ -546,8 +570,7 @@
 
             <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="closeModal('addRoomModal')">ยกเลิก</button>
-                <button type="submit" class="btn-submit"
-                    onclick="alert('บันทึกข้อมูลห้องใหม่สำเร็จ!'); closeModal('addRoomModal'); return false;">บันทึกห้องใหม่</button>
+                <button type="submit" class="btn-submit">บันทึกห้องใหม่</button>
             </div>
         </form>
     </div>
@@ -567,16 +590,21 @@
             <input type="hidden" name="room_id" id="edit_room_id">
 
             <div class="form-group">
-                <label>ชื่อห้องเรียน / ห้องประชุม <span style="color: red;">*</span></label>
+                <label>รหัสห้อง</label>
+                <input type="text" id="edit_room_code" class="form-control" disabled>
+                <small style="color:#64748b; margin-top:4px; display:block;">* ระบบไม่อนุญาตให้แก้ไขรหัสห้อง</small>
+            </div>
+
+            <div class="form-group">
+                <label>ชื่อห้อง <span style="color: red;">*</span></label>
                 <input type="text" name="room_name" id="edit_room_name" class="form-control" required>
             </div>
 
             <div class="form-group">
                 <label>ประเภทห้อง <span style="color: red;">*</span></label>
                 <select name="room_type" id="edit_room_type" class="form-control" required>
-                    <option value="lecture">ห้องเรียน / ห้องบรรยาย</option>
-                    <option value="meeting">ห้องประชุมภาควิชา</option>
-                    <option value="lab">ห้องปฏิบัติการ (Lab)</option>
+                    <option value="classroom">ห้องเรียน / ห้องบรรยาย</option>
+                    <option value="meeting">ห้องประชุม</option>
                 </select>
             </div>
 
@@ -595,8 +623,7 @@
 
             <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="closeModal('editRoomModal')">ยกเลิก</button>
-                <button type="submit" class="btn-submit btn-submit-yellow"
-                    onclick="alert('อัปเดตข้อมูลห้องสำเร็จ!'); closeModal('editRoomModal'); return false;">บันทึกการแก้ไข</button>
+                <button type="submit" class="btn-submit btn-submit-yellow">บันทึกการแก้ไข</button>
             </div>
         </form>
     </div>
@@ -618,9 +645,9 @@
                 <label>เลือกห้องที่ต้องการล็อกปฏิทิน <span style="color: red;">*</span></label>
                 <select name="target_room" class="form-control" required>
                     <option value="all">-- ทุกห้องในระบบ (All Rooms) --</option>
-                    <option value="ENG 406-3">ENG 406-3 (ห้องประชุม 1)</option>
-                    <option value="ENG 406-5">ENG 406-5 (ห้องประชุม 2)</option>
-                    <option value="ENG 408-1">ENG 408-1 (ห้องประชุม 3)</option>
+                    {% for room in rooms %}
+                    <option value="{{ room.room_code }}">{{ room.room_code }} ({{ room.room_name }})</option>
+                    {% endfor %}
                 </select>
             </div>
 
@@ -643,8 +670,7 @@
 
             <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="closeModal('addBlackoutModal')">ยกเลิก</button>
-                <button type="submit" class="btn-submit btn-submit-blue"
-                    onclick="alert('บันทึกการล็อกช่วงเวลาปฏิทินสำเร็จ!'); closeModal('addBlackoutModal'); return false;">ยืนยันการล็อกห้อง</button>
+                <button type="submit" class="btn-submit btn-submit-blue">ยืนยันการล็อกห้อง</button>
             </div>
         </form>
     </div>
@@ -683,8 +709,9 @@
     }
 
     // ฟังก์ชันเปิด Modal แก้ไขห้อง พร้อมดึงข้อมูลเดิมไปใส่ใน Input
-    function openEditRoomModal(id, name, type, capacity, isActive) {
+    function openEditRoomModal(id, roomCode, name, type, capacity, isActive) {
         document.getElementById('edit_room_id').value = id;
+        document.getElementById('edit_room_code').value = roomCode;
         document.getElementById('edit_room_name').value = name;
         document.getElementById('edit_room_type').value = type;
         document.getElementById('edit_room_capacity').value = capacity;
