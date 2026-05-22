@@ -13,6 +13,7 @@ from Users.views import (
     assign_user_role_view,
     room_management_view,
     room_report_view,
+    system_settings_view,
     users_management_view,
 )
 
@@ -31,6 +32,7 @@ urlpatterns = [
     path("room-report/", room_report_view, name="room_report"),
     path("admin-dashboard/rooms/", room_management_view, name="room_management"),
     path("admin-dashboard/calendar/", admin_calendar_view, name="admin_calendar"),
+    path("admin-dashboard/settings/", system_settings_view, name="system_settings"),
 ]
 
 if settings.DEBUG:

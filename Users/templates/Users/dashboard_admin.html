@@ -265,7 +265,7 @@
         <p>ดูสถิติและรายงานการใช้ห้อง</p>
         <ul class="feature-list">
             <li>ดูอัตราการใช้งานห้องพัก</li>
-            <li>สถิติแยกตามวัตถุประสงค์และหลักสูตร</li>
+            <li>สถิติแยกตามวัตถุประสงค์</li>
             <li>Export รายงานเป็น Excel / CSV</li>
         </ul>
         <a href="{% url 'room_report' %}" class="btn btn-outline">ดูรายงานสถิติ</a>
@@ -286,13 +286,13 @@
     <div class="card">
         <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
         <h2>การตั้งค่าระบบ</h2>
-        <p>จัดการการตั้งค่าทั่วไปของระบบหลังบ้าน</p>
+        <p>จัดการการตั้งค่าทั่วไปของระบบ</p>
         <ul class="feature-list">
-            <li>เข้าสู่ระบบฐานข้อมูล (Django Admin)</li>
-            <li>ตรวจสอบ Log การทำงาน</li>
-            <li>ตั้งค่าการแจ้งเตือนต่างๆ</li>
+            <li>ตั้งค่าเปิด-ปิดภาคการศึกษา</li>
+            <li>ปรับแก้ไขเงื่อนไขการจอง</li>
+            <li>ตั้งค่าการแจ้งเตือนอีเมล</li>
         </ul>
-        <a href="/admin/" class="btn btn-outline">ตั้งค่าระบบ</a>
+        <a href="{% url 'system_settings' %}" class="btn btn-outline">ตั้งค่าระบบ</a>
     </div>
 </div>
 

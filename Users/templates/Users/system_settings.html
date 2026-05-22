@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}การตั้งค่าระบบ - ผู้ดูแลระบบ{% endblock %}
+
+{% block extra_style %}
+<style>
+    /* โครงสร้างหลักป้องกันการพัง (Bulletproof Layout) */
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        color: #1e2937;
+        font-size: 1.75rem;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .page-header p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .settings-layout {
+        display: grid;
+        /* ใช้ minmax(0, 1fr) ป้องกันเนื้อหาด้านขวาดันจนกล่องทะลุขอบ */
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 2rem;
+        align-items: start;
+    }
+
+    @media (max-width: 992px) {
+        .settings-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* เมนูตั้งค่าด้านซ้าย */
+    .settings-nav {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        position: sticky;
+        /* ให้เมนูลอยตามเมื่อเลื่อนจอ */
+        top: 90px;
+    }
+
+    .settings-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        color: #4b5563;
+        font-weight: 600;
+        cursor: pointer;
+        border-left: 4px solid transparent;
+        transition: 0.2s;
+        background: white;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .settings-nav-item:last-child {
+        border-bottom: none;
+    }
+
+    .settings-nav-item:hover {
+        background: #f8fafc;
+        color: var(--tu-red);
+    }
+
+    .settings-nav-item.active {
+        background: var(--tu-red-light);
+        color: var(--tu-red);
+        border-left-color: var(--tu-red);
+    }
+
+    .settings-nav-item i {
+        width: 24px;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+
+    /* ส่วนเนื้อหาด้านขวา */
+    .settings-content {
+        min-width: 0;
+        /* สำคัญมาก: ช่วยให้ Grid ยืดหยุ่นและไม่พัง */
+    }
+
+    .settings-content-box {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e5e7eb;
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .settings-content-box.active {
+        display: block;
+    }
+
+    @media (max-width: 640px) {
+        .settings-content-box {
+            padding: 1.5rem;
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .box-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .box-header h2 {
+        margin: 0 0 5px 0;
+        color: #1f2937;
+        font-size: 1.4rem;
+    }
+
+    .box-header p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    /* สไตล์ของฟอร์ม */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        outline: none;
+        transition: 0.2s;
+        background: #fff;
+    }
+
+    .form-control:focus {
+        border-color: var(--tu-red);
+        box-shadow: 0 0 0 3px rgba(194, 30, 45, 0.1);
+    }
+
+    .form-text {
+        display: block;
+        margin-top: 6px;
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+
+    /* Responsive Form Row */
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* ปุ่มบันทึก */
+    .btn-save {
+        background-color: var(--tu-red);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1rem;
+    }
+
+    .btn-save:hover {
+        background-color: var(--tu-red-hover);
+        box-shadow: 0 4px 12px rgba(194, 30, 45, 0.2);
+    }
+
+    /* Toggle Switch แบบ Modern - ปรับปรุงไม่ให้โดนบีบ */
+    .switch-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        gap: 1.5rem;
+        background-color: #fafafa;
+    }
+
+    .switch-text {
+        flex: 1;
+    }
+
+    .switch-text h4 {
+        margin: 0 0 4px 0;
+        color: #1f2937;
+        font-size: 1.05rem;
+    }
+
+    .switch-text p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        flex-shrink: 0;
+        /* สำคัญ: ป้องกันสวิตช์โดนบีบจนผิดรูป */
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        margin: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: .3s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: #10b981;
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(24px);
+    }
+
+    @media (max-width: 640px) {
+        .switch-wrap {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .switch {
+            align-self: flex-end;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fa-solid fa-sliders" style="color: var(--tu-red); margin-right: 10px;"></i> การตั้งค่าระบบ</h1>
+    <p>ปรับแต่งการทำงานของระบบจองห้อง จัดการปีการศึกษา และตั้งค่าเงื่อนไขต่างๆ</p>
+</div>
+
+<div class="settings-layout">
+    <div class="settings-nav">
+        <div class="settings-nav-item active" onclick="openSettingTab('semester', this)">
+            <i class="fa-solid fa-graduation-cap"></i> ภาคการศึกษา
+        </div>
+        <div class="settings-nav-item" onclick="openSettingTab('booking_rules', this)">
+            <i class="fa-solid fa-clipboard-list"></i> เงื่อนไขการจอง
+        </div>
+        <div class="settings-nav-item" onclick="openSettingTab('notifications', this)">
+            <i class="fa-solid fa-bell"></i> การแจ้งเตือน
+        </div>
+    </div>
+
+    <div class="settings-content">
+
+        <div id="tab-semester" class="settings-content-box active">
+            <div class="box-header">
+                <h2>กำหนดช่วงเวลาภาคการศึกษา (Academic Semester)</h2>
+                <p>ข้อมูลนี้จะถูกใช้เพื่อตรวจสอบสิทธิ์การจอง และล็อกปฏิทินในช่วงที่อยู่นอกเหนือภาคการศึกษา</p>
+            </div>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>ปีการศึกษา / ภาคเรียนปัจจุบัน <span style="color: red;">*</span></label>
+                    <input type="text" name="semester_name" class="form-control" placeholder="เช่น 1/2569"
+                        value="1/2569" required>
+                    <span class="form-text">ชื่อเรียกภาคการศึกษาที่จะแสดงให้ผู้ใช้งานเห็น</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>วันที่เปิดเทอม (Start Date) <span style="color: red;">*</span></label>
+                        <input type="date" name="start_date" class="form-control" value="2026-08-10" required>
+                    </div>
+                    <div class="form-group">
+                        <label>วันที่ปิดเทอม (End Date) <span style="color: red;">*</span></label>
+                        <input type="date" name="end_date" class="form-control" value="2026-12-25" required>
+                    </div>
+                </div>
+
+                <div class="switch-wrap" style="margin-top: 10px;">
+                    <div class="switch-text">
+                        <h4>อนุญาตให้จองห้องช่วงปิดเทอมได้</h4>
+                        <p>หากปิด ผู้ใช้จะไม่สามารถกดจองห้องในวันทีอยู่นอกเหนือภาคการศึกษาได้</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="allow_break_booking">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div style="text-align: right; margin-top: 2rem;">
+                    <button type="submit" class="btn-save"
+                        onclick="alert('บันทึกข้อมูลภาคการศึกษาสำเร็จ!'); return false;">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="tab-booking_rules" class="settings-content-box">
+            <div class="box-header">
+                <h2>เงื่อนไขและกฎการจองห้อง</h2>
+                <p>กำหนดขอบเขตและข้อจำกัดในการกดจองห้องของผู้ใช้งานทั่วไป</p>
+            </div>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>จองล่วงหน้าได้สูงสุด (วัน) <span style="color: red;">*</span></label>
+                        <input type="number" name="max_advance_days" class="form-control" value="30" min="1" required>
+                        <span class="form-text">ผู้ใช้จะจองข้ามเดือนเกินจำนวนวันที่ระบุไม่ได้</span>
+                    </div>
+                    <div class="form-group">
+                        <label>จำกัดเวลาจองสูงสุดต่อครั้ง (ชั่วโมง) <span style="color: red;">*</span></label>
+                        <select name="max_hours" class="form-control">
+                            <option value="3">3 ชั่วโมง</option>
+                            <option value="4" selected>4 ชั่วโมง</option>
+                            <option value="6">6 ชั่วโมง</option>
+                            <option value="8">8 ชั่วโมง (ทั้งวัน)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="switch-wrap">
+                    <div class="switch-text">
+                        <h4>อนุมัติอัตโนมัติสำหรับอาจารย์ (Auto-Approve)</h4>
+                        <p>ข้ามขั้นตอนรอแอดมินอนุมัติ หากผู้จองมีบทบาทเป็นอาจารย์ (Lecturer)</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="auto_approve_lecturer" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="switch-wrap">
+                    <div class="switch-text">
+                        <h4>เปิดใช้งานจองห้องวันเสาร์-อาทิตย์</h4>
+                        <p>อนุญาตให้มีตัวเลือกการจองในวันหยุดสุดสัปดาห์บนปฏิทิน</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="allow_weekend" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div style="text-align: right; margin-top: 2rem;">
+                    <button type="submit" class="btn-save"
+                        onclick="alert('บันทึกเงื่อนไขการจองสำเร็จ!'); return false;">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="tab-notifications" class="settings-content-box">
+            <div class="box-header">
+                <h2>การแจ้งเตือนและอีเมลระบบ</h2>
+                <p>จัดการการส่งแจ้งเตือนสถานะการจองไปยังอีเมลของผู้ใช้งาน</p>
+            </div>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>อีเมลผู้ดูแลระบบ (สำหรับรับแจ้งเตือนเมื่อมีคำขอใหม่)</label>
+                    <input type="email" name="admin_email" class="form-control" value="admin.tse@thammasat.ac.th">
+                </div>
+
+                <div class="switch-wrap" style="margin-top: 1.5rem;">
+                    <div class="switch-text">
+                        <h4>ส่งอีเมลแจ้งเตือนผู้จอง (Email Notification)</h4>
+                        <p>ส่งอีเมลหาผู้ใช้งานเมื่อคำขอจองได้รับการ "อนุมัติ" หรือ "ปฏิเสธ"</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="enable_email_notification" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div style="text-align: right; margin-top: 2rem;">
+                    <button type="submit" class="btn-save"
+                        onclick="alert('บันทึกการตั้งค่าแจ้งเตือนสำเร็จ!'); return false;">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    // ฟังก์ชันสำหรับสลับแท็บเมนูการตั้งค่า
+    function openSettingTab(tabId, element) {
+        // ซ่อนเนื้อหาทั้งหมด
+        const contents = document.querySelectorAll('.settings-content-box');
+        contents.forEach(content => content.classList.remove('active'));
+
+        // ลบแถบสีแดงของเมนูทั้งหมด
+        const navItems = document.querySelectorAll('.settings-nav-item');
+        navItems.forEach(item => item.classList.remove('active'));
+
+        // แสดงเนื้อหาและเพิ่มแถบสีแดงในเมนูที่ถูกคลิก
+        document.getElementById('tab-' + tabId).classList.add('active');
+        element.classList.add('active');
+    }
+</script>
+{% endblock %}
