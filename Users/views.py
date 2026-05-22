@@ -13,7 +13,7 @@ import io
 import logging
 
 from .forms import TULoginForm, UserRoleAssignmentForm
-from .models import UserProfile
+from .models import UserProfile, SystemSettings
 
 logger = logging.getLogger(__name__)
 
@@ -698,7 +698,52 @@ def admin_calendar_view(request):
     }
     return render(request, "Users/admin_calendar.html", context)
 
-@login_required
+
+@login_required(login_url="login")
 def system_settings_view(request):
-    # ในอนาคตสามารถเขียนตรรกะ (Logic) ดึงค่าจาก Model 'AcademicSemester' มาแสดงในฟอร์มได้ที่นี่
-    return render(request, 'Users/system_settings.html')
+    if not request.user.profile.is_admin():
+        messages.error(request, "คุณไม่มีสิทธิ์เข้าถึงหน้านี้")
+        return redirect("dashboard")
+
+    # ดึงค่า Settings จากฐานข้อมูล
+    settings = SystemSettings.get_settings()
+
+    if request.method == "POST":
+        # ดักจับว่าบันทึกจากฟอร์มไหน (เพราะมี 3 ฟอร์ม)
+        if "semester_name" in request.POST:
+            settings.semester_name = request.POST.get("semester_name")
+            start = request.POST.get("start_date")
+            end = request.POST.get("end_date")
+            if start:
+                settings.start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            if end:
+                settings.end_date = datetime.strptime(end, "%Y-%m-%d").date()
+            settings.allow_break_booking = (
+                request.POST.get("allow_break_booking") == "on"
+            )
+            messages.success(request, "บันทึกข้อมูลภาคการศึกษาสำเร็จ")
+
+        elif "max_advance_days" in request.POST:
+            settings.max_advance_days = int(request.POST.get("max_advance_days", 30))
+            settings.max_hours = int(request.POST.get("max_hours", 4))
+            # settings.auto_approve_lecturer = (
+            #     request.POST.get("auto_approve_lecturer") == "on"
+            # )
+            settings.allow_weekend = request.POST.get("allow_weekend") == "on"
+            messages.success(request, "บันทึกเงื่อนไขการจองสำเร็จ")
+
+        elif "admin_email" in request.POST:
+            settings.admin_email = request.POST.get("admin_email")
+            settings.enable_email_notification = (
+                request.POST.get("enable_email_notification") == "on"
+            )
+            messages.success(request, "บันทึกการตั้งค่าแจ้งเตือนสำเร็จ")
+
+        settings.save()
+        return redirect("system_settings")
+
+    return render(
+        request,
+        "Users/system_settings.html",
+        {"settings": settings, "title": "การตั้งค่าระบบ"},
+    )

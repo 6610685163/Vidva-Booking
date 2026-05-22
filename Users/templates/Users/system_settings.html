@@ -327,19 +327,18 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label>ปีการศึกษา / ภาคเรียนปัจจุบัน <span style="color: red;">*</span></label>
-                    <input type="text" name="semester_name" class="form-control" placeholder="เช่น 1/2569"
-                        value="1/2569" required>
+                    <input type="text" name="semester_name" class="form-control" placeholder="เช่น 1/2569" value="{{ settings.semester_name }}" required>
                     <span class="form-text">ชื่อเรียกภาคการศึกษาที่จะแสดงให้ผู้ใช้งานเห็น</span>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>วันที่เปิดเทอม (Start Date) <span style="color: red;">*</span></label>
-                        <input type="date" name="start_date" class="form-control" value="2026-08-10" required>
+                        <input type="date" name="start_date" class="form-control" value="{{ settings.start_date|date:'Y-m-d' }}" required>
                     </div>
                     <div class="form-group">
                         <label>วันที่ปิดเทอม (End Date) <span style="color: red;">*</span></label>
-                        <input type="date" name="end_date" class="form-control" value="2026-12-25" required>
+                        <input type="date" name="end_date" class="form-control" value="{{ settings.end_date|date:'Y-m-d' }}" required>
                     </div>
                 </div>
 
@@ -349,14 +348,13 @@
                         <p>หากปิด ผู้ใช้จะไม่สามารถกดจองห้องในวันทีอยู่นอกเหนือภาคการศึกษาได้</p>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" name="allow_break_booking">
+                        <input type="checkbox" name="allow_break_booking" {% if settings.allow_break_booking %}checked{% endif %}>
                         <span class="slider"></span>
                     </label>
                 </div>
 
                 <div style="text-align: right; margin-top: 2rem;">
-                    <button type="submit" class="btn-save"
-                        onclick="alert('บันทึกข้อมูลภาคการศึกษาสำเร็จ!'); return false;">
+                    <button type="submit" class="btn-save">
                         <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า
                     </button>
                 </div>
@@ -373,30 +371,30 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>จองล่วงหน้าได้สูงสุด (วัน) <span style="color: red;">*</span></label>
-                        <input type="number" name="max_advance_days" class="form-control" value="30" min="1" required>
+                        <input type="number" name="max_advance_days" class="form-control" value="{{ settings.max_advance_days }}" min="1" required>
                         <span class="form-text">ผู้ใช้จะจองข้ามเดือนเกินจำนวนวันที่ระบุไม่ได้</span>
                     </div>
                     <div class="form-group">
                         <label>จำกัดเวลาจองสูงสุดต่อครั้ง (ชั่วโมง) <span style="color: red;">*</span></label>
                         <select name="max_hours" class="form-control">
-                            <option value="3">3 ชั่วโมง</option>
-                            <option value="4" selected>4 ชั่วโมง</option>
-                            <option value="6">6 ชั่วโมง</option>
-                            <option value="8">8 ชั่วโมง (ทั้งวัน)</option>
+                            <option value="3" {% if settings.max_hours == 3 %}selected{% endif %}>3 ชั่วโมง</option>
+                            <option value="4" {% if settings.max_hours == 4 %}selected{% endif %}>4 ชั่วโมง</option>
+                            <option value="6" {% if settings.max_hours == 6 %}selected{% endif %}>6 ชั่วโมง</option>
+                            <option value="8" {% if settings.max_hours == 8 %}selected{% endif %}>8 ชั่วโมง (ทั้งวัน)</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="switch-wrap">
+                {% comment %} <div class="switch-wrap">
                     <div class="switch-text">
                         <h4>อนุมัติอัตโนมัติสำหรับอาจารย์ (Auto-Approve)</h4>
                         <p>ข้ามขั้นตอนรอแอดมินอนุมัติ หากผู้จองมีบทบาทเป็นอาจารย์ (Lecturer)</p>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" name="auto_approve_lecturer" checked>
+                        <input type="checkbox" name="auto_approve_lecturer" {% if settings.auto_approve_lecturer %}checked{% endif %}>
                         <span class="slider"></span>
                     </label>
-                </div>
+                </div> {% endcomment %}
 
                 <div class="switch-wrap">
                     <div class="switch-text">
@@ -404,14 +402,13 @@
                         <p>อนุญาตให้มีตัวเลือกการจองในวันหยุดสุดสัปดาห์บนปฏิทิน</p>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" name="allow_weekend" checked>
+                        <input type="checkbox" name="allow_weekend" {% if settings.allow_weekend %}checked{% endif %}>
                         <span class="slider"></span>
                     </label>
                 </div>
 
                 <div style="text-align: right; margin-top: 2rem;">
-                    <button type="submit" class="btn-save"
-                        onclick="alert('บันทึกเงื่อนไขการจองสำเร็จ!'); return false;">
+                    <button type="submit" class="btn-save">
                         <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า
                     </button>
                 </div>
@@ -427,7 +424,7 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label>อีเมลผู้ดูแลระบบ (สำหรับรับแจ้งเตือนเมื่อมีคำขอใหม่)</label>
-                    <input type="email" name="admin_email" class="form-control" value="admin.tse@thammasat.ac.th">
+                    <input type="email" name="admin_email" class="form-control" value="{{ settings.admin_email }}">
                 </div>
 
                 <div class="switch-wrap" style="margin-top: 1.5rem;">
@@ -436,14 +433,13 @@
                         <p>ส่งอีเมลหาผู้ใช้งานเมื่อคำขอจองได้รับการ "อนุมัติ" หรือ "ปฏิเสธ"</p>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" name="enable_email_notification" checked>
+                        <input type="checkbox" name="enable_email_notification" {% if settings.enable_email_notification %}checked{% endif %}>
                         <span class="slider"></span>
                     </label>
                 </div>
 
                 <div style="text-align: right; margin-top: 2rem;">
-                    <button type="submit" class="btn-save"
-                        onclick="alert('บันทึกการตั้งค่าแจ้งเตือนสำเร็จ!'); return false;">
+                    <button type="submit" class="btn-save">
                         <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า
                     </button>
                 </div>
