@@ -1,327 +1,337 @@
-<!DOCTYPE html>
-<html lang="th">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - ระบบจองห้อง มธ.</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --tu-red: #c21e2d;
-            --tu-red-hover: #a01825;
-            --tu-green: #28a745;
-            --tu-green-hover: #218838;
-            --text-main: #374151;
-            --text-muted: #6b7280;
-            --bg-color: #f3f4f6;
-            --border-color: #d1d5db;
-        }
+{% block title %}รายการจองที่รอการอนุมัติ - ผู้ดูแลระบบ{% endblock %}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% block extra_style %}
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+    }
 
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-        }
+    .page-header h1 {
+        color: #1e2937;
+        font-size: 1.75rem;
+        margin: 0 0 0.5rem 0;
+    }
 
-        .navbar {
-            background-color: var(--tu-red);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .page-header p {
+        color: #6b7280;
+        margin: 0;
+    }
 
-        .navbar h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
+    .card-box {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+    }
 
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            transition: background-color 0.2s;
-        }
+    .table-wrapper {
+        overflow-x: auto;
+    }
 
-        .navbar a:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.5rem;
+    }
 
-        .container {
-            max-width: 1100px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
+    thead {
+        background-color: #f8fafc;
+        border-bottom: 2px solid #e5e7eb;
+    }
 
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
+    th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.95rem;
+    }
 
-        .card h2 {
-            color: var(--tu-red);
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid var(--tu-red);
-            padding-bottom: 0.5rem;
-        }
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid #edf2f7;
+        color: #374151;
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
 
-        .table-wrapper {
-            overflow-x: auto;
-        }
+    tbody tr:hover {
+        background-color: #fbfbfb;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
+    .purpose-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background-color: #f1f5f9;
+        color: #475569;
+        font-weight: 500;
+        border: 1px solid #e2e8f0;
+    }
 
-        thead {
-            background-color: var(--bg-color);
-            border-bottom: 2px solid var(--tu-red);
-        }
+    /* ปุ่ม Action */
+    .btn-action {
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        border: none;
+        transition: 0.2s;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-        th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: var(--tu-red);
-        }
+    .btn-approve {
+        background-color: #10b981;
+        /* สีเขียว */
+        color: white;
+    }
 
-        td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.95rem;
-        }
+    .btn-approve:hover {
+        background-color: #059669;
+        box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+    }
 
-        tbody tr:hover {
-            background-color: #f9fafb;
-        }
+    .btn-reject {
+        background-color: #ef4444;
+        /* สีแดง */
+        color: white;
+    }
 
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-weight: 600;
-            font-family: 'Sarabun', sans-serif;
-            cursor: pointer;
-            border: none;
-            transition: background-color 0.2s;
-            font-size: 0.9rem;
-        }
+    .btn-reject:hover {
+        background-color: #dc2626;
+        box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+    }
 
-        .btn-approve {
-            background-color: var(--tu-green);
-            color: white;
-            margin-right: 0.5rem;
-        }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #94a3b8;
+    }
 
-        .btn-approve:hover {
-            background-color: var(--tu-green-hover);
-        }
+    /* ----- สไตล์สำหรับ Popup Modal ปฏิเสธการจอง ----- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
 
-        .btn-reject {
-            background-color: var(--tu-red);
-            color: white;
-        }
+    .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+    }
 
-        .btn-reject:hover {
-            background-color: var(--tu-red-hover);
-        }
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+    }
 
-        .purpose-badge {
-            display: inline-block;
-            padding: 0.25rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            background-color: #e5e7eb;
-            color: #4b5563;
-        }
+    .modal-overlay.show .modal-content {
+        transform: translateY(0);
+    }
 
-        /* Modal Styling */
-        .modal-overlay {
-            display: flex;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #edf2f7;
+        padding-bottom: 10px;
+    }
 
-        .modal-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
+    .modal-header h2 {
+        margin: 0;
+        color: var(--tu-red);
+        font-size: 1.35rem;
+        font-weight: 700;
+    }
 
-        .modal-content {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
+    .btn-close-modal {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 1.25rem;
+        transition: 0.2s;
+    }
 
-        .modal-content h3 {
-            color: var(--tu-red);
-            margin-bottom: 1rem;
-        }
+    .btn-close-modal:hover {
+        color: #475569;
+    }
 
-        .modal-content textarea {
-            width: 100%;
-            height: 120px;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-family: 'Sarabun', sans-serif;
-            margin-bottom: 1.5rem;
-            resize: none;
-        }
+    .modal-content textarea {
+        width: 100%;
+        height: 120px;
+        padding: 12px 14px;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+        resize: none;
+        outline: none;
+        transition: 0.2s;
+    }
 
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-        }
+    .modal-content textarea:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
 
-        .btn-secondary {
-            background-color: #9ca3af;
-            color: white;
-        }
+    .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
 
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-        }
-    </style>
-</head>
+    .btn-secondary {
+        background-color: #f1f5f9;
+        color: #475569;
+    }
 
-<body>
-    <div class="navbar">
-        <h1>{{ title }}</h1>
-        <a href="{% url 'dashboard' %}">กลับสู่แดชบอร์ด</a>
+    .btn-secondary:hover {
+        background-color: #e2e8f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fa-solid fa-clipboard-check" style="color: var(--tu-red); margin-right: 10px;"></i>
+        รายการจองที่รอการอนุมัติ</h1>
+    <p>ตรวจสอบและดำเนินการอนุมัติหรือปฏิเสธคำขอจองห้องเรียนและห้องประชุม</p>
+</div>
+
+<div class="card-box">
+    {% if bookings %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>ผู้จอง</th>
+                    <th>ห้อง</th>
+                    <th>วัตถุประสงค์</th>
+                    <th>วันและเวลา</th>
+                    <th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bookings %}
+                <tr>
+                    <td>
+                        <strong style="color: #1e2937;">{{ b.booker.username }}</strong><br>
+                        <small style="color: #64748b;">{{ b.booker.email }}</small>
+                    </td>
+                    <td style="font-weight: 600;">{{ b.room.room_code }}</td>
+                    <td>
+                        <span class="purpose-badge">
+                            {% if b.purpose_type == 'class' %}
+                            <i class="fa-solid fa-book" style="margin-right: 4px;"></i> วิชา: {{ b.subject_name }} ({{
+                            b.subject_code }})
+                            {% else %}
+                            <i class="fa-solid fa-users" style="margin-right: 4px;"></i> อบรม: {{ b.topic }}
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="color: #374151; font-weight: 500;">{{ b.start_date|date:"d M Y" }}</div>
+                        <div style="font-size: 0.85rem; color: #64748b;"><i class="fa-regular fa-clock"></i> {{
+                            b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}</div>
+                    </td>
+                    <td style="display: flex; gap: 8px;">
+                        <form method="POST" action="{% url 'approve_booking' b.id %}" style="margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action btn-approve"><i class="fa-solid fa-check"></i>
+                                อนุมัติ</button>
+                        </form>
+                        <button type="button" class="btn-action btn-reject" onclick="showRejectModal('{{ b.id }}')"><i
+                                class="fa-solid fa-xmark"></i> ปฏิเสธ</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fa-solid fa-check-circle"
+            style="font-size: 3rem; color: #e2e8f0; margin-bottom: 15px; display: block;"></i>
+        <h3 style="color: #475569; margin-bottom: 5px;">ไม่มีรายการรออนุมัติ</h3>
+        <p>ขณะนี้ไม่มีคำขอจองห้องที่รอการตรวจสอบ</p>
+    </div>
+    {% endif %}
+</div>
 
-    <div class="container">
-        <div class="card">
-            <h2>รายการจองที่รอการอนุมัติ</h2>
-
-            {% if bookings %}
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ผู้จอง</th>
-                            <th>ห้อง</th>
-                            <th>วัตถุประสงค์</th>
-                            <th>วัน/เวลา</th>
-                            <th>จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for b in bookings %}
-                        <tr>
-                            <td>
-                                <strong>{{ b.booker.username }}</strong><br>
-                                <small style="color: var(--text-muted);">{{ b.booker.email }}</small>
-                            </td>
-                            <td>{{ b.room.room_code }}</td>
-                            <td>
-                                <span class="purpose-badge">
-                                    {% if b.purpose_type == 'class' %}
-                                    วิชา: {{ b.subject_name }} ({{ b.subject_code }})
-                                    {% else %}
-                                    อบรม: {{ b.topic }}
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td>
-                                {% if b.start_date == b.end_date %}
-                                {{ b.start_date|date:"d M Y" }}<br>
-                                {% else %}
-                                <span style="color: var(--tu-red); font-weight: 600;">ทุกวัน{{ b.get_thai_days_of_week }}</span><br>
-                                <small>{{ b.start_date|date:"d M Y" }} - {{ b.end_date|date:"d M Y" }}</small><br>
-                                {% endif %}
-                                <small>{{ b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}</small>
-                            </td>
-                            <td>
-                                <form method="POST" action="{% url 'approve_booking' b.id %}" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-approve">อนุมัติ</button>
-                                </form>
-                                <button type="button" class="btn btn-reject"
-                                    onclick="showRejectModal('{{ b.id }}')">ปฏิเสธ</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <p>ไม่มีรายการที่รอการอนุมัติในขณะนี้</p>
-            </div>
-            {% endif %}
+<div id="rejectModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i>ระบุเหตุผลการปฏิเสธ</h2>
+            <button class="btn-close-modal" onclick="hideRejectModal()"><i class="fa-solid fa-xmark"></i></button>
         </div>
+
+        <form id="rejectForm" method="POST" action="">
+            {% csrf_token %}
+            <textarea name="rejection_reason"
+                placeholder="กรุณาระบุเหตุผลที่ไม่อนุมัติการจองนี้ เพื่อแจ้งให้ผู้จองทราบ..." required></textarea>
+            <div class="modal-buttons">
+                <button type="button" class="btn-action btn-secondary" onclick="hideRejectModal()">ยกเลิก</button>
+                <button type="submit" class="btn-action btn-reject"><i class="fa-solid fa-paper-plane"></i>
+                    ยืนยันการปฏิเสธ</button>
+            </div>
+        </form>
     </div>
+</div>
+{% endblock %}
 
-    <div id="rejectModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>ระบุเหตุผลการปฏิเสธ</h3>
-            <form id="rejectForm" method="POST" action="">
-                {% csrf_token %}
-                <textarea name="rejection_reason" placeholder="กรุณาระบุเหตุผลที่ไม่อนุมัติการจองนี้..."
-                    required></textarea>
-                <div class="modal-buttons">
-                    <button type="button" class="btn btn-secondary" onclick="hideRejectModal()">ยกเลิก</button>
-                    <button type="submit" class="btn btn-reject">ยืนยันการปฏิเสธ</button>
-                </div>
-            </form>
-        </div>
-    </div>
+{% block extra_script %}
+<script>
+    // ฟังก์ชันเปิด Modal พร้อมกำหนด URL สำหรับการ Submit Form
+    function showRejectModal(bookingId) {
+        // ปรับ Path ให้ตรงกับ URL Configuration ของระบบ
+        document.getElementById('rejectForm').action = "/booking/" + bookingId + "/reject/";
 
-    <script>
-        function showRejectModal(bookingId) {
-            // ปรับ Path ให้ตรงกับ URL Configuration ของคุณ
-            document.getElementById('rejectForm').action = "/booking/" + bookingId + "/reject/";
-            document.getElementById('rejectModal').classList.add('show');
+        const modal = document.getElementById('rejectModal');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    // ฟังก์ชันซ่อน Modal
+    function hideRejectModal() {
+        const modal = document.getElementById('rejectModal');
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    // ปิด Modal เมื่อคลิกพื้นที่พื้นหลังสีดำ
+    window.onclick = function (event) {
+        const modal = document.getElementById('rejectModal');
+        if (event.target == modal) {
+            hideRejectModal();
         }
-
-        function hideRejectModal() {
-            document.getElementById('rejectModal').classList.remove('show');
-        }
-
-        // ปิด Modal เมื่อคลิกพื้นที่ด้านนอก
-        window.onclick = function (event) {
-            const modal = document.getElementById('rejectModal');
-            if (event.target == modal) {
-                hideRejectModal();
-            }
-        }
-    </script>
-</body>
-
-</html>
+    }
+</script>
+{% endblock %}
