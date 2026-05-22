@@ -761,7 +761,7 @@
             let dateString = `${year}-${mStr}-${dStr}`;
  
             // หาชื่อห้องปัจจุบัน (เช่น "ENG 406-3(ห้องประชุม 1)" -> "ENG 406-3")
-            let roomCode = currentRoom.split("(")[0].trim();
+            let roomCode = currentRoom.split("(")[0].replace("ENG", "").trim();
             
             let currentJSDate = new Date(year, month, d);
             let pyDayStr = ((currentJSDate.getDay() === 0) ? 6 : currentJSDate.getDay() - 1).toString();
@@ -824,7 +824,7 @@
         selectedDates.sort((a, b) => new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day));
  
         // 🎯 ดึงรหัสห้องที่กำลังเลือกอยู่
-        let roomCode = currentRoom.split("(")[0].trim();
+        let roomCode = currentRoom.split("(")[0].replace("ENG", "").trim();
  
         selectedDates.forEach(sd => {
             const dayFull = `${sd.day} ${sd.monthName} ${sd.year + 543}`;
@@ -979,7 +979,7 @@
         }
  
         if (step === 2 || step === 4) {
-            if (typeof data === 'string' && data.includes('ENG')) { currentRoom = data; }
+            if (typeof data === 'string') { currentRoom = data; }
         }
  
         if (step === 2) {
