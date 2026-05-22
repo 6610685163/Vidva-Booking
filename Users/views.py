@@ -614,3 +614,8 @@ def admin_calendar_view(request):
         "blackouts_json": json.dumps(blackouts_data),
     }
     return render(request, "Users/admin_calendar.html", context)
+
+@login_required
+def system_settings_view(request):
+    # ในอนาคตสามารถเขียนตรรกะ (Logic) ดึงค่าจาก Model 'AcademicSemester' มาแสดงในฟอร์มได้ที่นี่
+    return render(request, 'Users/system_settings.html')

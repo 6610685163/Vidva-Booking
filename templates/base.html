@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     {% load static %}
     <style>
-        /* เพิ่มคลาสนี้เพื่อใช้ซ่อนแชทบอท */
         .d-none {
             display: none !important;
         }
@@ -21,6 +20,7 @@
             --green: #10b981;
             --yellow: #f59e0b;
             --red: #ef4444;
+            --sidebar-width: 280px;
         }
 
         * {
@@ -32,6 +32,15 @@
             background-color: var(--bg);
             margin: 0;
             color: #334155;
+            overflow-x: hidden;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .navbar {
@@ -53,17 +62,18 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1400px;
+            width: 100%;
             margin: 30px auto;
-            padding: 0 20px;
+            padding: 0 30px;
+            flex-grow: 1;
         }
 
-        /* ----- Sidebar CSS ----- */
         .sidebar {
             position: fixed;
             top: 0;
-            left: -300px;
-            width: 280px;
+            left: 0;
+            width: var(--sidebar-width);
             height: 100vh;
             background-color: white;
             box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
@@ -71,10 +81,6 @@
             transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
-        }
-
-        .sidebar.open {
-            left: 0;
         }
 
         .sidebar-header {
@@ -152,7 +158,6 @@
             opacity: 1;
         }
 
-        /* จัดการขนาดโลโก้ */
         .nav-logo {
             height: 35px;
             width: auto;
@@ -165,6 +170,42 @@
             vertical-align: middle;
             filter: brightness(0) invert(1);
         }
+
+        /* ----- Responsive สำหรับ PC vs Mobile ----- */
+        @media (min-width: 993px) {
+
+            .btn-close-sidebar,
+            .sidebar-overlay {
+                display: none !important;
+            }
+
+            /* คลาสสำหรับหุบ Sidebar บนคอมพิวเตอร์ */
+            .sidebar.collapsed {
+                left: calc(var(--sidebar-width) * -1);
+            }
+
+            .main-content.expanded {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                left: -320px;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+        }
     </style>
     {% block extra_style %}{% endblock %}
 </head>
@@ -172,6 +213,7 @@
 <body>
 
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -183,298 +225,129 @@
 
         <ul class="sidebar-menu">
             {% if user.profile.role == 'lecturer' %}
-            <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                <a href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> แดชบอร์ด</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'booking_flow' %}active{% endif %}">
-                <a href="{% url 'booking_flow' %}"><i class="fa-solid fa-calendar-plus"></i> จองห้องใหม่</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'my_bookings' %}active{% endif %}">
-                <a href="{% url 'my_bookings' %}"><i class="fa-solid fa-list-check"></i> รายการจองของฉัน</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'booking_calendar' %}active{% endif %}">
-                <a href="{% url 'booking_calendar' %}"><i class="fa-solid fa-calendar-days"></i> ปฏิทินตารางห้อง</a>
+            <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><a
+                    href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> แดชบอร์ด</a></li>
+            <li class="{% if request.resolver_match.url_name == 'booking_flow' %}active{% endif %}"><a
+                    href="{% url 'booking_flow' %}"><i class="fa-solid fa-calendar-plus"></i> จองห้องใหม่</a></li>
+            <li class="{% if request.resolver_match.url_name == 'my_bookings' %}active{% endif %}"><a
+                    href="{% url 'my_bookings' %}"><i class="fa-solid fa-list-check"></i> รายการจองของฉัน</a></li>
+            <li class="{% if request.resolver_match.url_name == 'booking_calendar' %}active{% endif %}"><a
+                    href="{% url 'booking_calendar' %}"><i class="fa-solid fa-calendar-days"></i> ปฏิทินตารางห้อง</a>
             </li>
             {% endif %}
 
             {% if user.profile.role == 'admin' %}
-            <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                <a href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> แดชบอร์ด</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'pending_bookings' %}active{% endif %}">
-                <a href="{% url 'pending_bookings' %}"><i class="fa-solid fa-clipboard-check"></i>
-                    รายการจองที่รอการอนุมัติ</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'users_management' %}active{% endif %}">
-                <a href="{% url 'users_management' %}"><i class="fa-solid fa-users-gear"></i> จัดการผู้ใช้งาน</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'room_management' %}active{% endif %}">
-                <a href="{% url 'room_management' %}"><i class="fa-solid fa-building"></i> จัดการห้อง</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'room_report' %}active{% endif %}">
-                <a href="{% url 'room_report' %}"><i class="fa-solid fa-chart-line"></i> รายงานห้อง</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'admin_calendar' %}active{% endif %}">
-                <a href="{% url 'admin_calendar' %}"><i class="fa-regular fa-calendar-days"></i> ปฏิทินห้อง</a>
-            </li>
-            <li><a href="/admin/"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ</a></li>
+            <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><a
+                    href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> แดชบอร์ด</a></li>
+            <li class="{% if request.resolver_match.url_name == 'pending_bookings' %}active{% endif %}"><a
+                    href="{% url 'pending_bookings' %}"><i class="fa-solid fa-clipboard-check"></i>
+                    รายการจองรออนุมัติ</a></li>
+            <li class="{% if request.resolver_match.url_name == 'users_management' %}active{% endif %}"><a
+                    href="{% url 'users_management' %}"><i class="fa-solid fa-users-gear"></i> จัดการผู้ใช้งาน</a></li>
+            <li class="{% if request.resolver_match.url_name == 'room_management' %}active{% endif %}"><a
+                    href="{% url 'room_management' %}"><i class="fa-solid fa-building"></i> จัดการห้อง</a></li>
+            <li class="{% if request.resolver_match.url_name == 'room_report' %}active{% endif %}"><a
+                    href="{% url 'room_report' %}"><i class="fa-solid fa-chart-line"></i> รายงานสถิติ</a></li>
+            <li class="{% if request.resolver_match.url_name == 'admin_calendar' %}active{% endif %}"><a
+                    href="{% url 'admin_calendar' %}"><i class="fa-regular fa-calendar-days"></i> ปฏิทินห้อง</a></li>
+            <li class="{% if request.resolver_match.url_name == 'system_settings' %}active{% endif %}"><a
+                    href="{% url 'system_settings' %}"><i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ</a></li>
             {% endif %}
         </ul>
         <div style="padding: 20px; border-top: 1px solid #e2e8f0;">
             <form method="post" action="{% url 'logout' %}" style="margin: 0;">
                 {% csrf_token %}
                 <button type="submit"
-                    style="width: 100%; padding: 12px; background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600; transition: 0.2s;">
-                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
-                </button>
+                    style="width: 100%; padding: 12px; background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600; transition: 0.2s;"><i
+                        class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
             </form>
         </div>
     </div>
 
-    <nav class="navbar">
-        <div style="font-size: 1.4rem; font-weight: 600; display: flex; align-items: center; gap: 20px;">
-            <button onclick="toggleSidebar()"
-                style="background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer;">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="letter-spacing: 0.5px;">TSE Room Booking</span>
-            </div>
-        </div>
-        <div style="font-size: 0.95rem;">
-            <i class="fa-solid fa-circle-user"></i> {{ user.username }} | {{ user.profile.get_role_display }}
-        </div>
-    </nav>
-
-    <div class="container">
-        {% if messages %}
-        <div style="margin-bottom: 1.5rem;">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}" style="
-                padding: 1rem 1.5rem;
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-                animation: slideDown 0.3s ease, slideUp 4s ease 3s forwards;
-                {% if 'error' in message.tags %}
-                    background-color: #fee2e2;
-                    border: 1px solid #fecaca;
-                    color: #991b1b;
-                {% elif 'warning' in message.tags %}
-                    background-color: #fef3c7;
-                    border: 1px solid #fde68a;
-                    color: #92400e;
-                {% elif 'success' in message.tags %}
-                    background-color: #ecfdf5;
-                    border: 1px solid #a7f3d0;
-                    color: #065f46;
-                {% else %}
-                    background-color: #dbeafe;
-                    border: 1px solid #bfdbfe;
-                    color: #1e40af;
-                {% endif %}
-            ">
-                <i class="fa-solid fa-circle-check" style="font-size: 1.2rem;"></i>
-                <div>
-                    {{ message }}
+    <div class="main-content">
+        <nav class="navbar">
+            <div style="font-size: 1.4rem; font-weight: 600; display: flex; align-items: center; gap: 20px;">
+                <button class="hamburger-btn" onclick="toggleSidebar()"
+                    style="background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; display: inline-block;">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="letter-spacing: 0.5px;">TSE Room Booking</span>
                 </div>
             </div>
-            {% endfor %}
+            <div style="font-size: 0.95rem;">
+                <i class="fa-solid fa-circle-user"></i> {{ user.username }} | {{ user.profile.get_role_display }}
+            </div>
+        </nav>
+
+        <div class="container">
+            {% if messages %}
+            <div style="margin-bottom: 1.5rem;">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}"
+                    style="padding: 1rem 1.5rem; border-radius: 12px; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); animation: slideDown 0.3s ease, slideUp 4s ease 3s forwards; {% if 'error' in message.tags %} background-color: #fee2e2; border: 1px solid #fecaca; color: #991b1b; {% elif 'warning' in message.tags %} background-color: #fef3c7; border: 1px solid #fde68a; color: #92400e; {% elif 'success' in message.tags %} background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; {% else %} background-color: #dbeafe; border: 1px solid #bfdbfe; color: #1e40af; {% endif %}">
+                    <i class="fa-solid fa-circle-check" style="font-size: 1.2rem;"></i>
+                    <div>{{ message }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <style>
+                @keyframes slideDown {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                @keyframes slideUp {
+                    from {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+
+                    to {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                }
+            </style>
+            {% endif %}
+
+            {% block content %}{% endblock %}
         </div>
-        <style>
-            @keyframes slideDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes slideUp {
-                from {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-
-                to {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                }
-            }
-        </style>
-        {% endif %}
-
-        {% block content %}{% endblock %}
     </div>
 
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            sidebar.classList.toggle('open');
-            if (sidebar.classList.contains('open')) {
-                overlay.style.display = 'block';
-                setTimeout(() => overlay.classList.add('show'), 10);
-                document.body.style.overflow = 'hidden';
+            const mainContent = document.querySelector('.main-content');
+
+            // ตรวจสอบขนาดหน้าจอ ถ้าเป็น PC ให้ใช้การดันเนื้อหา (Collapse)
+            if (window.innerWidth > 992) {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
             } else {
-                overlay.classList.remove('show');
-                setTimeout(() => overlay.style.display = 'none', 300);
-                document.body.style.overflow = 'auto';
+                // ถ้าเป็นมือถือให้ใช้ Overlay
+                sidebar.classList.toggle('open');
+                if (sidebar.classList.contains('open')) {
+                    overlay.style.display = 'block';
+                    setTimeout(() => overlay.classList.add('show'), 10);
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    overlay.classList.remove('show');
+                    setTimeout(() => overlay.style.display = 'none', 300);
+                    document.body.style.overflow = 'auto';
+                }
             }
         }
     </script>
     {% block extra_script %}{% endblock %}
-
-    <div id="chatbot-widget" class="d-none"
-        style="position: fixed; bottom: 80px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1000; display: flex; flex-direction: column;">
-        <div
-            style="background: #007bff; color: white; padding: 10px; border-top-left-radius: 10px; border-top-right-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
-            <strong>🤖 ผู้ช่วย Vidva</strong>
-            <button onclick="toggleChatbot()"
-                style="background: none; border: none; color: white; font-weight: bold; cursor: pointer;">X</button>
-        </div>
-
-        <div id="chatbot-messages"
-            style="flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #f8f9fa;">
-            <div
-                style="align-self: flex-start; background: #e9ecef; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
-                สวัสดีครับ! ผมคือผู้ช่วย Vidva 🤖 <br>
-                พิมพ์คำถามที่สงสัย หรือเลือกคำสั่งด่วนด้านล่างนี้ได้เลยครับ:
-                <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px;">
-                    <button onclick="sendQuickReply('วิธีจอง')"
-                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">📅
-                        วิธีจองห้อง</button>
-                    <button onclick="sendQuickReply('เช็คห้อง')"
-                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">🔍
-                        เช็คห้องว่าง</button>
-                    <button onclick="sendQuickReply('ยกเลิก')"
-                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">❌
-                        ยกเลิกการจอง</button>
-                    <button onclick="sendQuickReply('เมนู')"
-                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">📋
-                        ดูคำสั่งทั้งหมด</button>
-                </div>
-            </div>
-        </div>
-
-        <div style="padding: 10px; border-top: 1px solid #dee2e6; display: flex; gap: 5px;">
-            <input type="text" id="chatbot-input" placeholder="พิมพ์ข้อความ..."
-                style="flex: 1; border: 1px solid #ced4da; border-radius: 5px; padding: 5px;"
-                onkeypress="handleChatbotEnter(event)">
-            <button onclick="sendChatbotMessage()"
-                style="background: #007bff; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">ส่ง</button>
-        </div>
-    </div>
-
-    <button onclick="toggleChatbot()"
-        style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: #007bff; color: white; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 24px; cursor: pointer; z-index: 1001;">
-        💬
-    </button>
-
-    <script>
-        // เปิด-ปิดหน้าต่างแชท
-        function toggleChatbot() {
-            const widget = document.getElementById('chatbot-widget');
-            if (widget.classList.contains('d-none')) {
-                widget.classList.remove('d-none');
-                document.getElementById('chatbot-input').focus();
-            } else {
-                widget.classList.add('d-none');
-            }
-        }
-
-        // กด Enter เพื่อส่งข้อความ
-        function handleChatbotEnter(event) {
-            if (event.key === 'Enter') {
-                sendChatbotMessage();
-            }
-        }
-
-        // ฟังก์ชันสำหรับกดปุ่ม Quick Reply
-        function sendQuickReply(text) {
-            const inputField = document.getElementById('chatbot-input');
-            inputField.value = text;
-            sendChatbotMessage();
-        }
-
-        // ฟังก์ชันส่งข้อความไปหา Backend
-        async function sendChatbotMessage() {
-            const inputField = document.getElementById('chatbot-input');
-            const message = inputField.value.trim();
-            if (!message) return;
-
-            const messagesContainer = document.getElementById('chatbot-messages');
-
-            // 1. แสดงข้อความของ User บนหน้าจอ
-            messagesContainer.innerHTML += `
-                <div style="align-self: flex-end; background: #007bff; color: white; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
-                    ${message}
-                </div>
-            `;
-            inputField.value = '';
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            // ดึง CSRF Token ของ Django
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ?
-                document.querySelector('[name=csrfmiddlewaretoken]').value :
-                getCookie('csrftoken');
-
-            try {
-                // 2. ยิง API ไปหา Backend ที่เราสร้างไว้ (อิงตาม path ที่ตั้งใน urls.py)
-                const response = await fetch('/booking/api/chatbot/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({ message: message })
-                });
-
-                const data = await response.json();
-
-                // 3. แสดงข้อความของ Bot บนหน้าจอ
-                if (data.reply) {
-                    // แปลง \n เป็น <br> ให้ขึ้นบรรทัดใหม่ได้
-                    const formattedReply = data.reply.replace(/\n/g, '<br>');
-                    messagesContainer.innerHTML += `
-                        <div style="align-self: flex-start; background: #e9ecef; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
-                            ${formattedReply}
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                messagesContainer.innerHTML += `
-                    <div style="align-self: flex-start; background: #ffdddd; color: #d8000c; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
-                        ระบบขัดข้อง ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ 😔
-                    </div>
-                `;
-            }
-
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        // ฟังก์ชันสำหรับดึง CSRF Token จาก Cookie (กรณีไม่มีใน Form)
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-    </script>
 </body>
 
 </html>
