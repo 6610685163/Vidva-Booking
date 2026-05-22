@@ -348,6 +348,151 @@
         }
     </script>
     {% block extra_script %}{% endblock %}
+
+    <div id="chatbot-widget" class="d-none"
+        style="position: fixed; bottom: 80px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1000; display: flex; flex-direction: column;">
+        <div
+            style="background: #007bff; color: white; padding: 10px; border-top-left-radius: 10px; border-top-right-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <strong>🤖 ผู้ช่วย Vidva</strong>
+            <button onclick="toggleChatbot()"
+                style="background: none; border: none; color: white; font-weight: bold; cursor: pointer;">X</button>
+        </div>
+
+        <div id="chatbot-messages"
+            style="flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #f8f9fa;">
+            <div
+                style="align-self: flex-start; background: #e9ecef; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
+                สวัสดีครับ! ผมคือผู้ช่วย Vidva 🤖 <br>
+                พิมพ์คำถามที่สงสัย หรือเลือกคำสั่งด่วนด้านล่างนี้ได้เลยครับ:
+                <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px;">
+                    <button onclick="sendQuickReply('วิธีจอง')"
+                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">📅
+                        วิธีจองห้อง</button>
+                    <button onclick="sendQuickReply('เช็คห้อง')"
+                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">🔍
+                        เช็คห้องว่าง</button>
+                    <button onclick="sendQuickReply('ยกเลิก')"
+                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">❌
+                        ยกเลิกการจอง</button>
+                    <button onclick="sendQuickReply('เมนู')"
+                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">📋
+                        ดูคำสั่งทั้งหมด</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding: 10px; border-top: 1px solid #dee2e6; display: flex; gap: 5px;">
+            <input type="text" id="chatbot-input" placeholder="พิมพ์ข้อความ..."
+                style="flex: 1; border: 1px solid #ced4da; border-radius: 5px; padding: 5px;"
+                onkeypress="handleChatbotEnter(event)">
+            <button onclick="sendChatbotMessage()"
+                style="background: #007bff; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">ส่ง</button>
+        </div>
+    </div>
+
+    <button onclick="toggleChatbot()"
+        style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: #007bff; color: white; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 24px; cursor: pointer; z-index: 1001;">
+        💬
+    </button>
+
+    <script>
+        // เปิด-ปิดหน้าต่างแชท
+        function toggleChatbot() {
+            const widget = document.getElementById('chatbot-widget');
+            if (widget.classList.contains('d-none')) {
+                widget.classList.remove('d-none');
+                document.getElementById('chatbot-input').focus();
+            } else {
+                widget.classList.add('d-none');
+            }
+        }
+
+        // กด Enter เพื่อส่งข้อความ
+        function handleChatbotEnter(event) {
+            if (event.key === 'Enter') {
+                sendChatbotMessage();
+            }
+        }
+
+        // ฟังก์ชันสำหรับกดปุ่ม Quick Reply
+        function sendQuickReply(text) {
+            const inputField = document.getElementById('chatbot-input');
+            inputField.value = text;
+            sendChatbotMessage();
+        }
+
+        // ฟังก์ชันส่งข้อความไปหา Backend
+        async function sendChatbotMessage() {
+            const inputField = document.getElementById('chatbot-input');
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            const messagesContainer = document.getElementById('chatbot-messages');
+
+            // 1. แสดงข้อความของ User บนหน้าจอ
+            messagesContainer.innerHTML += `
+                <div style="align-self: flex-end; background: #007bff; color: white; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
+                    ${message}
+                </div>
+            `;
+            inputField.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // ดึง CSRF Token ของ Django
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ?
+                document.querySelector('[name=csrfmiddlewaretoken]').value :
+                getCookie('csrftoken');
+
+            try {
+                // 2. ยิง API ไปหา Backend ที่เราสร้างไว้ (อิงตาม path ที่ตั้งใน urls.py)
+                const response = await fetch('/booking/api/chatbot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+
+                // 3. แสดงข้อความของ Bot บนหน้าจอ
+                if (data.reply) {
+                    // แปลง \n เป็น <br> ให้ขึ้นบรรทัดใหม่ได้
+                    const formattedReply = data.reply.replace(/\n/g, '<br>');
+                    messagesContainer.innerHTML += `
+                        <div style="align-self: flex-start; background: #e9ecef; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
+                            ${formattedReply}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                messagesContainer.innerHTML += `
+                    <div style="align-self: flex-start; background: #ffdddd; color: #d8000c; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
+                        ระบบขัดข้อง ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ 😔
+                    </div>
+                `;
+            }
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // ฟังก์ชันสำหรับดึง CSRF Token จาก Cookie (กรณีไม่มีใน Form)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
 </body>
 
 </html>
