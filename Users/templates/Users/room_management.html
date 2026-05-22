@@ -422,9 +422,11 @@
                     <td style="text-align: center;">{{ room.capacity }}</td>
                     <td>
                         {% if room.is_active %}
-                        <span class="status-badge badge-active"><i class="fa-solid fa-circle-check"></i> เปิดใช้งานปกติ</span>
+                        <span class="status-badge badge-active"><i class="fa-solid fa-circle-check"></i>
+                            เปิดใช้งานปกติ</span>
                         {% else %}
-                        <span class="status-badge badge-disabled"><i class="fa-solid fa-circle-xmark"></i> ปิดใช้งานระบบ</span>
+                        <span class="status-badge badge-disabled"><i class="fa-solid fa-circle-xmark"></i>
+                            ปิดใช้งานระบบ</span>
                         {% endif %}
                     </td>
                     <td style="text-align: center;">
@@ -443,7 +445,8 @@
                                     <i class="fa-solid fa-power-off"></i> ปิดใช้งาน
                                 </button>
                                 {% else %}
-                                <button type="submit" class="row-btn row-btn-toggle" style="color: #16a34a; border-color: #bbf7d0;">
+                                <button type="submit" class="row-btn row-btn-toggle"
+                                    style="color: #16a34a; border-color: #bbf7d0;">
                                     <i class="fa-solid fa-bolt"></i> เปิดใช้งาน
                                 </button>
                                 {% endif %}
@@ -454,7 +457,8 @@
                 {% empty %}
                 <tr>
                     <td colspan="6" style="text-align:center; padding:2rem; color:#94a3b8;">
-                        <i class="fa-solid fa-door-closed" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
+                        <i class="fa-solid fa-door-closed"
+                            style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
                         ยังไม่มีห้องในระบบ — กดปุ่ม "เพิ่มห้องใหม่" ด้านบนเพื่อเริ่ม
                     </td>
                 </tr>
@@ -488,16 +492,17 @@
                 <tr>
                     <td style="font-weight: 600; color: var(--text-main);">
                         {% if blackout.rooms.all %}
-                            {% for r in blackout.rooms.all %}{{ r.room_code }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        {% for r in blackout.rooms.all %}{{ r.room_code }}{% if not forloop.last %}, {% endif %}{% endfor %}
                         {% else %}
-                            ทุกห้องในระบบ (All Rooms)
+                        ทุกห้องในระบบ (All Rooms)
                         {% endif %}
                     </td>
                     <td>{{ blackout.start_date|date:"d M Y" }}</td>
                     <td>{{ blackout.end_date|date:"d M Y" }}</td>
                     <td>{{ blackout.title }}</td>
                     <td style="text-align: center;">
-                        <span class="status-badge badge-warning"><i class="fa-solid fa-lock"></i> บังคับล็อกช่วงเวลา</span>
+                        <span class="status-badge badge-warning"><i class="fa-solid fa-lock"></i>
+                            บังคับล็อกช่วงเวลา</span>
                     </td>
                     <td style="text-align: center;">
                         <form method="POST" action="" style="display:inline; margin:0;">
@@ -514,7 +519,8 @@
                 {% empty %}
                 <tr>
                     <td colspan="6" style="text-align:center; padding:2rem; color:#94a3b8;">
-                        <i class="fa-solid fa-calendar-check" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
+                        <i class="fa-solid fa-calendar-check"
+                            style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
                         ยังไม่มีช่วงเวลาปิดใช้งาน
                     </td>
                 </tr>
@@ -532,14 +538,15 @@
             <button class="btn-close-modal" onclick="closeModal('addRoomModal')"><i
                     class="fa-solid fa-xmark"></i></button>
         </div>
-        <form method="POST" action="">
+        <form method="POST" action="" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="action_type" value="add_room">
 
             <div class="form-group">
                 <label>รหัสห้อง <span style="color: red;">*</span></label>
                 <input type="text" name="room_code" class="form-control" placeholder="เช่น 408-3" required>
-                <small style="color:#64748b; margin-top:4px; display:block;">* รหัสห้องต้องไม่ซ้ำกับห้องที่มีอยู่</small>
+                <small style="color:#64748b; margin-top:4px; display:block;">*
+                    รหัสห้องต้องไม่ซ้ำกับห้องที่มีอยู่</small>
             </div>
 
             <div class="form-group">
@@ -558,6 +565,11 @@
             <div class="form-group">
                 <label>ความจุสูงสุด (จำนวนคน) <span style="color: red;">*</span></label>
                 <input type="number" name="capacity" class="form-control" placeholder="เช่น 30" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>รูปภาพห้อง</label>
+                <input type="file" name="image" class="form-control" accept="image/*" style="padding: 7px 14px;">
             </div>
 
             <div class="form-group">
@@ -584,7 +596,7 @@
             <button class="btn-close-modal" onclick="closeModal('editRoomModal')"><i
                     class="fa-solid fa-xmark"></i></button>
         </div>
-        <form method="POST" action="">
+        <form method="POST" action="" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="action_type" value="edit_room">
             <input type="hidden" name="room_id" id="edit_room_id">
@@ -611,6 +623,12 @@
             <div class="form-group">
                 <label>ความจุสูงสุด (จำนวนคน) <span style="color: red;">*</span></label>
                 <input type="number" name="capacity" id="edit_room_capacity" class="form-control" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>รูปภาพห้อง <small
+                        style="color: #64748b; font-weight: normal;">(อัปโหลดใหม่เพื่อเปลี่ยนรูป)</small></label>
+                <input type="file" name="image" class="form-control" accept="image/*" style="padding: 7px 14px;">
             </div>
 
             <div class="form-group">

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% comment %} จาก app Booking {% endcomment %}
+
 {% block title %}รายการจองที่รอการอนุมัติ - ผู้ดูแลระบบ{% endblock %}
 
 {% block extra_style %}
@@ -250,8 +252,7 @@
                     <td>
                         <span class="purpose-badge">
                             {% if b.purpose_type == 'class' %}
-                            <i class="fa-solid fa-book" style="margin-right: 4px;"></i> วิชา: {{ b.subject_name }} ({{
-                            b.subject_code }})
+                            <i class="fa-solid fa-book" style="margin-right: 4px;"></i> วิชา: {{ b.subject_name }} ({{ b.subject_code }})
                             {% else %}
                             <i class="fa-solid fa-users" style="margin-right: 4px;"></i> อบรม: {{ b.topic }}
                             {% endif %}
@@ -259,8 +260,7 @@
                     </td>
                     <td>
                         <div style="color: #374151; font-weight: 500;">{{ b.start_date|date:"d M Y" }}</div>
-                        <div style="font-size: 0.85rem; color: #64748b;"><i class="fa-regular fa-clock"></i> {{
-                            b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}</div>
+                        <div style="font-size: 0.85rem; color: #64748b;"><i class="fa-regular fa-clock"></i> {{ b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}</div>
                     </td>
                     <td style="display: flex; gap: 8px;">
                         <form method="POST" action="{% url 'approve_booking' b.id %}" style="margin: 0;">

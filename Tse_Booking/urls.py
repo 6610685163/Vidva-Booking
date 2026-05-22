@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
@@ -23,12 +25,13 @@ urlpatterns = [
     path("dashboard/", dashboard_view, name="dashboard"),
     path("users/", users_management_view, name="users_management"),
     path("users/<int:user_id>/role/", assign_user_role_view, name="assign_role"),
-    
     # ระบบ Booking (ดึงจากไฟล์ของแอป Booking ที่เราทำไว้สมบูรณ์แล้ว)
-    path('booking/', include('Booking.urls')),
-
+    path("booking/", include("Booking.urls")),
     # ฟีเจอร์ใหม่ของเพื่อน (ระบบ Report และ Admin Dashboard)
-    path('room-report/', room_report_view, name='room_report'),
-    path('admin-dashboard/rooms/', room_management_view, name='room_management'),
-    path('admin-dashboard/calendar/', admin_calendar_view, name='admin_calendar'),
+    path("room-report/", room_report_view, name="room_report"),
+    path("admin-dashboard/rooms/", room_management_view, name="room_management"),
+    path("admin-dashboard/calendar/", admin_calendar_view, name="admin_calendar"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

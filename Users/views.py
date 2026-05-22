@@ -17,6 +17,7 @@ from .models import UserProfile
 
 logger = logging.getLogger(__name__)
 
+
 @require_http_methods(["GET", "POST"])
 @csrf_protect
 def login_view(request):
@@ -44,7 +45,9 @@ def login_view(request):
                 logger.warning(f"Login failed for user: {username}")
                 messages.error(
                     request,
-                    _("ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง หรือเซิร์ฟเวอร์ API ไม่พร้อมใช้งาน"),
+                    _(
+                        "ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง หรือเซิร์ฟเวอร์ API ไม่พร้อมใช้งาน"
+                    ),
                 )
     else:
         form = TULoginForm()
@@ -55,6 +58,7 @@ def login_view(request):
     }
     return render(request, "Users/login.html", context)
 
+
 @require_http_methods(["POST"])
 def logout_view(request):
     username = request.user.username if request.user.is_authenticated else "Unknown"
@@ -62,6 +66,7 @@ def logout_view(request):
     logger.info(f"User {username} logged out")
     messages.success(request, _("ออกจากระบบสำเร็จ"))
     return redirect("login")
+
 
 @login_required(login_url="login")
 @require_http_methods(["GET"])
@@ -71,7 +76,7 @@ def dashboard_view(request):
     """
     if not request.user.is_authenticated:
         return redirect("login")
-    
+
     try:
         user_profile = request.user.profile
     except UserProfile.DoesNotExist:
@@ -80,16 +85,18 @@ def dashboard_view(request):
         return redirect("login")
 
     # ส่งข้อความแจ้งเตือนหลัง login (เฉพาะครั้งแรก)
-    if not request.session.get('welcome_shown'):
+    if not request.session.get("welcome_shown"):
         messages.success(request, _("ยินดีต้อนรับ! คุณเข้าสู่ระบบสำเร็จแล้ว"))
-        request.session['welcome_shown'] = True
+        request.session["welcome_shown"] = True
 
     # แยกหน้าจอตาม Role
     if user_profile.role == "lecturer":
         from Booking.models import Booking  # ป้องกันการหมุนวน Import
 
         # ดึงประวัติการจองไปแสดงที่หน้า Dashboard อาจารย์
-        my_bookings = Booking.objects.filter(booker=request.user).order_by("-created_at")
+        my_bookings = Booking.objects.filter(booker=request.user).order_by(
+            "-created_at"
+        )
 
         context = {
             "title": _("แดชบอร์ด - อาจารย์"),
@@ -107,6 +114,7 @@ def dashboard_view(request):
     else:
         messages.error(request, _("บทบาทของผู้ใช้งานไม่ชัดเจน"))
         return redirect("logout")
+
 
 @login_required(login_url="login")
 @require_http_methods(["GET", "POST"])
@@ -130,7 +138,9 @@ def assign_user_role_view(request, user_id):
         form = UserRoleAssignmentForm(request.POST, user_profile=user_profile)
         if form.is_valid():
             form.save()
-            logger.info(f"Admin {request.user.username} assigned role {user_profile.role} to user {target_user.username}")
+            logger.info(
+                f"Admin {request.user.username} assigned role {user_profile.role} to user {target_user.username}"
+            )
             messages.success(request, _(f"กำหนดบทบาทให้ {target_user.username} สำเร็จ"))
             return redirect("users_management")
     else:
@@ -143,6 +153,7 @@ def assign_user_role_view(request, user_id):
         "title": _("กำหนดบทบาทผู้ใช้งาน"),
     }
     return render(request, "Users/assign_role.html", context)
+
 
 @login_required(login_url="login")
 @require_http_methods(["GET"])
@@ -162,9 +173,11 @@ def users_management_view(request):
     }
     return render(request, "Users/users_management.html", context)
 
+
 # ==========================================
 # ระบบ Report และ Admin Dashboard
 # ==========================================
+
 
 def _count_sessions_in_range(booking, report_from, report_to):
     """
@@ -177,7 +190,11 @@ def _count_sessions_in_range(booking, report_from, report_to):
         return 0
 
     try:
-        days_set = {int(d.strip()) for d in booking.days_of_week.split(",") if d.strip().isdigit()}
+        days_set = {
+            int(d.strip())
+            for d in booking.days_of_week.split(",")
+            if d.strip().isdigit()
+        }
     except (AttributeError, ValueError):
         days_set = set()
 
@@ -228,12 +245,18 @@ def room_report_view(request):
     date_to_str = request.GET.get("date_to", "")
 
     try:
-        date_from = datetime.strptime(date_from_str, "%Y-%m-%d").date() if date_from_str else today - timedelta(days=30)
+        date_from = (
+            datetime.strptime(date_from_str, "%Y-%m-%d").date()
+            if date_from_str
+            else today - timedelta(days=30)
+        )
     except ValueError:
         date_from = today - timedelta(days=30)
 
     try:
-        date_to = datetime.strptime(date_to_str, "%Y-%m-%d").date() if date_to_str else today
+        date_to = (
+            datetime.strptime(date_to_str, "%Y-%m-%d").date() if date_to_str else today
+        )
     except ValueError:
         date_to = today
 
@@ -249,7 +272,7 @@ def room_report_view(request):
 
     # ชั่วโมงทำงานต่อวันสำหรับคำนวณ Utilization Rate
     AVAILABLE_HOURS_PER_DAY = 9
-    
+
     # นับจำนวนวันทั้งหมดในช่วง report range (รวมเสาร์-อาทิตย์ ไม่ตัดออก)
     total_days = (date_to - date_from).days + 1
     available_hours_total = total_days * AVAILABLE_HOURS_PER_DAY
@@ -301,25 +324,35 @@ def room_report_view(request):
             utilization = 0.0
 
         # รวม international (TEP-TEPE + TU-PINE) เป็นกลุ่ม "หลักสูตรนานาชาติ" ตาม template
-        regular_count = curriculum_stats["regular"]["count"] + curriculum_stats["master"]["count"]
-        regular_hours = curriculum_stats["regular"]["hours"] + curriculum_stats["master"]["hours"]
-        intl_count = curriculum_stats["tep_tepe"]["count"] + curriculum_stats["tu_pine"]["count"]
-        intl_hours = curriculum_stats["tep_tepe"]["hours"] + curriculum_stats["tu_pine"]["hours"]
+        regular_count = (
+            curriculum_stats["regular"]["count"] + curriculum_stats["master"]["count"]
+        )
+        regular_hours = (
+            curriculum_stats["regular"]["hours"] + curriculum_stats["master"]["hours"]
+        )
+        intl_count = (
+            curriculum_stats["tep_tepe"]["count"] + curriculum_stats["tu_pine"]["count"]
+        )
+        intl_hours = (
+            curriculum_stats["tep_tepe"]["hours"] + curriculum_stats["tu_pine"]["hours"]
+        )
 
-        rows.append({
-            "room": room,
-            "count": room_count,
-            "hours": round(room_hours, 1),
-            "utilization": utilization,
-            "class_count": class_count,
-            "class_hours": round(class_hours, 1),
-            "training_count": training_count,
-            "training_hours": round(training_hours, 1),
-            "regular_count": regular_count,
-            "regular_hours": round(regular_hours, 1),
-            "intl_count": intl_count,
-            "intl_hours": round(intl_hours, 1),
-        })
+        rows.append(
+            {
+                "room": room,
+                "count": room_count,
+                "hours": round(room_hours, 1),
+                "utilization": utilization,
+                "class_count": class_count,
+                "class_hours": round(class_hours, 1),
+                "training_count": training_count,
+                "training_hours": round(training_hours, 1),
+                "regular_count": regular_count,
+                "regular_hours": round(regular_hours, 1),
+                "intl_count": intl_count,
+                "intl_hours": round(intl_hours, 1),
+            }
+        )
 
         grand_total_count += room_count
         grand_total_hours += room_hours
@@ -330,37 +363,60 @@ def room_report_view(request):
         # UTF-8 BOM ให้ Excel แสดงภาษาไทยถูกต้อง
         buffer.write("﻿")
         writer = csv.writer(buffer)
-        writer.writerow([
-            f"รายงานสถิติการใช้ห้อง: {date_from.strftime('%d/%m/%Y')} - {date_to.strftime('%d/%m/%Y')}"
-        ])
+        writer.writerow(
+            [
+                f"รายงานสถิติการใช้ห้อง: {date_from.strftime('%d/%m/%Y')} - {date_to.strftime('%d/%m/%Y')}"
+            ]
+        )
         writer.writerow([])
-        writer.writerow([
-            "รหัสห้อง", "ชื่อห้อง", "ประเภท", "สถานะ",
-            "จำนวนครั้ง", "ชั่วโมงรวม", "Utilization (%)",
-            "เรียนการสอน-ครั้ง", "เรียนการสอน-ชม.",
-            "อบรม/ประชุม-ครั้ง", "อบรม/ประชุม-ชม.",
-            "ภาคปกติ/โท-ครั้ง", "ภาคปกติ/โท-ชม.",
-            "นานาชาติ-ครั้ง", "นานาชาติ-ชม.",
-        ])
+        writer.writerow(
+            [
+                "รหัสห้อง",
+                "ชื่อห้อง",
+                "ประเภท",
+                "สถานะ",
+                "จำนวนครั้ง",
+                "ชั่วโมงรวม",
+                "Utilization (%)",
+                "เรียนการสอน-ครั้ง",
+                "เรียนการสอน-ชม.",
+                "อบรม/ประชุม-ครั้ง",
+                "อบรม/ประชุม-ชม.",
+                "ภาคปกติ/โท-ครั้ง",
+                "ภาคปกติ/โท-ชม.",
+                "นานาชาติ-ครั้ง",
+                "นานาชาติ-ชม.",
+            ]
+        )
         for r in rows:
-            writer.writerow([
-                r["room"].room_code,
-                r["room"].room_name,
-                r["room"].get_room_type_display(),
-                "เปิดใช้งาน" if r["room"].is_active else "ปิดใช้งาน",
-                r["count"],
-                r["hours"],
-                r["utilization"],
-                r["class_count"], r["class_hours"],
-                r["training_count"], r["training_hours"],
-                r["regular_count"], r["regular_hours"],
-                r["intl_count"], r["intl_hours"],
-            ])
+            writer.writerow(
+                [
+                    r["room"].room_code,
+                    r["room"].room_name,
+                    r["room"].get_room_type_display(),
+                    "เปิดใช้งาน" if r["room"].is_active else "ปิดใช้งาน",
+                    r["count"],
+                    r["hours"],
+                    r["utilization"],
+                    r["class_count"],
+                    r["class_hours"],
+                    r["training_count"],
+                    r["training_hours"],
+                    r["regular_count"],
+                    r["regular_hours"],
+                    r["intl_count"],
+                    r["intl_hours"],
+                ]
+            )
         writer.writerow([])
-        writer.writerow(["รวมทั้งหมด", "", "", "", grand_total_count, round(grand_total_hours, 1)])
+        writer.writerow(
+            ["รวมทั้งหมด", "", "", "", grand_total_count, round(grand_total_hours, 1)]
+        )
 
         filename = f"room_report_{date_from.strftime('%Y%m%d')}_{date_to.strftime('%Y%m%d')}.csv"
-        response = HttpResponse(buffer.getvalue(), content_type="text/csv; charset=utf-8")
+        response = HttpResponse(
+            buffer.getvalue(), content_type="text/csv; charset=utf-8"
+        )
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
 
@@ -406,6 +462,8 @@ def room_management_view(request):
             capacity_raw = request.POST.get("capacity", "0").strip()
             is_active = request.POST.get("is_active", "true") == "true"
 
+            room_image = request.FILES.get("image")
+
             if not room_code or not room_name:
                 messages.error(request, _("กรุณาระบุรหัสห้องและชื่อห้องให้ครบ"))
                 return redirect("room_management")
@@ -431,6 +489,7 @@ def room_management_view(request):
                 room_type=room_type,
                 capacity=capacity,
                 is_active=is_active,
+                image=room_image,
             )
             logger.info(f"Admin {request.user.username} added room {room_code}")
             messages.success(request, _(f"เพิ่มห้อง {room_code} เรียบร้อยแล้ว"))
@@ -454,9 +513,16 @@ def room_management_view(request):
             except ValueError:
                 pass
             room.is_active = request.POST.get("is_active", "true") == "true"
+
+            uploaded_image = request.FILES.get("image")
+            if uploaded_image:
+                room.image = uploaded_image
+
             room.save()
             logger.info(f"Admin {request.user.username} edited room {room.room_code}")
-            messages.success(request, _(f"อัปเดตข้อมูลห้อง {room.room_code} เรียบร้อยแล้ว"))
+            messages.success(
+                request, _(f"อัปเดตข้อมูลห้อง {room.room_code} เรียบร้อยแล้ว")
+            )
             return redirect("room_management")
 
         # ----- เปิด/ปิดใช้งานห้อง -----
@@ -470,9 +536,14 @@ def room_management_view(request):
 
             room.is_active = not room.is_active
             room.save()
+            log_status = "Active" if room.is_active else "Inactive"
+            logger.info(
+                f"Admin {request.user.username} toggled room {room.room_code} to {log_status}"
+            )
             status_text = "เปิดใช้งาน" if room.is_active else "ปิดใช้งาน"
-            logger.info(f"Admin {request.user.username} toggled room {room.room_code} to {status_text}")
-            messages.success(request, _(f"เปลี่ยนสถานะห้อง {room.room_code} เป็น {status_text}"))
+            messages.success(
+                request, _(f"เปลี่ยนสถานะห้อง {room.room_code} เป็น {status_text}")
+            )
             return redirect("room_management")
 
         # ----- เพิ่ม Blackout Period -----
@@ -522,7 +593,9 @@ def room_management_view(request):
                 return redirect("room_management")
 
             blackout.delete()
-            logger.info(f"Admin {request.user.username} deleted blackout #{blackout_id}")
+            logger.info(
+                f"Admin {request.user.username} deleted blackout #{blackout_id}"
+            )
             messages.success(request, _("ปลดล็อกช่วงเวลาเรียบร้อยแล้ว"))
             return redirect("room_management")
 
@@ -532,7 +605,11 @@ def room_management_view(request):
 
     # ----- GET: แสดงรายการห้องและ Blackout ทั้งหมด -----
     rooms = Room.objects.all().order_by("room_code")
-    blackouts = BlackoutPeriod.objects.filter(is_active=True).prefetch_related("rooms").order_by("-start_date")
+    blackouts = (
+        BlackoutPeriod.objects.filter(is_active=True)
+        .prefetch_related("rooms")
+        .order_by("-start_date")
+    )
 
     context = {
         "title": _("จัดการห้อง"),
@@ -576,36 +653,42 @@ def admin_calendar_view(request):
     bookings_data = []
     for b in booking_qs:
         try:
-            days_list = [int(d.strip()) for d in b.days_of_week.split(",") if d.strip().isdigit()]
+            days_list = [
+                int(d.strip()) for d in b.days_of_week.split(",") if d.strip().isdigit()
+            ]
         except AttributeError:
             days_list = []
         title = b.subject_name or b.topic or "(ไม่ระบุ)"
         if b.subject_code:
             title = f"{b.subject_code} {title}"
-        bookings_data.append({
-            "id": b.id,
-            "room_code": b.room.room_code,
-            "start_date": b.start_date.strftime("%Y-%m-%d"),
-            "end_date": b.end_date.strftime("%Y-%m-%d"),
-            "start_time": b.start_time.strftime("%H:%M"),
-            "end_time": b.end_time.strftime("%H:%M"),
-            "days_of_week": days_list,
-            "status": b.status,
-            "title": title,
-            "booker": b.booker.get_full_name() or b.booker.username,
-        })
+        bookings_data.append(
+            {
+                "id": b.id,
+                "room_code": b.room.room_code,
+                "start_date": b.start_date.strftime("%Y-%m-%d"),
+                "end_date": b.end_date.strftime("%Y-%m-%d"),
+                "start_time": b.start_time.strftime("%H:%M"),
+                "end_time": b.end_time.strftime("%H:%M"),
+                "days_of_week": days_list,
+                "status": b.status,
+                "title": title,
+                "booker": b.booker.get_full_name() or b.booker.username,
+            }
+        )
 
     # ดึง blackouts ที่ active
     blackouts_data = []
     for blk in BlackoutPeriod.objects.filter(is_active=True).prefetch_related("rooms"):
         affected_rooms = [r.room_code for r in blk.rooms.all()]
-        blackouts_data.append({
-            "id": blk.id,
-            "title": blk.title,
-            "start_date": blk.start_date.strftime("%Y-%m-%d"),
-            "end_date": blk.end_date.strftime("%Y-%m-%d"),
-            "rooms": affected_rooms,  # ถ้า [] = ทุกห้อง
-        })
+        blackouts_data.append(
+            {
+                "id": blk.id,
+                "title": blk.title,
+                "start_date": blk.start_date.strftime("%Y-%m-%d"),
+                "end_date": blk.end_date.strftime("%Y-%m-%d"),
+                "rooms": affected_rooms,  # ถ้า [] = ทุกห้อง
+            }
+        )
 
     context = {
         "title": _("ปฏิทินตรวจสอบการใช้งานห้อง"),
