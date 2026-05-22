@@ -1,69 +1,88 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}ปฏิทินการจองของฉัน{% endblock %}
+{% block title %}ปฏิทินตรวจสอบห้องว่าง{% endblock %}
 
 {% block extra_style %}
 <style>
     .page-header {
-        margin-bottom: 30px;
+        margin-bottom: 1.5rem;
     }
 
     .page-header h1 {
-        color: #1e293b;
-        font-size: 1.8rem;
-        margin: 0 0 8px 0;
+        color: #1e2937;
+        font-size: 1.75rem;
+        margin: 0 0 0.5rem 0;
     }
 
     .page-header p {
-        color: #64748b;
+        color: #6b7280;
         margin: 0;
+        font-size: 0.95rem;
     }
 
-    /* โครงสร้างปฏิทินรายเดือน */
-    .calendar-card {
+    /* ----- กล่องปฏิทินใหญ่ (ใช้ style เดียวกับ booking_flow) ----- */
+    .calendar-container {
         background: white;
         padding: 30px;
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-        border: 1px solid #f1f5f9;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .calendar-top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .room-title {
+        margin: 0;
+        color: var(--tu-red);
+        font-weight: 700;
+        font-size: 1.4rem;
     }
 
     .calendar-controls {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-    }
-
-    .calendar-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #1e293b;
-        display: flex;
-        align-items: center;
         gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
     }
 
-    .btn-nav-month {
-        background: white;
-        border: 1px solid #cbd5e1;
-        padding: 8px 16px;
+    .select-input {
+        padding: 8px 12px;
         border-radius: 8px;
-        cursor: pointer;
-        transition: 0.2s;
+        border: 1px solid #cbd5e1;
         font-family: inherit;
+        font-size: 1rem;
+        cursor: pointer;
+        outline: none;
+        background: white;
     }
 
-    .btn-nav-month:hover {
+    .select-input:focus {
         border-color: var(--tu-red);
-        color: var(--tu-red);
     }
 
+    .select-room {
+        min-width: 220px;
+    }
+
+    .info-text {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-bottom: 15px;
+    }
+
+    /* ----- Grid วันแบบ booking_flow ----- */
     .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 10px;
+        margin-top: 10px;
     }
 
     .day-label {
@@ -71,89 +90,313 @@
         font-weight: 600;
         color: #64748b;
         padding-bottom: 10px;
-        border-bottom: 1px solid #f1f5f9;
     }
 
-    .calendar-day {
-        min-height: 95px;
+    .day {
+        height: 80px;
         border-radius: 12px;
-        border: 1px solid #f1f5f9;
-        padding: 8px;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        background: white;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+        border: 1px solid #f1f5f9;
+        position: relative;
+    }
+
+    .day:not(.empty):hover {
+        transform: scale(1.05);
+        z-index: 10;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .day.empty {
+        border: none;
+        cursor: default;
+        background: transparent;
+    }
+
+    .day .date {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .day .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-top: 5px;
+    }
+
+    .status-full {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border-color: #fecaca;
+    }
+
+    .status-partial {
+        background-color: #fef3c7;
+        color: #92400e;
+        border-color: #fde68a;
+    }
+
+    .status-available {
+        background-color: #ecfdf5;
+        color: #065f46;
+        border-color: #d1fae5;
+    }
+
+    .status-blackout {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px dashed #cbd5e1;
+    }
+
+    .day.selected-day {
+        border: 2px solid #3b82f6 !important;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+    }
+
+    .day.today-day .date {
+        text-decoration: underline;
+        text-decoration-color: var(--tu-red);
+        text-underline-offset: 3px;
+    }
+
+    .mine-dot {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--tu-red);
+        box-shadow: 0 0 0 2px white;
+    }
+
+    /* ----- Legend ----- */
+    .legend-area {
+        display: flex;
+        gap: 18px;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid #eee;
+        font-size: 0.85rem;
+        color: #64748b;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    /* ----- ส่วนรายละเอียดวันที่คลิก (ใต้ปฏิทิน คล้าย time-slots) ----- */
+    .day-details-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        display: none;
+        animation: fadeIn 0.4s;
+    }
+
+    .day-details-section.show {
+        display: block;
+    }
+
+    .day-details-header {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 18px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+
+    .slot-item {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        padding: 15px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
         transition: 0.2s;
     }
 
-    .calendar-day:not(.empty):hover {
+    .slot-item:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
-    .calendar-day.empty {
-        background: #f8fafc;
-        border: none;
-    }
-
-    .day-number {
+    .slot-time {
         font-weight: 600;
-        color: #475569;
-        font-size: 1rem;
-    }
-
-    /* รายการกิจกรรมภายในการ์ดวัน */
-    .event-container {
+        color: #374151;
         display: flex;
-        flex-direction: column;
-        gap: 4px;
-        margin-top: 5px;
+        align-items: center;
+        gap: 8px;
     }
 
-    .event-item {
-        font-size: 0.75rem;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    .slot-info {
+        color: #6b7280;
+        font-size: 0.88rem;
+        margin: 0;
     }
 
-    .event-approved {
-        background-color: #ecfdf5;
-        color: #065f46;
-        border-left: 3px solid #10b981;
+    .slot-booked {
+        border-left: 4px solid #f59e0b;
     }
 
-    .event-pending {
-        background-color: #fffaf0;
+    .slot-approved {
+        border-left: 4px solid #10b981;
+    }
+
+    .slot-free {
+        border-left: 4px solid #10b981;
+        grid-column: 1 / -1;
+    }
+
+    .slot-mine {
+        border-left: 4px solid var(--tu-red);
+        background: #fff5f5;
+    }
+
+    .slot-blackout {
+        border-left: 4px solid #64748b;
+        background: #f1f5f9;
+        grid-column: 1 / -1;
+    }
+
+    .mine-tag {
+        background: var(--tu-red);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        margin-left: auto;
+    }
+
+    .status-pill {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 999px;
+    }
+
+    .pill-approved {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .pill-pending {
+        background: #fef3c7;
         color: #92400e;
-        border-left: 3px solid #f59e0b;
+    }
+
+    .btn-book-now {
+        background: var(--tu-red);
+        color: white;
+        text-decoration: none;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+    }
+
+    .btn-book-now:hover {
+        background: #6b0000;
+        transform: translateY(-1px);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="fa-regular fa-calendar-days" style="color: var(--tu-red); margin-right: 10px;"></i>ปฏิทินการจองของฉัน
-    </h1>
-    <p>ดูและตรวจสอบตารางเวลาการจองห้องทั้งหมดในแต่ละเดือนของคุณ</p>
+    <h1><i class="fa-regular fa-calendar-days" style="color: var(--tu-red); margin-right: 10px;"></i>
+        ปฏิทินตรวจสอบห้องว่าง</h1>
+    <p>ตรวจสอบสถานะห้องว่าง คิวการจอง และช่วงเวลาปิดปรับปรุงก่อนทำการจอง</p>
 </div>
 
-<div class="calendar-card">
-    <div class="calendar-controls">
-        <button class="btn-nav-month" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i>
-            เดือนก่อนหน้า</button>
-        <div class="calendar-title">
-            <i class="fa-regular fa-calendar"></i>
-            <span id="monthYearTitle">มกราคม 2569</span>
+<div class="calendar-container">
+    <div class="calendar-top-bar">
+        <h2 id="roomTitle" class="room-title">เลือกห้อง</h2>
+        <div class="calendar-controls">
+            <select id="roomSelect" class="select-input select-room" onchange="changeRoom()">
+                {% for room in rooms %}
+                <option value="{{ room.room_code }}">ENG {{ room.room_code }} ({{ room.room_name }})</option>
+                {% empty %}
+                <option value="">-- ยังไม่มีห้องในระบบ --</option>
+                {% endfor %}
+            </select>
+            <select id="monthSelect" class="select-input" onchange="renderCalendar()"></select>
+            <select id="yearSelect" class="select-input" onchange="renderCalendar()"></select>
+            <a href="{% url 'booking_flow' %}" class="btn-book-now">
+                <i class="fa-solid fa-plus"></i> จองห้อง
+            </a>
         </div>
-        <button class="btn-nav-month" onclick="changeMonth(1)">เดือนถัดไป <i
-                class="fa-solid fa-chevron-right"></i></button>
     </div>
 
-    <div class="calendar-grid" id="calendarGrid">
+    <p class="info-text">
+        <i class="fa-solid fa-circle-info"></i> คลิกที่วันเพื่อดูรายละเอียดการจองและเช็คเวลาว่างก่อนทำการจอง
+    </p>
+
+    <div class="calendar-grid" id="calendarGrid"></div>
+
+    <div class="legend-area">
+        <div class="legend-item">
+            <div class="legend-color" style="background: #10b981;"></div> ว่าง
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #f59e0b;"></div> มีจองบางเวลา
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ef4444;"></div> จองเต็ม
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #64748b;"></div> ปิดปรับปรุง
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: var(--tu-red);"></div> มีการจองของคุณ
+        </div>
+    </div>
+
+    <div id="dayDetailsSection" class="day-details-section">
+        <div id="dayDetailsHeader" class="day-details-header">
+            <i class="fa-regular fa-calendar"></i> <span>วันที่ —</span>
+        </div>
+        <div id="dayDetailsContainer" class="slot-grid"></div>
     </div>
 </div>
 {% endblock %}
@@ -161,66 +404,268 @@
 {% block extra_script %}
 <script>
     let currentDate = new Date();
+    let selectedDayKey = null;
     const monthsTh = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
-    // จำลองข้อมูลการจองเพื่อแสดงผลบนปฏิทิน (ดึงจาก Backend จริงได้ในอนาคต)
-    const mockBookings = [
-        { day: 15, month: currentDate.getMonth(), year: currentDate.getFullYear(), room: "ENG 406-3", title: "CN334 สอนชดเชย", status: "approved" },
-        { day: 20, month: currentDate.getMonth(), year: currentDate.getFullYear(), room: "ENG 408-1", title: "ประชุมโปรเจกต์", status: "pending" }
-    ];
+    const ALL_BOOKINGS = {{ bookings_json|safe }};
+    const ALL_BLACKOUTS = {{ blackouts_json|safe }};
 
-    function renderMonthlyCalendar() {
+    function toISO(year, month, day) {
+        const m = String(month + 1).padStart(2, '0');
+        const d = String(day).padStart(2, '0');
+        return `${year}-${m}-${d}`;
+    }
+
+    function toPythonWeekday(jsDate) {
+        return (jsDate.getDay() + 6) % 7;
+    }
+
+    function escapeHtml(s) {
+        if (s === undefined || s === null) return '';
+        return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function isSameDay(d1, d2) {
+        return d1.getFullYear() === d2.getFullYear()
+            && d1.getMonth() === d2.getMonth()
+            && d1.getDate() === d2.getDate();
+    }
+
+    function initCalendarSelects() {
+        const mSelect = document.getElementById('monthSelect');
+        const ySelect = document.getElementById('yearSelect');
+        if (mSelect.options.length > 0) return;
+        const now = new Date();
+        monthsTh.forEach((m, i) => {
+            let opt = document.createElement('option');
+            opt.value = i; opt.innerHTML = m;
+            if (i === now.getMonth()) opt.selected = true;
+            mSelect.appendChild(opt);
+        });
+        for (let i = now.getFullYear() - 1; i <= now.getFullYear() + 2; i++) {
+            let opt = document.createElement('option');
+            opt.value = i; opt.innerHTML = i + 543;
+            if (i === now.getFullYear()) opt.selected = true;
+            ySelect.appendChild(opt);
+        }
+    }
+
+    function getEventsForDay(year, month, day, roomCode) {
+        const iso = toISO(year, month, day);
+        const dateObj = new Date(year, month, day);
+        const pyWeekday = toPythonWeekday(dateObj);
+
+        const bookings = ALL_BOOKINGS.filter(b =>
+            b.room_code === roomCode &&
+            b.start_date <= iso && iso <= b.end_date &&
+            Array.isArray(b.days_of_week) && b.days_of_week.includes(pyWeekday)
+        );
+
+        const blackouts = ALL_BLACKOUTS.filter(blk =>
+            blk.start_date <= iso && iso <= blk.end_date &&
+            (blk.rooms.length === 0 || blk.rooms.includes(roomCode))
+        );
+
+        return { bookings, blackouts };
+    }
+
+    function timeStrToMinutes(hhmm) {
+        const [h, m] = hhmm.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    function sumBookedMinutes(bookings) {
+        if (bookings.length === 0) return 0;
+        const intervals = bookings.map(b => [
+            timeStrToMinutes(b.start_time),
+            timeStrToMinutes(b.end_time),
+        ]).sort((a, b) => a[0] - b[0]);
+        let total = 0;
+        let curStart = intervals[0][0];
+        let curEnd = intervals[0][1];
+        for (let i = 1; i < intervals.length; i++) {
+            const [s, e] = intervals[i];
+            if (s <= curEnd) {
+                curEnd = Math.max(curEnd, e);
+            } else {
+                total += curEnd - curStart;
+                curStart = s;
+                curEnd = e;
+            }
+        }
+        total += curEnd - curStart;
+        return total;
+    }
+
+    function renderCalendar() {
+        initCalendarSelects();
         const grid = document.getElementById('calendarGrid');
-        const title = document.getElementById('monthYearTitle');
+        const month = parseInt(document.getElementById('monthSelect').value);
+        const year = parseInt(document.getElementById('yearSelect').value);
+        const roomSelect = document.getElementById('roomSelect');
+        const roomCode = roomSelect.value;
+        const roomLabel = roomSelect.options[roomSelect.selectedIndex]?.text || '';
+        document.getElementById('roomTitle').innerText = roomLabel || 'เลือกห้อง';
 
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
+        currentDate = new Date(year, month, 1);
+        const today = new Date();
 
-        title.innerText = `${monthsTh[month]} ${year + 543}`;
         grid.innerHTML = "";
-
-        // ใส่หัววัน อาทิตย์ - เสาร์
-        ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "เส."].forEach(day => {
+        ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => {
             grid.innerHTML += `<div class="day-label">${day}</div>`;
         });
 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // ช่องว่างก่อนวันแรกของเดือน
         for (let i = 0; i < firstDay; i++) {
-            grid.innerHTML += `<div class="calendar-day empty"></div>`;
+            grid.innerHTML += `<div class="day empty"></div>`;
         }
 
-        // วนลูปสร้างวัน
-        for (let d = 1; d <= daysInMonth; d++) {
-            // ค้นหาว่าวันน้ีมีนัดจองไหม
-            const dayEvents = mockBookings.filter(b => b.day === d && b.month === month && b.year === year);
-            let eventHtml = '<div class="event-container">';
+        // เวลาทำการ 08:00-18:00 = 600 นาที; full = ≥ 80%
+        const WORK_MINUTES = 10 * 60;
+        const FULL_THRESHOLD = 0.8;
 
-            dayEvents.forEach(ev => {
-                const statusClass = ev.status === 'approved' ? 'event-approved' : 'event-pending';
-                eventHtml += `<div class="event-item ${statusClass}" title="${ev.room}: ${ev.title}">
-                    <strong>${ev.room}</strong>: ${ev.title}
-                </div>`;
-            });
-            eventHtml += '</div>';
+        for (let d = 1; d <= daysInMonth; d++) {
+            const { bookings, blackouts } = getEventsForDay(year, month, d, roomCode);
+
+            let statusClass = 'status-available';
+            let dotColor = '#10b981';
+            if (blackouts.length > 0) {
+                statusClass = 'status-blackout';
+                dotColor = '#64748b';
+            } else if (bookings.length > 0) {
+                const mins = sumBookedMinutes(bookings);
+                if (mins >= WORK_MINUTES * FULL_THRESHOLD) {
+                    statusClass = 'status-full';
+                    dotColor = '#ef4444';
+                } else {
+                    statusClass = 'status-partial';
+                    dotColor = '#f59e0b';
+                }
+            }
+
+            const hasMine = bookings.some(b => b.is_mine);
+            const mineDotHtml = hasMine ? '<span class="mine-dot" title="มีการจองของคุณ"></span>' : '';
+
+            const cellDate = new Date(year, month, d);
+            const todayClass = isSameDay(cellDate, today) ? 'today-day' : '';
+            const dayKey = `${year}-${month}-${d}`;
+            const selectedClass = (selectedDayKey === dayKey) ? 'selected-day' : '';
 
             grid.innerHTML += `
-                <div class="calendar-day">
-                    <span class="day-number">${d}</span>
-                    ${eventHtml}
+                <div class="day ${statusClass} ${todayClass} ${selectedClass}" onclick="showDayDetails(${d}, ${month}, ${year})">
+                    ${mineDotHtml}
+                    <span class="date">${d}</span>
+                    <div class="status-dot" style="background:${dotColor};"></div>
                 </div>
             `;
         }
+
+        // refresh detail panel ถ้ามีวันที่กำลังเลือกอยู่
+        if (selectedDayKey) {
+            const [sy, sm, sd] = selectedDayKey.split('-').map(Number);
+            if (sy === year && sm === month) {
+                showDayDetails(sd, sm, sy, true);
+            } else {
+                hideDayDetails();
+            }
+        }
     }
 
-    function changeMonth(direction) {
-        currentDate.setMonth(currentDate.getMonth() + direction);
-        renderMonthlyCalendar();
+    function changeRoom() {
+        selectedDayKey = null;
+        hideDayDetails();
+        renderCalendar();
     }
 
-    // สั่งรันเมื่อโหลดหน้าจอ
-    document.addEventListener("DOMContentLoaded", renderMonthlyCalendar);
+    function hideDayDetails() {
+        document.getElementById('dayDetailsSection').classList.remove('show');
+        selectedDayKey = null;
+    }
+
+    function statusPill(status) {
+        if (status === 'approved') {
+            return `<span class="status-pill pill-approved">อนุมัติแล้ว</span>`;
+        }
+        return `<span class="status-pill pill-pending">รออนุมัติ</span>`;
+    }
+
+    function showDayDetails(day, month, year, keepHighlight) {
+        const roomCode = document.getElementById('roomSelect').value;
+        const dayKey = `${year}-${month}-${day}`;
+        selectedDayKey = dayKey;
+
+        // อัปเดต highlight ในกริด (ถ้าไม่ได้เพิ่ง render)
+        if (!keepHighlight) {
+            document.querySelectorAll('.day.selected-day').forEach(el => el.classList.remove('selected-day'));
+            const cells = document.querySelectorAll('.day:not(.empty)');
+            cells.forEach(el => {
+                if (el.querySelector('.date')?.innerText == String(day)) {
+                    el.classList.add('selected-day');
+                }
+            });
+        }
+
+        const section = document.getElementById('dayDetailsSection');
+        const header = document.getElementById('dayDetailsHeader');
+        const container = document.getElementById('dayDetailsContainer');
+        header.innerHTML = `<i class="fa-regular fa-calendar"></i> วันที่ ${day} ${monthsTh[month]} ${year + 543}`;
+        container.innerHTML = "";
+
+        const { bookings, blackouts } = getEventsForDay(year, month, day, roomCode);
+
+        if (blackouts.length > 0) {
+            blackouts.forEach(blk => {
+                container.innerHTML += `
+                    <div class="slot-item slot-blackout">
+                        <div class="slot-time"><i class="fa-solid fa-lock" style="color:#475569;"></i> ห้องปิดปรับปรุง / ไม่พร้อมใช้งาน</div>
+                        <p class="slot-info"><strong>เหตุผล:</strong> ${escapeHtml(blk.title)}</p>
+                        <p class="slot-info" style="color:#64748b;">${blk.start_date} ถึง ${blk.end_date}</p>
+                    </div>
+                `;
+            });
+            section.classList.add('show');
+            return;
+        }
+
+        if (bookings.length === 0) {
+            container.innerHTML = `
+                <div class="slot-item slot-free">
+                    <div class="slot-time"><i class="fa-regular fa-circle-check" style="color:#10b981;"></i> ห้องว่างตลอดวัน</div>
+                    <p class="slot-info" style="color:#10b981;">ไม่มีการจอง — คุณสามารถจองได้</p>
+                </div>
+            `;
+            section.classList.add('show');
+            return;
+        }
+
+        bookings.sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+        bookings.forEach(bk => {
+            const iconColor = bk.status === 'approved' ? '#10b981' : '#f59e0b';
+            const slotClass = bk.is_mine ? 'slot-mine' : (bk.status === 'approved' ? 'slot-approved' : 'slot-booked');
+            const mineTag = bk.is_mine ? '<span class="mine-tag">การจองของคุณ</span>' : '';
+            container.innerHTML += `
+                <div class="slot-item ${slotClass}">
+                    <div class="slot-time">
+                        <i class="fa-regular fa-clock" style="color:${iconColor};"></i>
+                        ${bk.start_time} - ${bk.end_time}
+                        ${statusPill(bk.status)}
+                        ${mineTag}
+                    </div>
+                    <p class="slot-info"><strong>วัตถุประสงค์:</strong> ${escapeHtml(bk.title)}</p>
+                    <p class="slot-info"><strong>ผู้จอง:</strong> ${escapeHtml(bk.booker)}</p>
+                </div>
+            `;
+        });
+
+        section.classList.add('show');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        initCalendarSelects();
+        renderCalendar();
+    });
 </script>
 {% endblock %}

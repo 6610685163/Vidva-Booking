@@ -354,13 +354,25 @@ def booking_flow_view(request):
             }
         )
 
+    # 🌟 [เพิ่มโค้ดส่วนนี้] ดึงข้อมูลช่วงเวลาปิดใช้งานห้อง (Blackout)
+    blackouts_data = []
+    for blk in BlackoutPeriod.objects.filter(is_active=True).prefetch_related("rooms"):
+        affected_rooms = [r.room_code for r in blk.rooms.all()]
+        blackouts_data.append({
+            "id": blk.id,
+            "title": blk.title,
+            "start_date": blk.start_date.strftime("%Y-%m-%d"),
+            "end_date": blk.end_date.strftime("%Y-%m-%d"),
+            "affected_rooms": affected_rooms,
+        })
+
     context = {
         "rooms": rooms,
         "booked_data_json": json.dumps(booked_list),
+        "blackouts_json": json.dumps(blackouts_data), # 🌟 [เพิ่มตัวแปรนี้]
         "title": "จองห้องเรียน/ห้องประชุม",
     }
     return render(request, "Booking/booking_flow.html", context)
-
 
 # ==========================================
 # Views อื่นๆ ของระบบ
@@ -475,7 +487,85 @@ def cancel_booking(request, booking_id):
 
 @login_required(login_url="login")
 def booking_calendar_view(request):
-    return render(request, "Booking/booking_calendar.html")
+    """
+    ปฏิทินภาพรวมการใช้ห้องสำหรับ user (ดูก่อนจองว่าวันไหน/ห้องไหน เต็ม/ว่าง)
+    ส่ง bookings (ทุกคน) + blackouts เป็น JSON ให้ JS render
+    โครงสร้างเหมือน admin_calendar เพื่อให้ผู้ใช้ตรวจสอบสถานะห้องก่อนสร้างการจอง
+    """
+    today = date.today()
+    horizon_start = today - timedelta(days=180)
+    horizon_end = today + timedelta(days=365)
+
+    rooms = Room.objects.filter(is_active=True).order_by("room_code")
+
+    # ดึง booking ของ "ทุกคน" ที่ active (pending + approved) ในช่วง horizon
+    booking_qs = (
+        Booking.objects.filter(
+            status__in=["pending", "approved"],
+            start_date__lte=horizon_end,
+            end_date__gte=horizon_start,
+        )
+        .select_related("room", "booker")
+        .order_by("start_date", "start_time")
+    )
+
+    bookings_data = []
+    for b in booking_qs:
+        try:
+            days_list = [
+                int(d.strip())
+                for d in (b.days_of_week or "").split(",")
+                if d.strip().isdigit()
+            ]
+        except AttributeError:
+            days_list = []
+
+        # ประกอบ title ที่จะโชว์
+        title = b.subject_name or b.topic or "(ไม่ระบุ)"
+        if b.subject_code:
+            title = f"{b.subject_code} {title}"
+
+        # ระบุว่าเป็นการจองของผู้ใช้คนนี้ไหม (ใช้ไฮไลต์ฝั่ง JS)
+        is_mine = b.booker_id == request.user.id
+
+        bookings_data.append(
+            {
+                "id": b.id,
+                "room_code": b.room.room_code,
+                "start_date": b.start_date.strftime("%Y-%m-%d"),
+                "end_date": b.end_date.strftime("%Y-%m-%d"),
+                "start_time": b.start_time.strftime("%H:%M"),
+                "end_time": b.end_time.strftime("%H:%M"),
+                "days_of_week": days_list,
+                "status": b.status,
+                "title": title,
+                "booker": b.booker.get_full_name() or b.booker.username,
+                "is_mine": is_mine,
+            }
+        )
+
+    # ดึง blackouts ที่ active
+    blackouts_data = []
+    for blk in BlackoutPeriod.objects.filter(is_active=True).prefetch_related("rooms"):
+        affected_rooms = [r.room_code for r in blk.rooms.all()]
+        blackouts_data.append(
+            {
+                "id": blk.id,
+                "title": blk.title,
+                "start_date": blk.start_date.strftime("%Y-%m-%d"),
+                "end_date": blk.end_date.strftime("%Y-%m-%d"),
+                "rooms": affected_rooms,  # [] = ทุกห้อง
+            }
+        )
+
+    context = {
+        "title": "ปฏิทินตรวจสอบห้องว่าง",
+        "rooms": rooms,
+        "bookings_json": json.dumps(bookings_data),
+        "blackouts_json": json.dumps(blackouts_data),
+    }
+    return render(request, "Booking/booking_calendar.html", context)
+
 
 
 # ==========================================

@@ -125,7 +125,7 @@
         position: relative;
     }
  
-    .day:not(.empty):hover {
+    .day:not(.empty):not(.status-blackout):hover {
         transform: scale(1.05);
         z-index: 10;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -166,6 +166,20 @@
         background-color: #ecfdf5;
         color: var(--green);
         border-color: #d1fae5;
+    }
+    
+    /* 🌟 เพิ่มคลาสสำหรับวันปิดใช้งาน (สีเทา) */
+    .status-blackout {
+        background-color: #f8fafc;
+        color: #94a3b8;
+        border-color: #e2e8f0;
+        cursor: not-allowed;
+    }
+    
+    .status-blackout:hover {
+        transform: none !important;
+        box-shadow: none !important;
+        z-index: 1 !important;
     }
  
     .day.selected-day {
@@ -690,6 +704,8 @@
     const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
  
     const serverBookings = JSON.parse('{{ booked_data_json|escapejs }}');
+    // 🌟 รับข้อมูลวันปิดห้องจากหลังบ้าน
+    const blackoutPeriods = JSON.parse('{{ blackouts_json|default:"[]"|escapejs }}'); 
  
     function openBookingModal(roomName) {
         pendingRoom = roomName;
@@ -760,11 +776,17 @@
             let dStr = d.toString().padStart(2, '0');
             let dateString = `${year}-${mStr}-${dStr}`;
  
-            // หาชื่อห้องปัจจุบัน (เช่น "ENG 406-3(ห้องประชุม 1)" -> "ENG 406-3")
+            // หาชื่อห้องปัจจุบัน
             let roomCode = currentRoom.split("(")[0].replace("ENG", "").trim();
             
             let currentJSDate = new Date(year, month, d);
             let pyDayStr = ((currentJSDate.getDay() === 0) ? 6 : currentJSDate.getDay() - 1).toString();
+
+            // 🌟 เช็คว่าวันนี้อยู่ในช่วงที่แอดมินปิดห้องหรือไม่ (Blackout)
+            let isBlackout = blackoutPeriods.some(b => {
+                let matchRoom = (b.affected_rooms.length === 0 || b.affected_rooms.includes(roomCode));
+                return matchRoom && (dateString >= b.start_date && dateString <= b.end_date);
+            });
 
             // เช็คว่ามีคิวการจองใน Database ที่ตรงกับห้องนี้และวันนี้หรือไม่
             let todaysBookings = serverBookings.filter(b => {
@@ -776,13 +798,26 @@
                 return false;
             });
  
-            if (todaysBookings.length >= 6) statusNum = 2; // เต็ม
-            else if (todaysBookings.length > 0) statusNum = 1;
+            // 🌟 เรียงลำดับความสำคัญของสถานะสี (ปิดห้อง > เต็ม > มีจองบ้าง > ว่าง)
+            if (isBlackout) statusNum = 3; // ปิดใช้งาน
+            else if (todaysBookings.length >= 6) statusNum = 2; // เต็ม
+            else if (todaysBookings.length > 0) statusNum = 1; // ไม่ว่างบางส่วน
             
-            const s = [{ c: 'status-available', d: '#10b981' }, { c: 'status-partial', d: '#f59e0b' }, { c: 'status-full', d: '#ef4444' }][statusNum];
+            const sOptions = [
+                { c: 'status-available', d: '#10b981' }, // 0
+                { c: 'status-partial', d: '#f59e0b' },   // 1
+                { c: 'status-full', d: '#ef4444' },      // 2
+                { c: 'status-blackout', d: '#94a3b8' }   // 3 (เพิ่มสีเทา)
+            ];
+            const s = sOptions[statusNum];
+
             const isChecked = selectedDates.some(sd => sd.day === d && sd.month === month && sd.year === year);
             const selectedClass = isChecked ? 'selected-day' : '';
-            const clickAction = `onclick="toggleDateSelection(${d}, ${month}, ${year})"`;
+            
+            // 🌟 ถ้าห้องปิด (statusNum === 3) จะบล็อกการคลิกและเด้งแจ้งเตือน
+            const clickAction = (statusNum === 3) ? 
+                `onclick="alert('ห้องนี้ปิดใช้งานในวันที่ ${d} ${months[month]} ${year+543} กรุณาเลือกวันอื่น')"` : 
+                `onclick="toggleDateSelection(${d}, ${month}, ${year})"`;
  
             grid.innerHTML += `
                 <div class="day ${s.c} ${selectedClass}" ${clickAction}>

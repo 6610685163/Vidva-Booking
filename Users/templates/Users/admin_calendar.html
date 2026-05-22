@@ -6,12 +6,7 @@
 {% block extra_style %}
 <style>
     .page-header {
-        margin-bottom: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        flex-wrap: wrap;
-        gap: 15px;
+        margin-bottom: 1.5rem;
     }
 
     .page-header h1 {
@@ -26,171 +21,130 @@
         font-size: 0.95rem;
     }
 
-    /* ตัวเลือกห้อง (Room Selector) */
-    .room-selector-wrapper {
+    /* ----- กล่องปฏิทินใหญ่ (ใช้ style เดียวกับ booking_flow) ----- */
+    .calendar-container {
         background: white;
-        padding: 15px 25px;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-        border: 1px solid #e5e7eb;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .calendar-top-bar {
         display: flex;
+        justify-content: space-between;
         align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
         gap: 15px;
     }
 
-    .room-selector-wrapper label {
-        font-weight: 600;
-        color: #374151;
-    }
-
-    .select-room {
-        padding: 10px 15px;
-        border-radius: 8px;
-        border: 1.5px solid #cbd5e1;
-        font-family: inherit;
-        font-size: 1rem;
-        outline: none;
-        min-width: 250px;
-        cursor: pointer;
-        transition: 0.2s;
-    }
-
-    .select-room:focus {
-        border-color: var(--tu-red);
-        box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
-    }
-
-    /* โครงสร้าง Layout (ซ้ายปฏิทิน ขวารายละเอียด) */
-    .calendar-layout {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 25px;
-        align-items: start;
-    }
-
-    @media (max-width: 992px) {
-        .calendar-layout {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* ส่วนของปฏิทิน */
-    .calendar-card {
-        background: white;
-        padding: 25px;
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-        border: 1px solid #e5e7eb;
+    .room-title {
+        margin: 0;
+        color: var(--tu-red);
+        font-weight: 700;
+        font-size: 1.4rem;
     }
 
     .calendar-controls {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-    }
-
-    .calendar-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #1e2937;
-        display: flex;
-        align-items: center;
         gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
     }
 
-    .btn-nav {
-        background: white;
-        border: 1px solid #cbd5e1;
-        padding: 8px 16px;
+    .select-input {
+        padding: 8px 12px;
         border-radius: 8px;
-        cursor: pointer;
-        transition: 0.2s;
+        border: 1px solid #cbd5e1;
         font-family: inherit;
-        color: #4b5563;
-        font-weight: 500;
+        font-size: 1rem;
+        cursor: pointer;
+        outline: none;
+        background: white;
     }
 
-    .btn-nav:hover {
+    .select-input:focus {
         border-color: var(--tu-red);
-        color: var(--tu-red);
-        background: #fff5f5;
     }
 
+    .select-room {
+        min-width: 220px;
+    }
+
+    .info-text {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-bottom: 15px;
+    }
+
+    /* ----- Grid วันแบบ booking_flow ----- */
     .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 10px;
+        margin-top: 10px;
     }
 
     .day-label {
         text-align: center;
         font-weight: 600;
-        color: #6b7280;
+        color: #64748b;
         padding-bottom: 10px;
-        border-bottom: 1px solid #f3f4f6;
     }
 
-    .calendar-day {
-        min-height: 100px;
+    .day {
+        height: 80px;
         border-radius: 12px;
-        border: 1px solid #f3f4f6;
-        padding: 10px;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
         transition: 0.2s;
+        border: 1px solid #f1f5f9;
         position: relative;
-        background: white;
     }
 
-    .calendar-day:not(.empty):hover {
-        border-color: #94a3b8;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    .day:not(.empty):hover {
+        transform: scale(1.05);
+        z-index: 10;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
-    .calendar-day.empty {
-        background: transparent;
+    .day.empty {
         border: none;
         cursor: default;
+        background: transparent;
     }
 
-    .calendar-day.active-day {
-        border: 2px solid var(--tu-red) !important;
-        background-color: var(--tu-red-light);
-    }
-
-    .day-number {
+    .day .date {
         font-weight: 600;
-        font-size: 1.05rem;
-        margin-bottom: 5px;
-        color: #374151;
+        font-size: 1.1rem;
     }
 
-    /* สไตล์สถานะบนปฏิทิน */
-    .status-indicator {
-        margin-top: auto;
-        font-size: 0.8rem;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-weight: 600;
-        text-align: center;
-    }
-
-    .status-free {
-        background-color: #ecfdf5;
-        color: #059669;
-    }
-
-    .status-partial {
-        background-color: #fffbeb;
-        color: #d97706;
+    .day .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-top: 5px;
     }
 
     .status-full {
-        background-color: #fef2f2;
-        color: #dc2626;
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border-color: #fecaca;
+    }
+
+    .status-partial {
+        background-color: #fef3c7;
+        color: #92400e;
+        border-color: #fde68a;
+    }
+
+    .status-available {
+        background-color: #ecfdf5;
+        color: #065f46;
+        border-color: #d1fae5;
     }
 
     .status-blackout {
@@ -199,82 +153,28 @@
         border: 1px dashed #cbd5e1;
     }
 
-    /* ส่วนของรายละเอียดด้านขวา */
-    .details-card {
-        background: white;
-        padding: 25px;
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-        border: 1px solid #e5e7eb;
-        position: sticky;
-        top: 100px;
+    .day.selected-day {
+        border: 2px solid #3b82f6 !important;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
     }
 
-    .details-header {
-        border-bottom: 2px solid #f3f4f6;
-        padding-bottom: 15px;
-        margin-bottom: 20px;
+    .day.today-day .date {
+        text-decoration: underline;
+        text-decoration-color: var(--tu-red);
+        text-underline-offset: 3px;
     }
 
-    .details-header h3 {
-        margin: 0 0 5px 0;
-        color: #1e2937;
-        font-size: 1.25rem;
-    }
-
-    .details-header p {
-        margin: 0;
-        color: #6b7280;
-        font-size: 0.95rem;
-    }
-
-    .slot-item {
-        background: #f8fafc;
-        border: 1px solid #e5e7eb;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .slot-time {
-        font-weight: 600;
-        color: #374151;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .slot-info {
-        color: #6b7280;
-        font-size: 0.9rem;
-        margin: 0;
-    }
-
-    .slot-booked {
-        border-left: 4px solid #f59e0b;
-    }
-
-    .slot-free {
-        border-left: 4px solid #10b981;
-    }
-
-    .slot-blackout {
-        border-left: 4px solid #64748b;
-        background: #f1f5f9;
-    }
-
+    /* ----- Legend ----- */
     .legend-area {
         display: flex;
-        gap: 15px;
+        gap: 18px;
         margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid #f3f4f6;
+        padding-top: 18px;
+        border-top: 1px solid #eee;
         font-size: 0.85rem;
-        color: #6b7280;
+        color: #64748b;
         justify-content: center;
+        flex-wrap: wrap;
     }
 
     .legend-item {
@@ -288,70 +188,165 @@
         height: 12px;
         border-radius: 3px;
     }
+
+    /* ----- ส่วนรายละเอียดวันที่คลิก (ใต้ปฏิทิน) ----- */
+    .day-details-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        display: none;
+        animation: fadeIn 0.4s;
+    }
+
+    .day-details-section.show {
+        display: block;
+    }
+
+    .day-details-header {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 18px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+
+    .slot-item {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        padding: 15px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: 0.2s;
+    }
+
+    .slot-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .slot-time {
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .slot-info {
+        color: #6b7280;
+        font-size: 0.88rem;
+        margin: 0;
+    }
+
+    .slot-booked {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .slot-approved {
+        border-left: 4px solid #10b981;
+    }
+
+    .slot-free {
+        border-left: 4px solid #10b981;
+        grid-column: 1 / -1;
+    }
+
+    .slot-blackout {
+        border-left: 4px solid #64748b;
+        background: #f1f5f9;
+        grid-column: 1 / -1;
+    }
+
+    .status-pill {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 9px;
+        border-radius: 999px;
+    }
+
+    .pill-approved {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .pill-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <div>
-        <h1><i class="fa-regular fa-calendar-days" style="color: var(--tu-red); margin-right: 10px;"></i>
-            ปฏิทินตรวจสอบการใช้งานห้อง</h1>
-        <p>ตรวจสอบสถานะห้องว่าง คิวการจอง และช่วงเวลาปิดปรับปรุงรายห้อง</p>
-    </div>
-    <div class="room-selector-wrapper">
-        <label for="roomSelect"><i class="fa-solid fa-door-open"></i> เลือกห้อง:</label>
-        <select id="roomSelect" class="select-room" onchange="changeRoom()">
-            {% for room in rooms %}
-            <option value="{{ room.room_code }}">{{ room.room_code }} ({{ room.room_name }})</option>
-            {% empty %}
-            <option value="">-- ยังไม่มีห้องในระบบ --</option>
-            {% endfor %}
-        </select>
-    </div>
+    <h1><i class="fa-regular fa-calendar-days" style="color: var(--tu-red); margin-right: 10px;"></i>
+        ปฏิทินตรวจสอบการใช้งานห้อง</h1>
+    <p>ตรวจสอบสถานะห้องว่าง คิวการจอง และช่วงเวลาปิดปรับปรุงรายห้อง</p>
 </div>
 
-<div class="calendar-layout">
-    <div class="calendar-card">
+<div class="calendar-container">
+    <div class="calendar-top-bar">
+        <h2 id="roomTitle" class="room-title">เลือกห้อง</h2>
         <div class="calendar-controls">
-            <button class="btn-nav" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i> ย้อนกลับ</button>
-            <div class="calendar-title">
-                <i class="fa-regular fa-calendar"></i>
-                <span id="monthYearTitle">มกราคม 2569</span>
-            </div>
-            <button class="btn-nav" onclick="changeMonth(1)">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-
-        <div class="calendar-grid" id="calendarGrid">
-        </div>
-
-        <div class="legend-area">
-            <div class="legend-item">
-                <div class="legend-color" style="background: #10b981;"></div> ว่างตลอดวัน
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #f59e0b;"></div> มีจองบางเวลา
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #ef4444;"></div> จองเต็มแล้ว
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #64748b;"></div> ปิดปรับปรุง (Blackout)
-            </div>
+            <select id="roomSelect" class="select-input select-room" onchange="changeRoom()">
+                {% for room in rooms %}
+                <option value="{{ room.room_code }}">ENG {{ room.room_code }} ({{ room.room_name }})</option>
+                {% empty %}
+                <option value="">-- ยังไม่มีห้องในระบบ --</option>
+                {% endfor %}
+            </select>
+            <select id="monthSelect" class="select-input" onchange="renderCalendar()"></select>
+            <select id="yearSelect" class="select-input" onchange="renderCalendar()"></select>
         </div>
     </div>
 
-    <div class="details-card">
-        <div class="details-header">
-            <h3 id="detailDateText">เลือกวันที่บนปฏิทิน</h3>
-            <p id="detailRoomText">เพื่อดูข้อมูลการจองโดยละเอียด</p>
-        </div>
+    <p class="info-text">
+        <i class="fa-solid fa-circle-info"></i> คลิกที่วันเพื่อดูรายละเอียดการจองรายห้อง
+    </p>
 
-        <div id="dayDetailsContainer">
-            <div style="text-align: center; color: #94a3b8; padding: 40px 0;">
-                <i class="fa-solid fa-hand-pointer" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <p>คลิกที่วันที่บนปฏิทินเพื่อดูข้อมูล</p>
-            </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+
+    <div class="legend-area">
+        <div class="legend-item">
+            <div class="legend-color" style="background: #10b981;"></div> ว่างตลอดวัน
         </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #f59e0b;"></div> มีจองบางเวลา
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ef4444;"></div> จองเต็มแล้ว
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #64748b;"></div> ปิดปรับปรุง (Blackout)
+        </div>
+    </div>
+
+    <div id="dayDetailsSection" class="day-details-section">
+        <div id="dayDetailsHeader" class="day-details-header">
+            <i class="fa-regular fa-calendar"></i> <span>วันที่ —</span>
+        </div>
+        <div id="dayDetailsContainer" class="slot-grid"></div>
     </div>
 </div>
 {% endblock %}
@@ -359,26 +354,52 @@
 {% block extra_script %}
 <script>
     let currentDate = new Date();
-    let selectedDayElement = null;
+    let selectedDayKey = null;
     const monthsTh = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
-    // ข้อมูลจริงจาก backend (Booking + BlackoutPeriod)
     const ALL_BOOKINGS = {{ bookings_json|safe }};
     const ALL_BLACKOUTS = {{ blackouts_json|safe }};
 
-    // helper: แปลงวันที่ JS Date เป็น ISO string YYYY-MM-DD (ใช้ local time)
     function toISO(year, month, day) {
         const m = String(month + 1).padStart(2, '0');
         const d = String(day).padStart(2, '0');
         return `${year}-${m}-${d}`;
     }
 
-    // แปลง JS weekday (Sun=0..Sat=6) เป็น convention ของระบบ (Mon=0..Sun=6)
     function toPythonWeekday(jsDate) {
         return (jsDate.getDay() + 6) % 7;
     }
 
-    // ดึง events (bookings + blackouts) ของวันใดวันหนึ่ง สำหรับห้องที่เลือก
+    function escapeHtml(s) {
+        if (s === undefined || s === null) return '';
+        return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function isSameDay(d1, d2) {
+        return d1.getFullYear() === d2.getFullYear()
+            && d1.getMonth() === d2.getMonth()
+            && d1.getDate() === d2.getDate();
+    }
+
+    function initCalendarSelects() {
+        const mSelect = document.getElementById('monthSelect');
+        const ySelect = document.getElementById('yearSelect');
+        if (mSelect.options.length > 0) return;
+        const now = new Date();
+        monthsTh.forEach((m, i) => {
+            let opt = document.createElement('option');
+            opt.value = i; opt.innerHTML = m;
+            if (i === now.getMonth()) opt.selected = true;
+            mSelect.appendChild(opt);
+        });
+        for (let i = now.getFullYear() - 1; i <= now.getFullYear() + 2; i++) {
+            let opt = document.createElement('option');
+            opt.value = i; opt.innerHTML = i + 543;
+            if (i === now.getFullYear()) opt.selected = true;
+            ySelect.appendChild(opt);
+        }
+    }
+
     function getEventsForDay(year, month, day, roomCode) {
         const iso = toISO(year, month, day);
         const dateObj = new Date(year, month, day);
@@ -387,7 +408,7 @@
         const bookings = ALL_BOOKINGS.filter(b =>
             b.room_code === roomCode &&
             b.start_date <= iso && iso <= b.end_date &&
-            b.days_of_week.includes(pyWeekday)
+            Array.isArray(b.days_of_week) && b.days_of_week.includes(pyWeekday)
         );
 
         const blackouts = ALL_BLACKOUTS.filter(blk =>
@@ -398,73 +419,17 @@
         return { bookings, blackouts };
     }
 
-    function renderCalendar() {
-        const grid = document.getElementById('calendarGrid');
-        const title = document.getElementById('monthYearTitle');
-        const roomCode = document.getElementById('roomSelect').value;
-
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-
-        title.innerText = `${monthsTh[month]} ${year + 543}`;
-        grid.innerHTML = "";
-
-        ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => {
-            grid.innerHTML += `<div class="day-label">${day}</div>`;
-        });
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        // เติมช่องว่างก่อนวันที่ 1
-        for (let i = 0; i < firstDay; i++) {
-            grid.innerHTML += `<div class="calendar-day empty"></div>`;
-        }
-
-        // เวลาทำการของห้อง 1 วัน: 08:00 - 18:00 = 10 ชั่วโมง = 600 นาที
-        const WORK_MINUTES_PER_DAY = 10 * 60;
-        const FULL_THRESHOLD = 0.8; // จองครอบ ≥ 80% ของเวลาทำการ → ถือว่า "จองเต็ม"
-
-        for (let d = 1; d <= daysInMonth; d++) {
-            const { bookings, blackouts } = getEventsForDay(year, month, d, roomCode);
-
-            let statusHtml = '<div class="status-indicator status-free">ว่าง</div>';
-            if (blackouts.length > 0) {
-                statusHtml = '<div class="status-indicator status-blackout"><i class="fa-solid fa-lock"></i> ปิดใช้งาน</div>';
-            } else if (bookings.length > 0) {
-                // คำนวณจำนวนนาทีที่ถูกจองรวมในวันนั้น (รวมแบบ merge ช่วงเวลาทับซ้อน)
-                const bookedMinutes = sumBookedMinutes(bookings);
-                if (bookedMinutes >= WORK_MINUTES_PER_DAY * FULL_THRESHOLD) {
-                    statusHtml = '<div class="status-indicator status-full">จองเต็ม</div>';
-                } else {
-                    statusHtml = '<div class="status-indicator status-partial">จองบางส่วน</div>';
-                }
-            }
-
-            grid.innerHTML += `
-                <div class="calendar-day" onclick="showDayDetails(${d}, ${month}, ${year}, this)">
-                    <span class="day-number">${d}</span>
-                    ${statusHtml}
-                </div>
-            `;
-        }
-    }
-
-    // helper: แปลง "HH:MM" → นาที (นับจาก 00:00)
     function timeStrToMinutes(hhmm) {
         const [h, m] = hhmm.split(':').map(Number);
         return h * 60 + m;
     }
 
-    // helper: นับรวมนาทีของ bookings โดย merge ช่วงเวลาทับซ้อน
     function sumBookedMinutes(bookings) {
         if (bookings.length === 0) return 0;
-        // แปลงเป็น [start, end] minutes แล้วเรียง
         const intervals = bookings.map(b => [
             timeStrToMinutes(b.start_time),
             timeStrToMinutes(b.end_time),
         ]).sort((a, b) => a[0] - b[0]);
-        // merge intervals
         let total = 0;
         let curStart = intervals[0][0];
         let curEnd = intervals[0][1];
@@ -482,90 +447,165 @@
         return total;
     }
 
-    function changeMonth(direction) {
-        currentDate.setMonth(currentDate.getMonth() + direction);
-        document.getElementById('dayDetailsContainer').innerHTML = `
-            <div style="text-align: center; color: #94a3b8; padding: 40px 0;">
-                <i class="fa-solid fa-hand-pointer" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <p>คลิกที่วันที่บนปฏิทินเพื่อดูข้อมูล</p>
-            </div>
-        `;
-        document.getElementById('detailDateText').innerText = "เลือกวันที่บนปฏิทิน";
-        if (selectedDayElement) selectedDayElement.classList.remove('active-day');
-        renderCalendar();
+    function renderCalendar() {
+        initCalendarSelects();
+        const grid = document.getElementById('calendarGrid');
+        const month = parseInt(document.getElementById('monthSelect').value);
+        const year = parseInt(document.getElementById('yearSelect').value);
+        const roomSelect = document.getElementById('roomSelect');
+        const roomCode = roomSelect.value;
+        const roomLabel = roomSelect.options[roomSelect.selectedIndex]?.text || '';
+        document.getElementById('roomTitle').innerText = roomLabel || 'เลือกห้อง';
+
+        currentDate = new Date(year, month, 1);
+        const today = new Date();
+
+        grid.innerHTML = "";
+        ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."].forEach(day => {
+            grid.innerHTML += `<div class="day-label">${day}</div>`;
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+            grid.innerHTML += `<div class="day empty"></div>`;
+        }
+
+        const WORK_MINUTES = 10 * 60;
+        const FULL_THRESHOLD = 0.8;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const { bookings, blackouts } = getEventsForDay(year, month, d, roomCode);
+
+            let statusClass = 'status-available';
+            let dotColor = '#10b981';
+            if (blackouts.length > 0) {
+                statusClass = 'status-blackout';
+                dotColor = '#64748b';
+            } else if (bookings.length > 0) {
+                const mins = sumBookedMinutes(bookings);
+                if (mins >= WORK_MINUTES * FULL_THRESHOLD) {
+                    statusClass = 'status-full';
+                    dotColor = '#ef4444';
+                } else {
+                    statusClass = 'status-partial';
+                    dotColor = '#f59e0b';
+                }
+            }
+
+            const cellDate = new Date(year, month, d);
+            const todayClass = isSameDay(cellDate, today) ? 'today-day' : '';
+            const dayKey = `${year}-${month}-${d}`;
+            const selectedClass = (selectedDayKey === dayKey) ? 'selected-day' : '';
+
+            grid.innerHTML += `
+                <div class="day ${statusClass} ${todayClass} ${selectedClass}" onclick="showDayDetails(${d}, ${month}, ${year})">
+                    <span class="date">${d}</span>
+                    <div class="status-dot" style="background:${dotColor};"></div>
+                </div>
+            `;
+        }
+
+        if (selectedDayKey) {
+            const [sy, sm, sd] = selectedDayKey.split('-').map(Number);
+            if (sy === year && sm === month) {
+                showDayDetails(sd, sm, sy, true);
+            } else {
+                hideDayDetails();
+            }
+        }
     }
 
     function changeRoom() {
-        document.getElementById('detailRoomText').innerText = "ห้อง: " + document.getElementById('roomSelect').value;
+        selectedDayKey = null;
+        hideDayDetails();
         renderCalendar();
-        changeMonth(0);
     }
 
-    function escapeHtml(s) {
-        if (s === undefined || s === null) return '';
-        return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    function hideDayDetails() {
+        document.getElementById('dayDetailsSection').classList.remove('show');
+        selectedDayKey = null;
     }
 
-    function showDayDetails(day, month, year, element) {
-        if (selectedDayElement) selectedDayElement.classList.remove('active-day');
-        element.classList.add('active-day');
-        selectedDayElement = element;
+    function statusPill(status) {
+        if (status === 'approved') {
+            return `<span class="status-pill pill-approved">อนุมัติแล้ว</span>`;
+        }
+        return `<span class="status-pill pill-pending">รออนุมัติ</span>`;
+    }
 
+    function showDayDetails(day, month, year, keepHighlight) {
         const roomCode = document.getElementById('roomSelect').value;
-        document.getElementById('detailDateText').innerText = `วันที่ ${day} ${monthsTh[month]} ${year + 543}`;
-        document.getElementById('detailRoomText').innerText = `ห้อง: ${roomCode}`;
+        const dayKey = `${year}-${month}-${day}`;
+        selectedDayKey = dayKey;
 
-        const { bookings, blackouts } = getEventsForDay(year, month, day, roomCode);
+        if (!keepHighlight) {
+            document.querySelectorAll('.day.selected-day').forEach(el => el.classList.remove('selected-day'));
+            const cells = document.querySelectorAll('.day:not(.empty)');
+            cells.forEach(el => {
+                if (el.querySelector('.date')?.innerText == String(day)) {
+                    el.classList.add('selected-day');
+                }
+            });
+        }
+
+        const section = document.getElementById('dayDetailsSection');
+        const header = document.getElementById('dayDetailsHeader');
         const container = document.getElementById('dayDetailsContainer');
+        header.innerHTML = `<i class="fa-regular fa-calendar"></i> วันที่ ${day} ${monthsTh[month]} ${year + 543}`;
         container.innerHTML = "";
 
-        // แสดง Blackout ก่อน (มี priority สูงสุด)
+        const { bookings, blackouts } = getEventsForDay(year, month, day, roomCode);
+
         if (blackouts.length > 0) {
             blackouts.forEach(blk => {
                 container.innerHTML += `
                     <div class="slot-item slot-blackout">
-                        <div class="slot-time"><i class="fa-solid fa-lock" style="color: #475569;"></i> ห้องปิดปรับปรุง / ไม่พร้อมใช้งาน</div>
+                        <div class="slot-time"><i class="fa-solid fa-lock" style="color:#475569;"></i> ห้องปิดปรับปรุง / ไม่พร้อมใช้งาน</div>
                         <p class="slot-info"><strong>เหตุผล:</strong> ${escapeHtml(blk.title)}</p>
                         <p class="slot-info" style="color:#64748b;">${blk.start_date} ถึง ${blk.end_date}</p>
                     </div>
                 `;
             });
-            // ถ้ามี blackout ครอบทั้งวัน ไม่ต้องแสดงคิวจองอีก
+            section.classList.add('show');
             return;
         }
 
         if (bookings.length === 0) {
             container.innerHTML = `
                 <div class="slot-item slot-free">
-                    <div class="slot-time"><i class="fa-regular fa-circle-check" style="color: #10b981;"></i> ห้องว่างตลอดวัน</div>
-                    <p class="slot-info" style="color: #10b981;">ไม่มีการจองในวันนี้</p>
+                    <div class="slot-time"><i class="fa-regular fa-circle-check" style="color:#10b981;"></i> ห้องว่างตลอดวัน</div>
+                    <p class="slot-info" style="color:#10b981;">ไม่มีการจองในวันนี้</p>
                 </div>
             `;
+            section.classList.add('show');
             return;
         }
 
-        // เรียงตามเวลาเริ่ม
         bookings.sort((a, b) => a.start_time.localeCompare(b.start_time));
 
         bookings.forEach(bk => {
-            const statusColor = bk.status === 'approved' ? '#10b981' : '#f59e0b';
-            const statusLabel = bk.status === 'approved' ? 'อนุมัติแล้ว' : 'รอการอนุมัติ';
+            const iconColor = bk.status === 'approved' ? '#10b981' : '#f59e0b';
+            const slotClass = bk.status === 'approved' ? 'slot-approved' : 'slot-booked';
             container.innerHTML += `
-                <div class="slot-item slot-booked">
-                    <div class="slot-time"><i class="fa-regular fa-clock" style="color: ${statusColor};"></i> ${bk.start_time} - ${bk.end_time}</div>
+                <div class="slot-item ${slotClass}">
+                    <div class="slot-time">
+                        <i class="fa-regular fa-clock" style="color:${iconColor};"></i>
+                        ${bk.start_time} - ${bk.end_time}
+                        ${statusPill(bk.status)}
+                    </div>
                     <p class="slot-info"><strong>วัตถุประสงค์:</strong> ${escapeHtml(bk.title)}</p>
                     <p class="slot-info"><strong>ผู้จอง:</strong> ${escapeHtml(bk.booker)}</p>
-                    <p class="slot-info" style="color: ${statusColor}; font-weight:600;">สถานะ: ${statusLabel}</p>
                 </div>
             `;
         });
+
+        section.classList.add('show');
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        const sel = document.getElementById('roomSelect');
-        if (sel && sel.value) {
-            document.getElementById('detailRoomText').innerText = "ห้อง: " + sel.value;
-        }
+        initCalendarSelects();
         renderCalendar();
     });
 </script>
