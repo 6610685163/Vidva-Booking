@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-gzepb(+2%%r7(b+jic@!cyf!af50q338_r9-&l@q_8r+v%lrzi'
+SECRET_KEY = "django-insecure-gzepb(+2%%r7(b+jic@!cyf!af50q338_r9-&l@q_8r+v%lrzi"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -36,53 +36,53 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'Users',
-    'Booking',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "Users",
+    "Booking",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'Tse_Booking.urls'
+ROOT_URLCONF = "Tse_Booking.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'Tse_Booking.wsgi.application'
+WSGI_APPLICATION = "Tse_Booking.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -92,16 +92,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -109,9 +109,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'th'
+LANGUAGE_CODE = "th"
 
-TIME_ZONE = 'Asia/Bangkok'
+TIME_ZONE = "Asia/Bangkok"
 
 USE_I18N = True
 
@@ -121,11 +121,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    BASE_DIR / "static",
 ]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # ====================
 # Custom Authentication
@@ -134,83 +137,81 @@ STATICFILES_DIRS = [
 # Use custom TU REST API authentication backend
 # Requirement: FR-AUTH-02
 AUTHENTICATION_BACKENDS = [
-    'Users.auth_backend.TURestAPIBackend',
-    'django.contrib.auth.backends.ModelBackend',  # Fallback to default
+    "Users.auth_backend.TURestAPIBackend",
+    "django.contrib.auth.backends.ModelBackend",  # Fallback to default
 ]
 
 # TU REST API Configuration
 # Requirement: FR-AUTH-02
 # Get Application-Key from TU REST API (https://restapi.tu.ac.th)
-TU_API_KEY = os.getenv('TU_API_KEY', '')  # Set this in .env file
-TU_API_ENDPOINT = 'https://restapi.tu.ac.th/api/v1/auth/Ad/verify'
+TU_API_KEY = os.getenv("TU_API_KEY", "")  # Set this in .env file
+TU_API_ENDPOINT = "https://restapi.tu.ac.th/api/v1/auth/Ad/verify"
 
 # Session configuration
 # Requirement: NFR-SEC-03 (8 hours timeout)
 SESSION_COOKIE_AGE = 8 * 60 * 60  # 8 hours in seconds
 SESSION_COOKIE_SECURE = False  # Set to True in production (HTTPS)
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = False  # Set to True in production (HTTPS)
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = "Lax"
 
 # Login URL
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
 
 # ====================
 # Logging Configuration
 # ====================
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
         },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'tse_booking.log',
-            'formatter': 'verbose',
-        },
-        'auth_file': {
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'authentication.log',
-            'formatter': 'verbose',
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
     },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'Users.auth_backend': {
-            'handlers': ['console', 'auth_file'],
-            'level': 'DEBUG',
-            'propagate': False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "simple"},
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "tse_booking.log",
+            "formatter": "verbose",
         },
-        'Users.views': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
+        "auth_file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "authentication.log",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "Users.auth_backend": {
+            "handlers": ["console", "auth_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "Users.views": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
         },
     },
 }
 
 # Create logs directory if it doesn't exist
 import os
-logs_dir = BASE_DIR / 'logs'
+
+logs_dir = BASE_DIR / "logs"
 os.makedirs(logs_dir, exist_ok=True)
 
 # ====================

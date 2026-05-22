@@ -8,7 +8,12 @@ from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from django.http import JsonResponse
-from .models import Booking, Room, AcademicSemester, BlackoutPeriod  # นำเข้าครบทุก Model ทั้ง Semester และ Blackout
+from .models import (
+    Booking,
+    Room,
+    AcademicSemester,
+    BlackoutPeriod,
+)  # นำเข้าครบทุก Model ทั้ง Semester และ Blackout
 from .forms import BookingForm
 
 # นำเข้าฟังก์ชันส่งแจ้งเตือนของเพื่อน
@@ -105,7 +110,9 @@ def booking_flow_view(request):
         # 🎯 รับค่าอีเมลแจ้งเตือน (ฟีเจอร์ของเพื่อน)
         notification_email = request.POST.get("notification_email", "").strip()
         if not notification_email:
-            notification_email = request.user.email  # ถ้าไม่กรอก ให้ใช้อีเมลของ User แทน
+            notification_email = (
+                request.user.email
+            )  # ถ้าไม่กรอก ให้ใช้อีเมลของ User แทน
 
         # ==========================================
         # 1. จองแบบรายวัน
@@ -160,7 +167,7 @@ def booking_flow_view(request):
                     messages.error(
                         request,
                         f"❌ ไม่สามารถจองได้ในวันที่ {slot.get('dateStr')} เนื่องจากอยู่ในช่วงปิดใช้งาน '{blocking_blackout.title}' "
-                        f"({blocking_blackout.start_date.strftime('%d/%m/%Y')} - {blocking_blackout.end_date.strftime('%d/%m/%Y')})"
+                        f"({blocking_blackout.start_date.strftime('%d/%m/%Y')} - {blocking_blackout.end_date.strftime('%d/%m/%Y')})",
                     )
                     return redirect("booking_flow")
 
@@ -277,7 +284,7 @@ def booking_flow_view(request):
                         request,
                         f"❌ ไม่สามารถจองทั้งเทอมได้ เนื่องจากตรงกับช่วงปิดใช้งานห้อง '{blocking_blackout.title}' "
                         f"(ตรงกับวันที่ {blocked_date.strftime('%d/%m/%Y')}). "
-                        f"กรุณาแจ้งเจ้าหน้าที่หรือเลือกช่วงเวลาอื่น"
+                        f"กรุณาแจ้งเจ้าหน้าที่หรือเลือกช่วงเวลาอื่น",
                     )
                     return redirect("booking_flow")
 
@@ -433,7 +440,10 @@ def cancel_booking(request, booking_id):
 
     # เช็คสถานะ
     if booking.status not in ("pending", "approved"):
-        messages.warning(request, f"การจองนี้อยู่ในสถานะ '{booking.get_status_display()}' ยกเลิกไม่ได้")
+        messages.warning(
+            request,
+            f"การจองนี้อยู่ในสถานะ '{booking.get_status_display()}' ยกเลิกไม่ได้",
+        )
         return redirect("my_bookings")
 
     # เช็คว่าวันสิ้นสุดยังไม่ผ่าน
@@ -483,7 +493,10 @@ def chatbot_api(request):
                 reply = "ปกติเจ้าหน้าที่จะใช้เวลาพิจารณาอนุมัติภายใน 1-2 วันทำการ หากได้รับการอนุมัติจะมี Email แจ้งเตือนส่งไปให้ครับ 📧"
 
             # เมนูคำสั่งทั้งหมด
-            elif any(word in user_message for word in ["เมนู", "ช่วยเหลือ", "คำสั่ง", "ทำอะไรได้บ้าง"]):
+            elif any(
+                word in user_message
+                for word in ["เมนู", "ช่วยเหลือ", "คำสั่ง", "ทำอะไรได้บ้าง"]
+            ):
                 reply = (
                     "นี่คือคำสั่งที่ผมสามารถช่วยได้ครับ กดพิมพ์คำเหล่านี้มาได้เลย:\n"
                     "- 📅 **'วิธีจอง'** (ดูขั้นตอนการจอง)\n"

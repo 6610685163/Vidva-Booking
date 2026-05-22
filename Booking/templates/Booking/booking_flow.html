@@ -457,43 +457,33 @@
 </div>
  
 <div id="view1" class="room-grid">
-    <div class="card" onclick="openBookingModal('ENG 406-3(ห้องประชุม 1)')">
-        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
-                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+406-3'"></div>
-        <div class="card-title">ENG 406-3(ห้องประชุม 1)</div>
-        <p>ความจุ: 60 คน | ห้องประชุม</p>
-        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+    {% for room in rooms %}
+    <div class="card" onclick="openBookingModal('ENG {{ room.room_code }}({{ room.room_name }})')">
+        
+        <div class="room-img-placeholder">
+            {% if room.image %}
+                <img src="{{ room.image.url }}" alt="{{ room.room_name }}">
+            {% else %}
+                <img src="{% static 'images/test_room.jpg' %}" alt="{{ room.room_name }}"
+                     onerror="this.src='https://via.placeholder.com/400x200?text=ENG+{{ room.room_code }}'">
+            {% endif %}
+        </div>
+        
+        <div class="card-title">ENG {{ room.room_code }}({{ room.room_name }})</div>
+        <p>ความจุ: {{ room.capacity }} คน | {{ room.get_room_type_display }}</p>
+        
+        {% if room.description %}
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: -5px; line-height: 1.4;">{{ room.description }}</p>
+        {% endif %}
     </div>
-    <div class="card" onclick="openBookingModal('ENG 406-5(ห้องประชุม 2)')">
-        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
-                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+406-5'"></div>
-        <div class="card-title">ENG 406-5(ห้องประชุม 2)</div>
-        <p>ความจุ: 15 คน | ห้องประชุม</p>
-        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
+    {% empty %}
+    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">
+        <i class="fa-solid fa-door-closed" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+        <p style="font-size: 1.1rem; margin: 0;">ขณะนี้ยังไม่มีห้องเปิดใช้งานในระบบ</p>
     </div>
-    <div class="card" onclick="openBookingModal('ENG 408-1(ห้องประชุม 3)')">
-        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
-                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+408-1'"></div>
-        <div class="card-title">ENG 408-1(ห้องประชุม 3)</div>
-        <p>ความจุ: 10 คน | ห้องประชุม</p>
-        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
-    </div>
-    <div class="card" onclick="openBookingModal('ENG 408-2/1(ห้องบรรยาย 1)')">
-        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
-                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+408-2/1'"></div>
-        <div class="card-title">ENG 408-2/1(ห้องบรรยาย 1)</div>
-        <p>ความจุ: 20 คน | ห้องเรียน</p>
-        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
-    </div>
-    <div class="card" onclick="openBookingModal('ENG 408-2/2(ห้องบรรยาย 2)')">
-        <div class="room-img-placeholder"><img src="{% static 'images/test_room.jpg' %}" alt="test"
-                onerror="this.src='https://via.placeholder.com/400x200?text=ENG+408-2/2'"></div>
-        <div class="card-title">ENG 408-2/2(ห้องบรรยาย 2)</div>
-        <p>ความจุ: 20 คน | ห้องเรียน</p>
-        <small style="color: var(--yellow);"><i class="fa-solid fa-circle-exclamation"></i> จองหนาแน่น</small>
-    </div>
+    {% endfor %}
 </div>
- 
+
 <div id="view2" class="hidden">
     <div class="calendar-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
@@ -771,7 +761,7 @@
             let dateString = `${year}-${mStr}-${dStr}`;
  
             // หาชื่อห้องปัจจุบัน (เช่น "ENG 406-3(ห้องประชุม 1)" -> "ENG 406-3")
-            let roomCode = currentRoom.split("(")[0].trim();
+            let roomCode = currentRoom.split("(")[0].replace("ENG", "").trim();
             
             let currentJSDate = new Date(year, month, d);
             let pyDayStr = ((currentJSDate.getDay() === 0) ? 6 : currentJSDate.getDay() - 1).toString();
@@ -834,7 +824,7 @@
         selectedDates.sort((a, b) => new Date(a.year, a.month, a.day) - new Date(b.year, b.month, b.day));
  
         // 🎯 ดึงรหัสห้องที่กำลังเลือกอยู่
-        let roomCode = currentRoom.split("(")[0].trim();
+        let roomCode = currentRoom.split("(")[0].replace("ENG", "").trim();
  
         selectedDates.forEach(sd => {
             const dayFull = `${sd.day} ${sd.monthName} ${sd.year + 543}`;
@@ -989,7 +979,7 @@
         }
  
         if (step === 2 || step === 4) {
-            if (typeof data === 'string' && data.includes('ENG')) { currentRoom = data; }
+            if (typeof data === 'string') { currentRoom = data; }
         }
  
         if (step === 2) {
