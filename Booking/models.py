@@ -204,19 +204,19 @@ class Notification(models.Model):
         return f"{status} [{self.get_notification_type_display()}] → {self.recipient_email}"
 
 
-class AcademicSemester(models.Model):
-    name = models.CharField(max_length=100, verbose_name=_("ภาคการศึกษา (เช่น 1/2569)"))
-    start_date = models.DateField(verbose_name=_("วันเริ่มต้นเทอม"))
-    end_date = models.DateField(verbose_name=_("วันสิ้นสุดเทอม"))
-    is_active = models.BooleanField(
-        default=False, verbose_name=_("เปิดใช้งานเป็นเทอมปัจจุบัน")
-    )
+# class AcademicSemester(models.Model):
+#     name = models.CharField(max_length=100, verbose_name=_("ภาคการศึกษา (เช่น 1/2569)"))
+#     start_date = models.DateField(verbose_name=_("วันเริ่มต้นเทอม"))
+#     end_date = models.DateField(verbose_name=_("วันสิ้นสุดเทอม"))
+#     is_active = models.BooleanField(
+#         default=False, verbose_name=_("เปิดใช้งานเป็นเทอมปัจจุบัน")
+#     )
 
-    class Meta:
-        verbose_name = _("ภาคการศึกษา")
-        verbose_name_plural = _("ภาคการศึกษา")
-        ordering = ["-start_date"]
+#     class Meta:
+#         verbose_name = _("ภาคการศึกษา")
+#         verbose_name_plural = _("ภาคการศึกษา")
+#         ordering = ["-start_date"]
 
-    def __str__(self):
-        status = " (เทอมปัจจุบัน)" if self.is_active else ""
-        return f"{self.name}{status}"
+#     def __str__(self):
+#         status = " (เทอมปัจจุบัน)" if self.is_active else ""
+#         return f"{self.name}{status}"

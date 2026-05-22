@@ -11,10 +11,11 @@ from django.http import JsonResponse
 from .models import (
     Booking,
     Room,
-    AcademicSemester,
+    # AcademicSemester,
     BlackoutPeriod,
 )  # นำเข้าครบทุก Model ทั้ง Semester และ Blackout
 from .forms import BookingForm
+from Users.models import SystemSettings
 
 # นำเข้าฟังก์ชันส่งแจ้งเตือนของเพื่อน
 from Users.utils import send_booking_notification
@@ -226,18 +227,29 @@ def booking_flow_view(request):
                 return redirect("booking_flow")
 
             # ดึงข้อมูลเทอมการศึกษาปัจจุบันจาก Admin (ถ้ามี)
-            active_semester = AcademicSemester.objects.filter(is_active=True).first()
+            settings = SystemSettings.get_settings()
 
-            if active_semester:
-                start_semester = active_semester.start_date
-                end_semester = active_semester.end_date
+            if settings.start_date and settings.end_date:
+                start_semester = settings.start_date
+                end_semester = settings.end_date
             else:
-                # Fallback: ถ้า Admin ยังไม่ได้ตั้งภาคการศึกษา → ใช้ค่า default (วันนี้ + 120 วัน)
+                # Fallback: ถ้า Admin ยังไม่ได้ตั้งภาคการศึกษาหน้าเว็บ
                 start_semester = date.today()
                 end_semester = start_semester + timedelta(days=120)
                 logger.warning(
-                    "ไม่พบ AcademicSemester ที่ active — ใช้ค่า fallback start=today end=today+120days"
+                    "SystemSettings ยังไม่ได้ตั้งค่า start_date/end_date — ใช้ค่า fallback start=today end=today+120days"
                 )
+
+            # if active_semester:
+            #     start_semester = active_semester.start_date
+            #     end_semester = active_semester.end_date
+            # else:
+            #     # Fallback: ถ้า Admin ยังไม่ได้ตั้งภาคการศึกษา → ใช้ค่า default (วันนี้ + 120 วัน)
+            #     start_semester = date.today()
+            #     end_semester = start_semester + timedelta(days=120)
+            #     logger.warning(
+            #         "ไม่พบ AcademicSemester ที่ active — ใช้ค่า fallback start=today end=today+120days"
+            #     )
 
             db_days = [THAI_DAYS.get(d) for d in days_list if d in THAI_DAYS]
             days_of_week_str = ",".join(db_days)
