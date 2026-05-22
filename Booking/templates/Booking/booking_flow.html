@@ -861,37 +861,34 @@
                 });
             };
 
-            // 🎯 ตรวจสอบว่าเวลานี้ถูกจองไปหรือยัง (ใน Database)
-            let isSlot1Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "09:00");
-            let isSlot2Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "13:00");
-            let isSlot3Booked = serverBookings.some(b => b.room_code === roomCode && b.start_date === dbDateStr && b.start_time === "16:00");
- 
-            // ตรวจสอบว่า User กำลังคลิกเลือกอยู่หรือไม่
-            const isSlot1Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '09:00 - 12:00') ? 'selected-slot' : '';
-            const isSlot2Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '13:00 - 16:00') ? 'selected-slot' : '';
-            const isSlot3Selected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === '16:00 - 18:00') ? 'selected-slot' : '';
- 
-            // 🎯 สร้างปุ่มเวลา (ถ้าจองแล้วให้ล็อกเป็นสีเทาและแม่กุญแจแดง ถ้ายังให้กดได้ปกติ)
-            let btn1HTML = isSlot1Booked
-                ? `<div class="slot-btn disabled"><span>09:00 - 12:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
-                : `<div class="slot-btn ${isSlot1Selected}" onclick="toggleSlotSelection('${dayFull}', '09:00 - 12:00')"><span>09:00 - 12:00</span> ${isSlot1Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
- 
-            let btn2HTML = isSlot2Booked
-                ? `<div class="slot-btn disabled"><span>13:00 - 16:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
-                : `<div class="slot-btn ${isSlot2Selected}" onclick="toggleSlotSelection('${dayFull}', '13:00 - 16:00')"><span>13:00 - 16:00</span> ${isSlot2Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
- 
-            let btn3HTML = isSlot3Booked 
-                ? `<div class="slot-btn disabled"><span>16:00 - 18:00</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`
-                : `<div class="slot-btn ${isSlot3Selected}" onclick="toggleSlotSelection('${dayFull}', '16:00 - 18:00')"><span>16:00 - 18:00</span> ${isSlot3Selected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
- 
+            // 🎯 ช่วงเวลา 6 slot (ตรงกับการจองทั้งเทอม)
+            const DAILY_TIME_SLOTS = [
+                '08:00 - 09:30',
+                '09:30 - 11:00',
+                '11:00 - 12:30',
+                '13:30 - 15:00',
+                '15:00 - 16:30',
+                '16:30 - 18:00',
+            ];
+
+            // 🎯 สร้างปุ่ม 6 slot — ใช้ checkOverlap เช็คทับซ้อนกับ booking ในฐานข้อมูล
+            let slotsHtml = DAILY_TIME_SLOTS.map(slotStr => {
+                const [startT, endT] = slotStr.split(' - ');
+                const isBooked = checkOverlap(startT, endT);
+                const isSelected = selectedTimeSlots.some(s => s.dateStr === dayFull && s.timeStr === slotStr) ? 'selected-slot' : '';
+
+                if (isBooked) {
+                    return `<div class="slot-btn disabled"><span>${slotStr}</span> <i class="fa-solid fa-lock" style="color:#ef4444;"></i></div>`;
+                }
+                return `<div class="slot-btn ${isSelected}" onclick="toggleSlotSelection('${dayFull}', '${slotStr}')"><span>${slotStr}</span> ${isSelected ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-regular fa-clock"></i>'}</div>`;
+            }).join('');
+
             // นำปุ่มมาประกอบร่างเข้าด้วยกัน
             container.innerHTML += `
                 <div class="day-slot-group">
                     <div class="day-slot-header"><i class="fa-regular fa-calendar"></i> วันที่ ${dayFull}</div>
                     <div class="slot-grid">
-                        ${btn1HTML}
-                        ${btn2HTML}
-                        ${btn3HTML}
+                        ${slotsHtml}
                     </div>
                 </div>
             `;

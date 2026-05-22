@@ -347,9 +347,8 @@
                     class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <form method="POST" action="">
+        <form method="POST" id="editRoleForm" action="">
             {% csrf_token %}
-            <input type="hidden" name="action_type" value="edit_role">
             <input type="hidden" name="user_id" id="edit_user_id">
 
             <div class="form-group">
@@ -369,8 +368,7 @@
 
             <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="closeModal('editRoleModal')">ยกเลิก</button>
-                <button type="submit" class="btn-submit-blue"
-                    onclick="alert('อัปเดตบทบาทผู้ใช้งานสำเร็จ!'); closeModal('editRoleModal'); return false;">บันทึกการเปลี่ยนแปลง</button>
+                <button type="submit" class="btn-submit-blue">บันทึกการเปลี่ยนแปลง</button>
             </div>
         </form>
     </div>
@@ -385,6 +383,9 @@
         document.getElementById('edit_user_id').value = userId;
         document.getElementById('edit_username').value = username;
         document.getElementById('edit_role_select').value = currentRole;
+
+        // ตั้ง form action ให้ชี้ไปที่ URL assign_role พร้อม user_id ที่ถูกต้อง
+        document.getElementById('editRoleForm').action = "/users/" + userId + "/role/";
 
         // แสดง Modal
         const modal = document.getElementById('editRoleModal');

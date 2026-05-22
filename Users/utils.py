@@ -49,12 +49,28 @@ def send_booking_notification(booking, notification_type):
     recipient_emails = []
 
     if notification_type == "new_booking":
-        # แจ้งเตือน Admin เมื่อมีการจองใหม่ (FR-NOTI-01)
+        # แจ้งเตือน Admin ทุกคนเมื่อมีการจองใหม่ (FR-NOTI-01)
         subject = f"[ระบบจองห้อง TSE] มีคำขอจองห้องใหม่: {booking.room.room_name}"
 
-        # ส่งไปให้ Admin email ที่กำหนด (661068513@student.tu.ac.th)
-        admin_email = getattr(settings, "ADMIN_EMAIL", "661068513@student.tu.ac.th")
-        recipient_emails = [admin_email] if admin_email else []
+        # ดึง email ของ UserProfile ทุกคนที่ role='admin' และ is_active=True
+        admin_emails = list(
+            UserProfile.objects.filter(role="admin", is_active=True)
+            .exclude(email="")
+            .values_list("email", flat=True)
+        )
+
+        # ถ้าใน DB ไม่มี admin เลย → fallback ใช้ ADMIN_EMAIL จาก settings/.env
+        if not admin_emails:
+            fallback = getattr(settings, "ADMIN_EMAIL", "")
+            if fallback:
+                admin_emails = [fallback]
+                logger.warning(
+                    "ไม่พบ admin ที่ active ใน DB — fallback ใช้ ADMIN_EMAIL จาก settings"
+                )
+
+        # ลบ email ซ้ำ (กันกรณีมี admin หลายคนใช้ email เดียวกัน)
+        recipient_emails = list(dict.fromkeys(admin_emails))
+        logger.info(f"แจ้งเตือนการจองใหม่ถึง admin {len(recipient_emails)} คน: {recipient_emails}")
 
         message = (
             f"เรียน เจ้าหน้าที่ (Admin),\n\n"

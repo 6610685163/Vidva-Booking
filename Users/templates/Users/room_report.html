@@ -170,23 +170,29 @@
     <form method="GET" action="" class="filter-bar">
         <div class="filter-group">
             <label><i class="fa-regular fa-calendar"></i> เริ่มต้นวันที่</label>
-            <input type="date" name="date_from" class="input-date" required>
+            <input type="date" name="date_from" class="input-date" value="{{ date_from_str }}" required>
         </div>
         <div class="filter-group">
             <label><i class="fa-regular fa-calendar"></i> ถึงวันที่</label>
-            <input type="date" name="date_to" class="input-date" required>
+            <input type="date" name="date_to" class="input-date" value="{{ date_to_str }}" required>
         </div>
         <button type="submit" class="btn-filter"><i class="fa-solid fa-magnifying-glass"></i> ประมวลผล</button>
 
         <div class="export-buttons">
-            <a href="?export=csv" class="btn-export btn-export-csv"
-                onclick="alert('ระบบกำลังดาวน์โหลดรายงานรูปแบบ CSV');"><i class="fa-solid fa-file-csv"></i> Export
-                CSV</a>
-            <a href="?export=excel" class="btn-export btn-export-excel"
-                onclick="alert('ระบบกำลังดาวน์โหลดรายงานรูปแบบ Excel');"><i class="fa-solid fa-file-excel"></i> Export
-                Excel</a>
+            <a href="?date_from={{ date_from_str }}&date_to={{ date_to_str }}&export=csv"
+                class="btn-export btn-export-csv">
+                <i class="fa-solid fa-file-csv"></i> Export CSV
+            </a>
+           
         </div>
     </form>
+
+    <div style="background:#eff6ff; border-left:4px solid #2563eb; padding:10px 14px; border-radius:8px; margin-bottom:1rem; color:#1e40af; font-size:0.9rem;">
+        <i class="fa-solid fa-circle-info"></i>
+        ช่วงรายงาน: <strong>{{ date_from|date:"d M Y" }} – {{ date_to|date:"d M Y" }}</strong>
+        | ใช้งานรวมทั้งหมด <strong>{{ grand_total_count }}</strong> ครั้ง / <strong>{{ grand_total_hours }}</strong> ชม.
+        <span style="color:#64748b;">(คำนวณ Utilization จากเวลาทำการ 9 ชม./วัน × วันทำการ ในช่วงรายงาน)</span>
+    </div>
 
     <div class="table-wrapper">
         <table>
@@ -203,31 +209,43 @@
                 <tr>
                     <th>เพื่อการเรียนการสอน</th>
                     <th>เพื่อการจัดอบรม/ประชุม</th>
-                    <th>หลักสูตรภาคปกติ (ไทย)</th>
-                    <th>หลักสูตรนานาชาติ (TEP/TEPE)</th>
+                    <th>หลักสูตรภาคปกติ/โท</th>
+                    <th>หลักสูตรนานาชาติ (TEP-TEPE/TU-PINE)</th>
                 </tr>
             </thead>
             <tbody>
+                {% for row in rows %}
                 <tr>
-                    <td style="font-weight:600; text-align: left;">ENG 406-3 (ห้องประชุม 1)</td>
-                    <td style="text-align: center;">24</td>
-                    <td style="text-align: center;">72 ชม.</td>
-                    <td style="text-align: center;"><strong style="color: #10b981;">80%</strong></td>
-                    <td style="text-align: center; color: #4b5563;">18 ครั้ง / 54 ชม.</td>
-                    <td style="text-align: center; color: #4b5563;">6 ครั้ง / 18 ชม.</td>
-                    <td style="text-align: center; color: #4b5563;">14 ครั้ง / 42 ชม.</td>
-                    <td style="text-align: center; color: #4b5563;">10 ครั้ง / 30 ชม.</td>
+                    <td style="font-weight:600; text-align: left;">
+                        {{ row.room.room_code }} ({{ row.room.room_name }})
+                        {% if not row.room.is_active %}
+                            <span style="color:#dc2626; font-size:0.75rem;">[ปิดใช้งาน]</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">{{ row.count }}</td>
+                    <td style="text-align: center;">{{ row.hours }} ชม.</td>
+                    <td style="text-align: center;">
+                        {% if row.utilization >= 70 %}
+                            <strong style="color: #10b981;">{{ row.utilization }}%</strong>
+                        {% elif row.utilization >= 40 %}
+                            <strong style="color: #f59e0b;">{{ row.utilization }}%</strong>
+                        {% else %}
+                            <strong style="color: #64748b;">{{ row.utilization }}%</strong>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center; color: #4b5563;">{{ row.class_count }} ครั้ง / {{ row.class_hours }} ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">{{ row.training_count }} ครั้ง / {{ row.training_hours }} ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">{{ row.regular_count }} ครั้ง / {{ row.regular_hours }} ชม.</td>
+                    <td style="text-align: center; color: #4b5563;">{{ row.intl_count }} ครั้ง / {{ row.intl_hours }} ชม.</td>
                 </tr>
+                {% empty %}
                 <tr>
-                    <td style="font-weight:600; text-align: left;">ENG 406-5 (ห้องประชุม 2)</td>
-                    <td style="text-align: center;">14</td>
-                    <td style="text-align: center;">42 ชม.</td>
-                    <td style="text-align: center;"><strong style="color: #f59e0b;">55%</strong></td>
-                    <td style="text-align: center; color: #4b5563;">10 ครั้ง / 30 ชม.</td>
-                    <td style="text-align: center; color: #4b5563;">4 ครั้ง / 12 ชม.</td>
-                    <td style="text-align: center; color: #4b5563;">8 ครั้ง / 24 ชม.</td>
-                    <td style="text-align: center; color: #4b5563;">6 ครั้ง / 18 ชม.</td>
+                    <td colspan="8" style="text-align:center; padding:2rem; color:#94a3b8;">
+                        <i class="fa-solid fa-database" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
+                        ไม่พบข้อมูลห้องในระบบ
+                    </td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
