@@ -13,7 +13,7 @@
         .d-none {
             display: none !important;
         }
-        
+
         :root {
             --tu-red: #8b0000;
             --tu-gold: #fbc02d;
@@ -202,7 +202,8 @@
                 <a href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> แดชบอร์ด</a>
             </li>
             <li class="{% if request.resolver_match.url_name == 'pending_bookings' %}active{% endif %}">
-                <a href="{% url 'pending_bookings' %}"><i class="fa-solid fa-clock"></i> รายการจองที่รอการอนุมัติ</a>
+                <a href="{% url 'pending_bookings' %}"><i class="fa-solid fa-clipboard-check"></i>
+                    รายการจองที่รอการอนุมัติ</a>
             </li>
             <li class="{% if request.resolver_match.url_name == 'users_management' %}active{% endif %}">
                 <a href="{% url 'users_management' %}"><i class="fa-solid fa-users-gear"></i> จัดการผู้ใช้งาน</a>
@@ -288,16 +289,19 @@
                     opacity: 0;
                     transform: translateY(-10px);
                 }
+
                 to {
                     opacity: 1;
                     transform: translateY(0);
                 }
             }
+
             @keyframes slideUp {
                 from {
                     opacity: 1;
                     transform: translateY(0);
                 }
+
                 to {
                     opacity: 0;
                     transform: translateY(-10px);
@@ -327,32 +331,49 @@
     </script>
     {% block extra_script %}{% endblock %}
 
-    <div id="chatbot-widget" class="d-none" style="position: fixed; bottom: 80px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1000; display: flex; flex-direction: column;">
-        <div style="background: #007bff; color: white; padding: 10px; border-top-left-radius: 10px; border-top-right-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+    <div id="chatbot-widget" class="d-none"
+        style="position: fixed; bottom: 80px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1000; display: flex; flex-direction: column;">
+        <div
+            style="background: #007bff; color: white; padding: 10px; border-top-left-radius: 10px; border-top-right-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
             <strong>🤖 ผู้ช่วย Vidva</strong>
-            <button onclick="toggleChatbot()" style="background: none; border: none; color: white; font-weight: bold; cursor: pointer;">X</button>
+            <button onclick="toggleChatbot()"
+                style="background: none; border: none; color: white; font-weight: bold; cursor: pointer;">X</button>
         </div>
-        
-        <div id="chatbot-messages" style="flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #f8f9fa;">
-            <div style="align-self: flex-start; background: #e9ecef; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
+
+        <div id="chatbot-messages"
+            style="flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #f8f9fa;">
+            <div
+                style="align-self: flex-start; background: #e9ecef; padding: 8px 12px; border-radius: 15px; max-width: 80%; font-size: 0.9rem;">
                 สวัสดีครับ! ผมคือผู้ช่วย Vidva 🤖 <br>
                 พิมพ์คำถามที่สงสัย หรือเลือกคำสั่งด่วนด้านล่างนี้ได้เลยครับ:
                 <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px;">
-                    <button onclick="sendQuickReply('วิธีจอง')" style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">📅 วิธีจองห้อง</button>
-                    <button onclick="sendQuickReply('เช็คห้อง')" style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">🔍 เช็คห้องว่าง</button>
-                    <button onclick="sendQuickReply('ยกเลิก')" style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">❌ ยกเลิกการจอง</button>
-                    <button onclick="sendQuickReply('เมนู')" style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">📋 ดูคำสั่งทั้งหมด</button>
+                    <button onclick="sendQuickReply('วิธีจอง')"
+                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">📅
+                        วิธีจองห้อง</button>
+                    <button onclick="sendQuickReply('เช็คห้อง')"
+                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">🔍
+                        เช็คห้องว่าง</button>
+                    <button onclick="sendQuickReply('ยกเลิก')"
+                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">❌
+                        ยกเลิกการจอง</button>
+                    <button onclick="sendQuickReply('เมนู')"
+                        style="font-size: 0.8rem; background: #fff; border: 1px solid #007bff; color: #007bff; border-radius: 12px; padding: 4px 8px; cursor: pointer;">📋
+                        ดูคำสั่งทั้งหมด</button>
                 </div>
             </div>
         </div>
-        
+
         <div style="padding: 10px; border-top: 1px solid #dee2e6; display: flex; gap: 5px;">
-            <input type="text" id="chatbot-input" placeholder="พิมพ์ข้อความ..." style="flex: 1; border: 1px solid #ced4da; border-radius: 5px; padding: 5px;" onkeypress="handleChatbotEnter(event)">
-            <button onclick="sendChatbotMessage()" style="background: #007bff; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">ส่ง</button>
+            <input type="text" id="chatbot-input" placeholder="พิมพ์ข้อความ..."
+                style="flex: 1; border: 1px solid #ced4da; border-radius: 5px; padding: 5px;"
+                onkeypress="handleChatbotEnter(event)">
+            <button onclick="sendChatbotMessage()"
+                style="background: #007bff; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">ส่ง</button>
         </div>
     </div>
 
-    <button onclick="toggleChatbot()" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: #007bff; color: white; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 24px; cursor: pointer; z-index: 1001;">
+    <button onclick="toggleChatbot()"
+        style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: #007bff; color: white; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-size: 24px; cursor: pointer; z-index: 1001;">
         💬
     </button>
 
@@ -379,7 +400,7 @@
         function sendQuickReply(text) {
             const inputField = document.getElementById('chatbot-input');
             inputField.value = text;
-            sendChatbotMessage(); 
+            sendChatbotMessage();
         }
 
         // ฟังก์ชันส่งข้อความไปหา Backend
@@ -400,13 +421,13 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
             // ดึง CSRF Token ของ Django
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? 
-                              document.querySelector('[name=csrfmiddlewaretoken]').value : 
-                              getCookie('csrftoken');
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ?
+                document.querySelector('[name=csrfmiddlewaretoken]').value :
+                getCookie('csrftoken');
 
             try {
                 // 2. ยิง API ไปหา Backend ที่เราสร้างไว้ (อิงตาม path ที่ตั้งใน urls.py)
-                const response = await fetch('/booking/api/chatbot/', { 
+                const response = await fetch('/booking/api/chatbot/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -418,7 +439,7 @@
                 const data = await response.json();
 
                 // 3. แสดงข้อความของ Bot บนหน้าจอ
-                if(data.reply) {
+                if (data.reply) {
                     // แปลง \n เป็น <br> ให้ขึ้นบรรทัดใหม่ได้
                     const formattedReply = data.reply.replace(/\n/g, '<br>');
                     messagesContainer.innerHTML += `
@@ -434,7 +455,7 @@
                     </div>
                 `;
             }
-            
+
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
@@ -454,5 +475,6 @@
             return cookieValue;
         }
     </script>
-    </body>
+</body>
+
 </html>

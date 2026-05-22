@@ -20,56 +20,143 @@
         margin: 0;
     }
 
-    /* ตารางคำขอจองล่าสุดด้านล่าง */
-    .table-section {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        border: 1px solid #edf2f7;
-        margin-top: 2.5rem;
+    .table-wrapper {
+        overflow-x: auto;
     }
 
     table {
         width: 100%;
         border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    thead {
+        background-color: var(--bg-color);
+        border-bottom: 2px solid var(--tu-red);
     }
 
     th {
-        text-align: left;
         padding: 1rem;
-        color: #718096;
+        text-align: left;
         font-weight: 600;
-        border-bottom: 2px solid #edf2f7;
+        color: var(--tu-red);
     }
 
     td {
         padding: 1rem;
-        border-bottom: 1px solid #edf2f7;
-        color: #4a5568;
-        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.95rem;
     }
 
-    .action-btn {
-        background: white;
-        border: 1px solid #e2e8f0;
-        color: #64748b;
-        padding: 6px 12px;
+    tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
         border-radius: 6px;
+        font-weight: 600;
+        font-family: 'Sarabun', sans-serif;
         cursor: pointer;
-        transition: 0.2s;
+        border: none;
+        transition: background-color 0.2s;
+        font-size: 0.9rem;
     }
 
-    .action-btn:hover {
-        border-color: var(--tu-red);
-        color: var(--tu-red);
-        background: #fff5f5;
+    .btn-approve {
+        background-color: var(--tu-green);
+        color: white;
+        margin-right: 0.5rem;
     }
 
     .btn-approve:hover {
-        border-color: #10b981;
-        color: #10b981;
-        background: #ecfdf5;
+        background-color: var(--tu-green-hover);
+    }
+
+    .btn-reject {
+        background-color: var(--tu-red);
+        color: white;
+    }
+
+    .btn-reject:hover {
+        background-color: var(--tu-red-hover);
+    }
+
+    .purpose-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        background-color: #e5e7eb;
+        color: #4b5563;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-content h3 {
+        color: var(--tu-red);
+        margin-bottom: 1rem;
+    }
+
+    .modal-content textarea {
+        width: 100%;
+        height: 120px;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-family: 'Sarabun', sans-serif;
+        margin-bottom: 1.5rem;
+        resize: none;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .btn-secondary {
+        background-color: #9ca3af;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
     }
 </style>
 {% endblock %}
@@ -80,44 +167,99 @@
         คำขอการจองห้องที่รอการอนุมัติ</h1>
     <p>อนุมัติหรือปฏิเสธคำขอจองห้องที่รออนุมัติ</p>
 </div>
-<div class="table-section">
-    <h3 style="margin-top: 0; margin-bottom: 1.5rem;">คำขอจองห้องที่รออนุมัติ</h3>
+{% if bookings %}
+<div class="table-wrapper">
     <table>
         <thead>
             <tr>
                 <th>ผู้จอง</th>
                 <th>ห้อง</th>
                 <th>วัตถุประสงค์</th>
-                <th>วันและเวลา</th>
+                <th>วัน/เวลา</th>
                 <th>จัดการ</th>
             </tr>
         </thead>
         <tbody>
-            {% for booking in pending_bookings %}
+            {% for b in bookings %}
             <tr>
-                <td style="font-weight:600;">{{ booking.user.username }}</td>
-                <td>{{ booking.room_name }}</td>
-                <td>{{ booking.purpose }}</td>
                 <td>
-                    <small style="display:block;">{{ booking.booking_date }}</small>
-                    <small style="color:#718096;">{{ booking.booking_time }}</small>
+                    <strong>{{ b.booker.username }}</strong><br>
+                    <small style="color: var(--text-muted);">{{ b.booker.email }}</small>
                 </td>
-                <td style="display: flex; gap: 8px;">
-                    <button class="action-btn btn-approve" title="อนุมัติ"><i class="fa-solid fa-check"></i></button>
-                    <button class="action-btn" title="ปฏิเสธ" style="color: #ef4444;"><i
-                            class="fa-solid fa-xmark"></i></button>
+                <td>{{ b.room.room_code }}</td>
+                <td>
+                    <span class="purpose-badge">
+                        {% if b.purpose_type == 'class' %}
+                        วิชา: {{ b.subject_name }} ({{ b.subject_code }})
+                        {% else %}
+                        อบรม: {{ b.topic }}
+                        {% endif %}
+                    </span>
                 </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 3rem; color: #a0aec0;">
-                    <i class="fa-solid fa-check-circle"
-                        style="font-size: 2.5rem; margin-bottom: 10px; color: #e2e8f0; display: block;"></i>
-                    ไม่มีคำขอจองห้องที่รอการอนุมัติในขณะนี้
+                <td>
+                    {% if b.start_date == b.end_date %}
+                    {{ b.start_date|date:"d M Y" }}<br>
+                    {% else %}
+                    <span style="color: var(--tu-red); font-weight: 600;">ทุกวัน{{ b.get_thai_days_of_week }}</span><br>
+                    <small>{{ b.start_date|date:"d M Y" }} - {{ b.end_date|date:"d M Y" }}</small><br>
+                    {% endif %}
+                    <small>{{ b.start_time|time:"H:i" }} - {{ b.end_time|time:"H:i" }}</small>
+                </td>
+                <td>
+                    <form method="POST" action="{% url 'approve_booking' b.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-approve">อนุมัติ</button>
+                    </form>
+                    <button type="button" class="btn btn-reject" onclick="showRejectModal('{{ b.id }}')">ปฏิเสธ</button>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% else %}
+<div class="empty-state">
+    <p>ไม่มีรายการที่รอการอนุมัติในขณะนี้</p>
+</div>
+{% endif %}
+</div>
+</div>
+
+<div id="rejectModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>ระบุเหตุผลการปฏิเสธ</h3>
+        <form id="rejectForm" method="POST" action="">
+            {% csrf_token %}
+            <textarea name="rejection_reason" placeholder="กรุณาระบุเหตุผลที่ไม่อนุมัติการจองนี้..."
+                required></textarea>
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" onclick="hideRejectModal()">ยกเลิก</button>
+                <button type="submit" class="btn btn-reject">ยืนยันการปฏิเสธ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    function showRejectModal(bookingId) {
+        // ปรับ Path ให้ตรงกับ URL Configuration ของคุณ
+        document.getElementById('rejectForm').action = "/booking/" + bookingId + "/reject/";
+        document.getElementById('rejectModal').classList.add('show');
+    }
+
+    function hideRejectModal() {
+        document.getElementById('rejectModal').classList.remove('show');
+    }
+
+    // ปิด Modal เมื่อคลิกพื้นที่ด้านนอก
+    window.onclick = function (event) {
+        const modal = document.getElementById('rejectModal');
+        if (event.target == modal) {
+            hideRejectModal();
+        }
+    }
+</script>
 {% endblock %}
